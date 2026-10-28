@@ -1,4 +1,4 @@
-import {catalog,componentPresets} from './componentCatalog';
+import {catalog,componentPresets,noseParameterDefaults} from './componentCatalog';
 import {addPart,validate,type Project} from './project';
 export const NEW_STAGE='@new-stage';
 export function componentTargets(project:Project,presetId:string){
@@ -17,6 +17,7 @@ export function createComponent(project:Project,parentId:string,presetId:string)
  }
  next=addPart(next,target,preset.kind);const id=next.parts.at(-1)!.id;
  const geometry=structuredClone({...catalog[preset.kind].geometry,...preset.geometry});
+ if(geometry.noseProfile)geometry.noseParameter=noseParameterDefaults[geometry.noseProfile];
  next={...next,parts:next.parts.map(p=>p.id===id?{...p,name:preset.label,geometry}:p)};
  return {project:validate(next),id};
 }

@@ -42,7 +42,7 @@ export function transformSelection(project:Project,ids:string[],mode:GeometryEdi
    factor=Math.max(factor,floor/Math.max(part[mode],1));
   }
   if(Math.abs(factor-1)<1e-12&&selection.nodes.every(n=>n.part[mode]>=1))return project;
-  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,mode==='diameter'&&isShell(n.part.kind)?2*(n.part.inputs?.wallThickness??0):1,round(n.part[mode]*factor))}]));
+  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,mode==='diameter'?n.part.geometry?.innerDiameter??0:0,mode==='diameter'&&isShell(n.part.kind)?2*(n.part.inputs?.wallThickness??0):1,round(n.part[mode]*factor))}]));
   if(mode==='diameter')for(const {part}of selection.nodes)if(isFin(part.kind)){
    const parentDiameter=patches.get(part.parentId??'')?.diameter??project.parts.find(p=>p.id===part.parentId)?.diameter??1;
    patches.set(part.id,{diameter:Math.max(patches.get(part.id)!.diameter!,parentDiameter)});

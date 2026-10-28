@@ -1,15 +1,15 @@
 import {SelectMenu,TextArea} from '@stardrop/ui';
 import {useState,useEffect} from 'react';
-import {isFin,noseProfiles,type ComponentGeometry} from '../domain/componentCatalog';
+import {isFin,noseProfiles,noseParameterDefaults,type ComponentGeometry,type NoseProfile} from '../domain/componentCatalog';
 import type {Part} from '../domain/project';
 import {NumberInput} from './NumberInput';
 export default function GeometryFields({part,onChange}:{part:Part;onChange:(patch:Partial<Part>)=>void}){
  const geometry=part.geometry??{};const set=(patch:Partial<ComponentGeometry>)=>onChange({geometry:{...geometry,...patch}});
  const field=(key:keyof ComponentGeometry,label:string,unit='mm',signed=false,min=0,max=Infinity)=><NumberInput key={key} label={label} unit={unit} value={geometry[key] as number|undefined} optional signed={signed} integer={['finCount','instanceCount','lineCount'].includes(key)} min={min} max={max} onChange={value=>set({[key]:value})}/>;
  return <>
- {part.kind==='nose'&&<label className="inspector-material"><span>Burun profili</span><SelectMenu label="Burun profili" value={geometry.noseProfile??'legacy'} options={[{value:'legacy',label:'Mevcut profil'},...noseProfiles]} onChange={value=>set({noseProfile:value==='legacy'?undefined:value as ComponentGeometry['noseProfile']})}/></label>}
+ {part.kind==='nose'&&<label className="inspector-material"><span>Burun profili</span><SelectMenu label="Burun profili" value={geometry.noseProfile??'legacy'} options={[{value:'legacy',label:'Mevcut profil'},...noseProfiles]} onChange={value=>set({noseProfile:value==='legacy'?undefined:value as NoseProfile,noseParameter:noseParameterDefaults[value as NoseProfile]})}/></label>}
  <div className="inspector-numbers">
- {part.kind==='nose'&&<>{field('noseParameter','Profil parametresi','—',false,0,1)}{field('shoulderLength','Omuz uzunluğu')}{field('shoulderDiameter','Omuz çapı')}{field('shoulderThickness','Omuz et kalınlığı')}</>}
+ {part.kind==='nose'&&<>{geometry.noseProfile&&['secantOgive','parabolic','power','haack'].includes(geometry.noseProfile)&&field('noseParameter','Profil parametresi','—',false,geometry.noseProfile==='power'?.01:0,geometry.noseProfile==='haack'?1/3:1)}{field('shoulderLength','Omuz uzunluğu')}{field('shoulderDiameter','Omuz çapı')}{field('shoulderThickness','Omuz et kalınlığı')}</>}
  {part.kind==='transition'&&field('aftDiameter','Arka çap')}
  {['innerTube','motor','ring','engineBlock','sleeve','lug','railButton'].includes(part.kind)&&field('innerDiameter','İç çap','mm',false,0,part.diameter)}
  {(isFin(part.kind)||part.kind==='tubeFins')&&<>{field('finCount','Kanat sayısı','adet',false,1,64)}{field('rotation','Dönüş','°',true)}</>}

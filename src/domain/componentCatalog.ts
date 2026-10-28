@@ -36,6 +36,7 @@ export const isShell=(kind:Kind)=>['body','nose','transition','motor','innerTube
 export const isSerial=(kind:Kind)=>['stage','body','nose','transition'].includes(kind);
 export const isInternal=(kind:Kind)=>['motor','innerTube','ring','bulkhead','engineBlock','mass','parachute','cord'].includes(kind);
 export const noseProfiles:{value:NoseProfile;label:string}[]=[{value:'conical',label:'Konik'},{value:'tangentOgive',label:'Teğet ogiv'},{value:'secantOgive',label:'Sekant ogiv'},{value:'elliptical',label:'Eliptik'},{value:'parabolic',label:'Parabolik'},{value:'power',label:'Üs profili'},{value:'haack',label:'Haack'},{value:'vonKarman',label:'Von Kármán'}];
+export const noseParameterDefaults:Partial<Record<NoseProfile,number>>={secantOgive:.5,parabolic:.5,power:.5,haack:0,vonKarman:0};
 export const componentPresets=Object.entries(catalog).filter(([kind])=>kind!=='rocket'&&kind!=='nose').map(([kind,def])=>({id:kind,kind:kind as Kind,label:def.label,category:def.category,geometry:def.geometry})).concat(noseProfiles.map(profile=>({id:`nose-${profile.value}`,kind:'nose' as Kind,label:`Burun · ${profile.label}`,category:'Yapı' as ComponentCategory,geometry:{noseProfile:profile.value}})));
 export function validateGeometry(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Parça geometrisi geçersiz.');
