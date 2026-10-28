@@ -34,7 +34,7 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   if(!g.changed&&Math.abs(distance)<3)return;
   const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(g.inverse);
   const delta=g.mode==='diameter'?-2*(point.y-g.start.y):point.x-g.start.x;
-  g.patch=geometryPatch(g.part,g.mode,delta,event.shiftKey?10:event.altKey?.1:1);g.changed=true;
+  g.patch=geometryPatch(g.part,g.mode,delta,event.shiftKey?10:event.altKey?0.1:1);g.changed=true;
   setDraft({id:g.part.id,patch:g.patch});callbacks.current.onPreview?.({...g.part,...g.patch});
  };
  return {draft,start,move,finish};

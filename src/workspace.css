@@ -79,6 +79,14 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .rocket-part{fill:#000;stroke:#fff;stroke-width:2.2;cursor:pointer;outline:none}
 .rocket-part:is(:hover,:focus-visible,.selected){stroke-width:5}
 .rocket-part.internal{fill:url(#hatch);stroke-dasharray:6 4}
+.rocket-svg.editable{touch-action:none;user-select:none}
+.rocket-svg.editable .rocket-part{cursor:ew-resize}
+.rocket-svg.geometry-dragging{cursor:ew-resize}
+.geometry-bounds{fill:none;stroke:#fff;stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;pointer-events:none}
+.geometry-handle{outline:none}.handle-length{cursor:ew-resize}.handle-diameter{cursor:ns-resize}
+.handle-hit{fill:transparent;stroke:none}.handle-mark{fill:#000;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
+.geometry-handle:is(:hover,:focus-visible) .handle-mark{fill:#fff;stroke:#000;stroke-width:2}
+.geometry-readout{fill:#fff;stroke:#000;stroke-width:4;paint-order:stroke;vector-effect:non-scaling-stroke;pointer-events:none}
 .view-label{position:absolute;top:5px;left:22px;display:grid;gap:8px;pointer-events:none}
 .view-label>span{font-size:11px;letter-spacing:.3em}
 .view-label small{font-size:11px}
