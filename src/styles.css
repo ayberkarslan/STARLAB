@@ -14,6 +14,7 @@ svg{flex-shrink:0}
 *::-webkit-scrollbar-thumb{background:#fff;border-radius:0}
 *::-webkit-scrollbar-button{display:none}
 /* Square-ended white markers, shared across menus and controls. */
+.sd-button[aria-pressed=true]::after{opacity:1}
 :is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button){position:relative}
 :is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:#fff;opacity:0;pointer-events:none}
 :is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button):is(:hover,:focus-visible):not(:disabled)::after,.menu-root>button[aria-expanded=true]::after,.sd-select__trigger[aria-expanded=true]::after{opacity:1}
