@@ -17,4 +17,8 @@ body[data-panel-resizing] .split-handle::after{background:#fff}
 .split-pane>.tree-panel,.split-pane>.viewport{height:100%;flex:1;min-height:0}
 .split-pane>.hierarchy-browser,.split-pane>.part-inspector{height:100%;flex:1;min-height:0}
 .editor.resizable-split{grid-template-columns:minmax(0,1fr)}
+.editor.resizable-split{border:0;border-radius:0}
+.editor>.split-pane{border:1px solid var(--line);border-radius:6px}
+.editor>.split-handle::after{left:20px;right:20px;background:transparent}
+.editor>.split-handle:is(:hover,:focus-visible)::after,body[data-panel-resizing=y] .editor>.split-handle::after{background:#fff}
 .split-pane>.tree-panel{border-bottom:0}

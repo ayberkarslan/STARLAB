@@ -61,6 +61,10 @@ nav.task-tabs button.active::after,nav.task-tabs button:not(:disabled):is(:hover
 .drawing::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#ffffff40 .7px,transparent 1px),linear-gradient(to right,#ffffff0d 1px,transparent 1px),linear-gradient(to bottom,#ffffff0d 1px,transparent 1px);background-size:20px 20px,100px 100px,100px 100px;background-position:center;mask-image:radial-gradient(ellipse at center,#000 35%,#0005 100%)}
 .drawing:focus-visible{outline:1px solid #fff;outline-offset:-1px}
 .drawing .rocket-svg{position:relative}
+.canvas-controls{position:absolute;left:16px;right:16px;top:12px;display:flex;align-items:flex-start;justify-content:space-between;z-index:4;pointer-events:none}
+.canvas-controls>*{pointer-events:auto;background:#000;border-radius:4px}
+.canvas-controls .view-switch{padding:0 8px}
+.canvas-controls .sd-icon-button{width:34px;min-height:34px}
 .three-view{position:absolute;inset:0;z-index:1;touch-action:none}
 .drawing:has(.three-view)::before{display:none}
 .view-label,.axis{z-index:2}
