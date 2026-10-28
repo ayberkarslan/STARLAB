@@ -1,11 +1,12 @@
 import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent,type RefObject} from 'react';
 import type {Part,Project} from '../domain/project';
 import {geometryPatch,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
+import {snapCandidates,snapGeometry,type GeometrySnap} from '../domain/geometrySnap';
 
-interface Gesture {pointer:number;part:Part;mode:GeometryEdit;inverse:DOMMatrix;start:DOMPoint;clientX:number;clientY:number;patch:GeometryPatch;changed:boolean}
-export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,focus:string,onEdit:((id:string,patch:GeometryPatch)=>void)|undefined,onPreview:((part:Part|null)=>void)|undefined){
- const gesture=useRef<Gesture|null>(null),callbacks=useRef({onEdit,onPreview});callbacks.current={onEdit,onPreview};
- const [draft,setDraft]=useState<{id:string;patch:GeometryPatch}|null>(null);
+interface Gesture {pointer:number;part:Part;mode:GeometryEdit;inverse:DOMMatrix;start:DOMPoint;clientX:number;clientY:number;patch:GeometryPatch;changed:boolean;candidates:GeometrySnap[];snap:GeometrySnap|null}
+export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,focus:string,onEdit:((id:string,patch:GeometryPatch)=>void)|undefined,onPreview:((part:Part|null)=>void)|undefined,snapEnabled=true){
+ const gesture=useRef<Gesture|null>(null),callbacks=useRef({onEdit,onPreview,snapEnabled});callbacks.current={onEdit,onPreview,snapEnabled};
+ const [draft,setDraft]=useState<{id:string;patch:GeometryPatch;snap:GeometrySnap|null}|null>(null);
  const finish=(commit:boolean)=>{
   const g=gesture.current;if(!g)return;gesture.current=null;setDraft(null);callbacks.current.onPreview?.(null);
   if(svg.current?.hasPointerCapture(g.pointer))svg.current.releasePointerCapture(g.pointer);
@@ -25,8 +26,9 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   if(!callbacks.current.onEdit||event.button!==0||gesture.current)return;
   const root=svg.current,inverse=root?.getScreenCTM()?.inverse();if(!root||!inverse)return;
   event.preventDefault();event.stopPropagation();event.currentTarget.focus({preventScroll:true});
-  gesture.current={pointer:event.pointerId,part,mode,inverse,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(inverse),clientX:event.clientX,clientY:event.clientY,patch:{},changed:false};
-  root.setPointerCapture(event.pointerId);setDraft({id:part.id,patch:{}});
+  const candidates=snapCandidates(project,part,mode).filter(c=>c.key!=='diameter'||c.value>=Math.max(1,2*(part.inputs?.wallThickness??0)));
+  gesture.current={pointer:event.pointerId,part,mode,inverse,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(inverse),clientX:event.clientX,clientY:event.clientY,patch:{},changed:false,candidates,snap:null};
+  root.setPointerCapture(event.pointerId);setDraft({id:part.id,patch:{},snap:null});
  };
  const move=(event:ReactPointerEvent<SVGSVGElement>)=>{
   const g=gesture.current;if(!g||event.pointerId!==g.pointer)return;
@@ -35,7 +37,9 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(g.inverse);
   const delta=g.mode==='diameter'?-2*(point.y-g.start.y):point.x-g.start.x;
   g.patch=geometryPatch(g.part,g.mode,delta,event.shiftKey?10:event.altKey?0.1:1);g.changed=true;
-  setDraft({id:g.part.id,patch:g.patch});callbacks.current.onPreview?.({...g.part,...g.patch});
+  const aligned=callbacks.current.snapEnabled&&!event.altKey?snapGeometry(g.patch,g.candidates,Math.hypot(g.inverse.a,g.inverse.b),g.snap):{patch:g.patch,snap:null};
+  g.patch=aligned.patch;g.snap=aligned.snap;
+  setDraft({id:g.part.id,patch:g.patch,snap:g.snap});callbacks.current.onPreview?.({...g.part,...g.patch});
  };
  return {draft,start,move,finish};
 }

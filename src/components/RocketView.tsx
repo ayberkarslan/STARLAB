@@ -5,10 +5,10 @@ import type {Part} from '../domain/project';
 import {geometryPatch,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
 import {useGeometryDrag} from './useGeometryDrag';
 import {useCanvasNavigation} from './useCanvasNavigation';
-interface Props extends ViewProps {onEdit?:(id:string,patch:GeometryPatch)=>void;onPreview?:(part:Part|null)=>void;onZoom?:(zoom:number)=>void;resetKey?:number}
-export default function RocketView({project,selected,focus,onSelect,zoom,onEdit,onPreview,onZoom,resetKey=0}:Props){
+interface Props extends ViewProps {onEdit?:(id:string,patch:GeometryPatch)=>void;onPreview?:(part:Part|null)=>void;onZoom?:(zoom:number)=>void;resetKey?:number;snapEnabled?:boolean}
+export default function RocketView({project,selected,focus,onSelect,zoom,onEdit,onPreview,onZoom,resetKey=0,snapEnabled=true}:Props){
  const svg=useRef<SVGSVGElement>(null);const [size,setSize]=useState({width:1000,height:400});
- const drag=useGeometryDrag(svg,project,focus,onEdit,onPreview);
+ const drag=useGeometryDrag(svg,project,focus,onEdit,onPreview,snapEnabled);
  const working=useMemo(()=>drag.draft?{...project,parts:project.parts.map(p=>p.id===drag.draft!.id?{...p,...drag.draft!.patch}:p)}:project,[project,drag.draft]);
  const resolved=useMemo(()=>resolveParts(working),[working]);const shown=scopeParts(resolved,focus).filter(n=>n.physical);
  const original=useMemo(()=>scopeParts(resolveParts(project),focus),[project,focus]);const bounds=boundsOf(original);const min=bounds.min[0],max=bounds.max[0];const radius=Math.max(bounds.max[1],100);const height=Math.max(500,radius*4);const width=Math.max(300,max-min)+300;
@@ -16,6 +16,7 @@ export default function RocketView({project,selected,focus,onSelect,zoom,onEdit,
  const unit=Math.max(nav.frame.width/Math.max(size.width,1),nav.frame.height/Math.max(size.height,1));
  useEffect(()=>{const node=svg.current;if(!node)return;const observer=new ResizeObserver(([entry])=>setSize({width:entry.contentRect.width,height:entry.contentRect.height}));observer.observe(node);return()=>observer.disconnect()},[]);
  const current=shown.find(n=>n.part.id===selected);
+ const snap=drag.draft?.snap;const snapTarget=resolved.find(n=>n.part.id===snap?.targetId);
  const keyEdit=(event:KeyboardEvent<SVGGElement>,part:Part,mode?:GeometryEdit)=>{
   if(event.ctrlKey||event.metaKey||!event.key.startsWith('Arrow'))return;
   const step=event.shiftKey?10:1;let edit=mode;
@@ -34,6 +35,7 @@ export default function RocketView({project,selected,focus,onSelect,zoom,onEdit,
  <line x1={min-150} x2={max+150} y1="0" y2="0" stroke="#fff" strokeWidth="1" strokeDasharray="12 12"/>
  {shown.map(({part:n,position})=>{const x=position[0],d=n.diameter/2;const parent=working.parts.find(p=>p.id===n.parentId);const outline=n.kind==='nose'?noseProfile(n.length,d):finProfile(n.length,d,(parent?.diameter||140)/2);return <g key={n.id} data-part-id={n.id} className={`rocket-part ${selected===n.id?'selected':''} ${['motor','parachute','cord'].includes(n.kind)?'internal':''}`} tabIndex={0} role="button" aria-label={n.name} aria-pressed={selected===n.id} onFocus={()=>onSelect(n.id)} onPointerDown={event=>{if(onEdit){onSelect(n.id);drag.start(event,n,'move')}}} onClick={()=>onSelect(n.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onSelect(n.id)}else keyEdit(e,n)}}><title>{n.name}{onEdit?' · sürükle: konum':''}</title>{n.kind==='nose'?<polygon points={[...outline.map(([a,b])=>`${x+a},${-b}`),...outline.slice().reverse().map(([a,b])=>`${x+a},${b}`)].join(' ')}/>:n.kind==='fins'?<>{[-1,1].map(sign=><polygon key={sign} points={outline.map(([a,b])=>`${x+a},${b*sign}`).join(' ')}/>)}</>:<rect x={x} y={-d} width={Math.max(n.length,1)} height={Math.max(n.diameter,1)} rx={n.kind==='parachute'?15:0}/>}</g>})}
  <path d={`M${min} ${radius+40}v20 H${max}v-20`} fill="none" stroke="#fff" strokeWidth="2"/><text x={(min+max)/2} y={radius+100} textAnchor="middle" fill="#fff" fontSize="24">{Math.round(max-min)} mm</text>
+ {snap&&current&&snapTarget&&<g className="geometry-snap-guide" data-snap-target={snap.targetId} aria-hidden="true">{snap.axis==='diameter'?[-1,1].map(sign=><line key={sign} x1={Math.min(current.position[0],snapTarget.position[0])-unit*12} x2={Math.max(current.position[0]+current.part.length,snapTarget.position[0]+snapTarget.part.length)+unit*12} y1={sign*snap.line} y2={sign*snap.line}/>):<line x1={snap.line} x2={snap.line} y1={-Math.max(current.part.diameter,snapTarget.part.diameter)/2-unit*20} y2={Math.max(current.part.diameter,snapTarget.part.diameter)/2+unit*20}/>}</g>}
  {onEdit&&current&&<g className="geometry-selection"><rect className="geometry-bounds" x={current.position[0]} y={-current.part.diameter/2} width={Math.max(current.part.length,1)} height={Math.max(current.part.diameter,1)}/>{handle('length',current.position[0]+current.part.length,0)}{handle('diameter',current.position[0]+current.part.length/2,-current.part.diameter/2)}<text className="geometry-readout" x={current.position[0]+current.part.length/2} y={current.part.diameter/2+unit*24} fontSize={unit*12} textAnchor="middle">{current.part.length} × {current.part.diameter} mm · X {current.part.offset}</text></g>}
  </svg>
 }

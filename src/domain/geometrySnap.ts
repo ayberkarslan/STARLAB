@@ -9,7 +9,17 @@ export function snapCandidates(project:Project,part:Part,mode:GeometryEdit):Geom
  if(mode==='diameter')return peers.map(n=>({key:'diameter',value:n.part.diameter,targetId:n.part.id,axis:'diameter',line:n.part.diameter/2}));
  // Descendants follow their parent; they cannot be a stationary alignment target.
  const descendants=new Set([part.id]);for(const n of nodes)if(n.parentId&&descendants.has(n.parentId))descendants.add(n.part.id);
- return peers.filter(n=>!descendants.has(n.part.id)).flatMap(n=>[n.position[0],n.position[0]+n.part.length].flatMap(line=>mode==='length'?[{key:'length' as const,value:line-node.position[0],targetId:n.part.id,axis:'x' as const,line}]:[0,part.length].map(edge=>({key:'offset' as const,value:part.offset+line-node.position[0]-edge,targetId:n.part.id,axis:'x' as const,line})))).filter(c=>c.key==='offset'||c.value>=1);
+ const changed=mode==='move'?'offset':'length';
+ const probe=new Map(resolveParts({...project,parts:project.parts.map(p=>p.id===part.id?{...p,[changed]:p[changed]+1}:p)}).map(n=>[n.part.id,n.position[0]]));
+ const result:GeometrySnap[]=[];
+ for(const peer of peers){
+  if(descendants.has(peer.part.id)||Math.abs((probe.get(peer.part.id)??Infinity)-peer.position[0])>1e-6)continue;
+  for(const line of [peer.position[0],peer.position[0]+peer.part.length]){
+   if(mode==='length')result.push({key:'length',value:line-node.position[0],targetId:peer.part.id,axis:'x',line});
+   else for(const edge of [0,part.length])result.push({key:'offset',value:part.offset+line-node.position[0]-edge,targetId:peer.part.id,axis:'x',line});
+  }
+ }
+ return result.filter(c=>c.key==='offset'||c.value>=1);
 }
 export function snapGeometry(patch:GeometryPatch,candidates:GeometrySnap[],worldPerPixel:number,previous?:GeometrySnap|null):{patch:GeometryPatch;snap:GeometrySnap|null}{
  const distance=(c:GeometrySnap)=>Math.abs((patch[c.key]??Infinity)-c.value)/(c.axis==='diameter'?2:1);

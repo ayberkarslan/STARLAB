@@ -12,7 +12,7 @@ describe('screen scale alignment snapping',()=>{
  });
  it('aligns axial edges while excluding descendants as moving targets',()=>{
   const p=initialProject(),part=p.parts.find(p=>p.id==='upper')!;const candidates=snapCandidates(p,part,'move');
-  expect(candidates.some(c=>c.targetId==='lower')).toBe(true);expect(candidates.some(c=>c.targetId==='umotor')).toBe(false);
+  expect(candidates.some(c=>c.targetId==='nose')).toBe(true);expect(candidates.some(c=>c.targetId==='lower')).toBe(false);expect(candidates.some(c=>c.targetId==='umotor')).toBe(false);
   expect(candidates.some(c=>c.value===0)).toBe(true);
  });
 });
