@@ -27,9 +27,9 @@ export function transformSelection(project:Project,ids:string[],mode:GeometryEdi
   let factor=Math.max(.000001,wanted/Math.max(span,1));const selected=new Set(selection.nodes.map(n=>n.part.id));
   for(const {part}of selection.nodes){
    const floor=mode==='length'?1:part.kind==='fins'&&selected.has(part.parentId??'')?1:minimumDiameter(project,part);
-   factor=Math.max(factor,floor/Math.max(part[mode],.001));
+   factor=Math.max(factor,floor/Math.max(part[mode],1));
   }
-  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:round(n.part[mode]*factor)}]));
+  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,round(n.part[mode]*factor))}]));
   next={...project,parts:project.parts.map(p=>patches.has(p.id)?{...p,...patches.get(p.id)}:p)};
   if(mode==='length')next=place(next,new Map(selection.nodes.map(n=>[n.part.id,selection.bounds.min[0]+(n.position[0]-selection.bounds.min[0])*factor])));
  }

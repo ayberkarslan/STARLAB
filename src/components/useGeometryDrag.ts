@@ -2,7 +2,8 @@ import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent,type Re
 import type {Part,Project} from '../domain/project';
 import {geometryPatch,minimumDiameter,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
 import {snapCandidates,snapGeometry,type GeometrySnap} from '../domain/geometrySnap';
-import {transformSelection} from '../domain/selectionGeometry';
+import {transformSelection,geometrySelection} from '../domain/selectionGeometry';
+import {selectionSnapCandidates} from '../domain/selectionSnap';
 
 interface Batch {ids:string[];onEdit:(project:Project)=>void;onPreview:(parts:Part[]|null)=>void}
 interface Gesture {pointer:number;part:Part;mode:GeometryEdit;inverse:DOMMatrix;start:DOMPoint;clientX:number;clientY:number;patch:GeometryPatch;changed:boolean;candidates:GeometrySnap[];snap:GeometrySnap|null;diameterFloor:number;batchIds?:string[];base:Project;next?:Project}
@@ -30,7 +31,9 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   event.preventDefault();event.stopPropagation();event.currentTarget.focus({preventScroll:true});
   const diameterFloor=minimumDiameter(project,part);const candidates=snapCandidates(project,part,mode).filter(c=>c.key!=='diameter'||c.value>=diameterFloor);
   const ids=batch?.ids.includes(part.id)?batch.ids:[part.id];const batchIds=batch&&(ids.length>1||['stage','assembly'].includes(part.kind))?ids:undefined;
-  gesture.current={pointer:event.pointerId,part,mode,inverse,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(inverse),clientX:event.clientX,clientY:event.clientY,patch:{},changed:false,candidates,snap:null,diameterFloor,batchIds,base:project};
+  const selected=batchIds?geometrySelection(project,batchIds):undefined;
+  const reference=selected?{...part,length:selected.bounds.max[0]-selected.bounds.min[0],diameter:Math.max(...selected.nodes.map(n=>n.part.diameter)),offset:0}:part;
+  gesture.current={pointer:event.pointerId,part:reference,mode,inverse,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(inverse),clientX:event.clientX,clientY:event.clientY,patch:{},changed:false,candidates:batchIds?selectionSnapCandidates(project,batchIds,mode):candidates,snap:null,diameterFloor,batchIds,base:project};
   root.setPointerCapture(event.pointerId);setDraft({id:part.id,patch:{},snap:null});
  };
  const move=(event:ReactPointerEvent<SVGSVGElement>)=>{
@@ -40,8 +43,13 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   const point=new DOMPoint(event.clientX,event.clientY).matrixTransform(g.inverse);
   const delta=g.mode==='diameter'?-2*(point.y-g.start.y):point.x-g.start.x;
   if(g.batchIds){
-   g.next=transformSelection(g.base,g.batchIds,g.mode,delta,event.shiftKey?10:event.altKey?0.1:1);g.changed=g.next!==g.base;
-   setDraft({id:g.part.id,patch:{},snap:null,project:g.next});callbacks.current.batch?.onPreview(g.next.parts);return;
+   const step=event.shiftKey?10:event.altKey?0.1:1,key=g.mode==='move'?'offset':g.mode;
+   const patch=geometryPatch(g.part,g.mode,delta,step);
+   const aligned=callbacks.current.snapEnabled&&!event.altKey?snapGeometry(patch,g.candidates,Math.hypot(g.inverse.a,g.inverse.b),g.snap):{patch,snap:null};
+   g.next=transformSelection(g.base,g.batchIds,g.mode,aligned.patch[key]!-g.part[key],aligned.snap?.001:step);g.changed=g.next!==g.base;g.snap=aligned.snap;
+   const result=geometrySelection(g.next,g.batchIds);const actual=g.mode==='move'?result.bounds.min[0]-geometrySelection(g.base,g.batchIds).bounds.min[0]:g.mode==='length'?result.bounds.max[0]-result.bounds.min[0]:Math.max(...result.nodes.map(n=>n.part.diameter));
+   if(g.snap&&Math.abs(actual-g.snap.value)>.01)g.snap=null;
+   setDraft({id:g.part.id,patch:{},snap:g.snap,project:g.next});callbacks.current.batch?.onPreview(g.next.parts);return;
   }
   g.patch=geometryPatch(g.part,g.mode,delta,event.shiftKey?10:event.altKey?0.1:1,g.diameterFloor);g.changed=true;
   const aligned=callbacks.current.snapEnabled&&!event.altKey?snapGeometry(g.patch,g.candidates,Math.hypot(g.inverse.a,g.inverse.b),g.snap):{patch:g.patch,snap:null};
