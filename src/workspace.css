@@ -131,3 +131,6 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
  .menu-project{max-width:180px}
  .menu-brand{font-size:11px}
 }
+.menu-popup button{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.menu-popup button:disabled{opacity:.4;cursor:default}
+.menu-popup kbd{font-size:11px;white-space:nowrap}

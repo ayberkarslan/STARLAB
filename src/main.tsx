@@ -17,6 +17,8 @@ import './components/engineering/engineering.css';
 import {movePart,type MoveTarget} from './domain/move';
 import { focusPath, nextFocus } from './domain/navigation';
 import {t} from './i18n';
+import {parseStar,serializeStar,starFilename,STAR_MAX_BYTES} from './domain/starFile';
+import {useProjectHistory} from './useProjectHistory';
 import '@stardrop/ui/styles.css';
 import './styles.css';
 import './workspace.css';
@@ -28,7 +30,7 @@ function App(){
  const [page,setPage]=useState(0);const [visited,setVisited]=useState(new Set([0]));
  const [view,setView]=useState<'2d'|'3d'>('2d');
  const [menu,setMenu]=useState<string|null>(null);const [showTree,setShowTree]=useState(true);const menuRoot=useRef<HTMLDivElement>(null);
- const [boot]=useState(load);const [project,setProject]=useState<Project>(boot.project);const [selected,setSelected]=useState('sustainer');const [focus,setFocus]=useState('rocket');const [zoom,setZoom]=useState(1);const [notice,setNotice]=useState(boot.error);const [saved,setSaved]=useState(!boot.error);const [help,setHelp]=useState(false);const [adding,setAdding]=useState(false);const [deleting,setDeleting]=useState(false);const file=useRef<HTMLInputElement>(null);const engine=useMemo(createMockEngine,[]);const revision=useRef(0);
+ const [boot]=useState(load);const {project,setProject,undo,redo,reset,endGroup,canUndo,canRedo}=useProjectHistory(boot.project);const [selected,setSelected]=useState('sustainer');const [focus,setFocus]=useState('rocket');const [zoom,setZoom]=useState(1);const [notice,setNotice]=useState(boot.error);const [saved,setSaved]=useState(!boot.error);const [help,setHelp]=useState(false);const [adding,setAdding]=useState(false);const [deleting,setDeleting]=useState(false);const file=useRef<HTMLInputElement>(null);const engine=useMemo(createMockEngine,[]);const revision=useRef(0);
  const flight=useMemo(()=>project.flight??initialFlight(),[project.flight]);
  const changeFlight=(next:FlightWorkspace)=>setProject(current=>({...current,flight:cleanFlight(current,next)}));
  const openPage=(index:number)=>{setPage(index);setMenu(null);setVisited(old=>new Set([...old,index]))};
@@ -37,9 +39,10 @@ function App(){
  const part=project.parts.find(n=>n.id===selected)||project.parts[0];const focusPart=project.parts.find(n=>n.id===focus);
  useEffect(()=>{const close=(e:PointerEvent)=>{if(!menuRoot.current?.contains(e.target as Node))setMenu(null)};const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenu(null)};document.addEventListener('pointerdown',close);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('pointerdown',close);document.removeEventListener('keydown',escape)}},[]);
  function update(patch:Partial<Part>){setProject(p=>({...p,parts:p.parts.map(n=>n.id===part.id?{...n,...patch}:n)}));}
- async function importProject(f?:File){if(!f)return;try{if(f.size>2_000_000)throw Error('Dosya 2 MB sınırını aşıyor.');const next=validate(JSON.parse(await f.text()));setProject(next);setSelected(next.parts.find(n=>n.kind==='rocket')!.id);setFocus(next.parts.find(n=>n.kind==='rocket')!.id);}catch(e){setNotice(e instanceof Error?e.message:'Proje açılamadı.');}finally{if(file.current)file.current.value='';}}
- function exportProject(){const url=URL.createObjectURL(new Blob([JSON.stringify(project,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='starlab-tasarim.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ async function importProject(f?:File){if(!f)return;try{if(f.size>STAR_MAX_BYTES)throw Error('Proje dosyası 50 MB sınırını aşıyor.');const next=parseStar(await f.text());reset(next);setSelected(next.parts.find(n=>n.kind==='rocket')!.id);setFocus(next.parts.find(n=>n.kind==='rocket')!.id);setZoom(1);setPage(0);setVisited(new Set([0]));}catch(e){setNotice(e instanceof Error?e.message:'Proje açılamadı.');}finally{if(file.current)file.current.value='';}}
+ function exportProject(){try{const url=URL.createObjectURL(new Blob([serializeStar(project)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=starFilename(project.name);a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){setNotice(error instanceof Error?error.message:'Proje kaydedilemedi.');}}
  const rootId=project.parts.find(n=>n.kind==='rocket')!.id;
+ useEffect(()=>{if(!project.parts.some(p=>p.id===selected))setSelected('');if(!project.parts.some(p=>p.id===focus))setFocus(rootId)},[project,selected,focus,rootId]);
  const path=focusPath(project,focus);
  const focusSelected=()=>{setFocus(nextFocus(project,focus,selected));setZoom(1);setMenu(null)};
  const navigateTo=(id:string)=>{setFocus(id);setSelected('');setZoom(1)};
@@ -54,15 +57,30 @@ function App(){
    window.addEventListener('keydown',onKey);
    return()=>window.removeEventListener('keydown',onKey);
  },[project,focus,selected,adding,deleting,help,menu,page]);
- const menuItems:Record<string,{label:string;action:()=>void}[]>={
- 'Dosya':[{label:'Proje aç…',action:()=>file.current?.click()},{label:'JSON olarak dışa aktar…',action:exportProject}],
- 'Düzenle':[{label:'Seçili bileşeni düzenle…',action:()=>{openPage(0);setShowTree(true)}},{label:'Bileşen ekle…',action:()=>{openPage(0);setAdding(true)}},{label:'Seçili bileşeni sil…',action:()=>{if(part.kind!=='rocket')setDeleting(true)}}],
+ useEffect(()=>{
+  const shortcut=(event:KeyboardEvent)=>{
+   if(event.defaultPrevented||event.isComposing||event.altKey||document.querySelector('dialog[open]'))return;
+   const key=event.key.toLowerCase(),command=event.ctrlKey||event.metaKey;
+   if(command&&['z','y','s','o'].includes(key)){
+    event.preventDefault();if(event.repeat)return;
+    if(key==='z'){if(event.shiftKey)redo();else undo();setMenu(null)}
+    else if(key==='y'){redo();setMenu(null)}else if(key==='s')exportProject();else file.current?.click();
+   }else if(event.key==='Delete'&&page===0&&!adding&&!deleting&&!help&&selected&&part.kind!=='rocket'){
+    if((event.target as Element)?.closest('input,textarea,[contenteditable=true],[role=combobox]'))return;
+    event.preventDefault();setDeleting(true);
+   }
+  };
+  window.addEventListener('keydown',shortcut);return()=>window.removeEventListener('keydown',shortcut);
+ },[project,undo,redo,page,selected,part,adding,deleting,help]);
+ const menuItems:Record<string,{label:string;action:()=>void;shortcut?:string;disabled?:boolean}[]>={
+ 'Dosya':[{label:'Proje aç…',shortcut:'Ctrl O',action:()=>file.current?.click()},{label:'.star olarak dışa aktar…',shortcut:'Ctrl S',action:exportProject}],
+ 'Düzenle':[{label:'Geri al',shortcut:'Ctrl Z',disabled:!canUndo,action:undo},{label:'İleri al',shortcut:'Ctrl Shift Z',disabled:!canRedo,action:redo},{label:'Bileşen ekle…',action:()=>{openPage(0);setAdding(true)}},{label:'Seçili bileşeni sil…',shortcut:'Del',disabled:part.kind==='rocket'||!selected,action:()=>{if(part.kind!=='rocket')setDeleting(true)}}],
  'Görünüm':[{label:showTree?'Bileşen ağacını gizle':'Bileşen ağacını göster',action:()=>setShowTree(v=>!v)},{label:'Seçilene odaklan',action:focusSelected},{label:'Tüm roketi göster',action:()=>{setFocus(rootId);setZoom(1)}}],
  'Araçlar':[{label:'Tasarımı tanı…',action:()=>setHelp(true)}],
  'Yardım':[{label:'Tasarım rehberi',action:()=>setHelp(true)}]};
- return <div className="app"><main>
- <div className="menu-bar" ref={menuRoot}><div className="menu-left"><div className="menus">{Object.entries(menuItems).map(([label,items])=><div className="menu-root" key={label} onPointerEnter={event=>{if(event.pointerType!=='touch')setMenu(label)}} onPointerLeave={event=>{if(event.pointerType!=='touch')setMenu(current=>current===label?null:current)}}><button aria-expanded={menu===label} aria-haspopup="true" onClick={()=>setMenu(label)}>{label}</button>{menu===label&&<div className="menu-popup">{items.map(item=><button key={item.label} onClick={()=>{item.action();setMenu(null)}}>{item.label}</button>)}</div>}</div>)}</div></div><div className="menu-brand"><img className="brand-image" src="/brand/starlab.png" alt="STARLAB logosu"/> STARLAB</div><div className="menu-project" style={{'--title-width':Math.min(Math.max(project.name.length,8),26)+'ch'} as React.CSSProperties}><input aria-label="Proje adı" value={project.name} style={{width:'var(--title-width)'}} onChange={e=>setProject({...project,name:e.target.value})}/><span className={saved?'save-indicator saved':'save-indicator pending'} role="status" aria-label={saved?'Kaydedildi':'Kaydedilmedi'} title={saved?'Kaydedildi':'Kaydedilmedi'}>{saved?<Check size={15}/>:<RefreshCw size={15}/>}</span></div></div>
- <input hidden ref={file} type="file" accept=".json,application/json" onChange={e=>void importProject(e.target.files?.[0])}/>
+ return <div className="app" onBlurCapture={endGroup}><main>
+ <div className="menu-bar" ref={menuRoot}><div className="menu-left"><div className="menus">{Object.entries(menuItems).map(([label,items])=><div className="menu-root" key={label} onPointerEnter={event=>{if(event.pointerType!=='touch')setMenu(label)}} onPointerLeave={event=>{if(event.pointerType!=='touch')setMenu(current=>current===label?null:current)}}><button aria-expanded={menu===label} aria-haspopup="true" onClick={()=>setMenu(label)}>{label}</button>{menu===label&&<div className="menu-popup">{items.map(item=><button key={item.label} disabled={item.disabled} onClick={()=>{item.action();setMenu(null)}}><span>{item.label}</span>{item.shortcut&&<kbd>{item.shortcut}</kbd>}</button>)}</div>}</div>)}</div></div><div className="menu-brand"><img className="brand-image" src="/brand/starlab.png" alt="STARLAB logosu"/> STARLAB</div><div className="menu-project" style={{'--title-width':Math.min(Math.max(project.name.length,8),26)+'ch'} as React.CSSProperties}><input aria-label="Proje adı" value={project.name} style={{width:'var(--title-width)'}} onChange={e=>setProject({...project,name:e.target.value})}/><span className={saved?'save-indicator saved':'save-indicator pending'} role="status" aria-label={saved?'Kaydedildi':'Kaydedilmedi'} title={saved?'Yerel kayıt güncel': 'Yerel kayıt bekliyor'}>{saved?<Check size={15}/>:<RefreshCw size={15}/>}</span></div></div>
+ <input hidden ref={file} type="file" accept=".star,.json,application/json" onChange={e=>void importProject(e.target.files?.[0])}/>
  <nav className="task-tabs" aria-label="Çalışma alanları">{[[Layers,t('design')],[SlidersHorizontal,'Motorlar & konfigürasyon'],[Orbit,'Uçuş simülasyonları'],[ChartNoAxesCombined,t('analysis')]].map(([Icon,label],i)=>{const I=Icon as typeof Layers;return <button key={i} className={i===page?'active':''} aria-current={i===page?'page':undefined} onClick={()=>openPage(i)}><I size={15}/>{label as string}</button>})}</nav>
  <div className="page-slot" hidden={page!==0}>
  <ResizableSplit className="editor" axis="y" storageKey="workspace" label="Bileşen ve görünüm paneli boyutu" initialRatio={.45} minFirst={150} minSecond={220} collapsedFirst={!showTree}><HierarchyPanel inspector={<PartInspector part={project.parts.find(p=>p.id===selected)} onChange={update} onAdd={()=>setAdding(true)} onDelete={()=>setDeleting(true)} onFocus={focusSelected}/>} summary={`${project.parts.filter(p=>p.kind==='stage').length} kademe · ${result.results.inventory?.value??0} parça`} project={project} selected={selected} onSelect={setSelected} onEdit={id=>{setSelected(id);setShowTree(true)}} onAdd={()=>setAdding(true)} onFocus={focusSelected} onMove={(source:string,target:MoveTarget)=>{try{const next=movePart(project,source,target);setProject(next);setSelected(source);if(!subtree(next,focus).some(p=>p.id===source))setFocus(next.parts.find(p=>p.id===source)!.parentId||rootId);}catch(error){setNotice(error instanceof Error?error.message:'Taşıma başarısız.')}}}/>
