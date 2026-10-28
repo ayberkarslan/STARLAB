@@ -26,7 +26,7 @@ export function place(project:Project,targets:Map<string,number>){
 }
 /** Changes geometry inputs only. World positions are used to avoid double transforms. */
 export function transformSelection(project:Project,ids:string[],mode:GeometryEdit,delta:number,step=1):Project {
- if(!Number.isFinite(delta)||!ids.length)return project;
+ if(!Number.isFinite(delta)||!Number.isFinite(step)||step<=0||!ids.length)return project;
  const selection=geometrySelection(project,ids);if(!selection.nodes.length)return project;
  const all=resolveParts(project);let next=project;
  if(mode==='move'){
@@ -41,7 +41,11 @@ export function transformSelection(project:Project,ids:string[],mode:GeometryEdi
    factor=Math.max(factor,floor/Math.max(part[mode],1));
   }
   if(Math.abs(factor-1)<1e-12&&selection.nodes.every(n=>n.part[mode]>=1))return project;
-  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,round(n.part[mode]*factor))}]));
+  const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,mode==='diameter'&&['body','nose','motor'].includes(n.part.kind)?2*(n.part.inputs?.wallThickness??0):1,round(n.part[mode]*factor))}]));
+  if(mode==='diameter')for(const {part}of selection.nodes)if(part.kind==='fins'){
+   const parentDiameter=patches.get(part.parentId??'')?.diameter??project.parts.find(p=>p.id===part.parentId)?.diameter??1;
+   patches.set(part.id,{diameter:Math.max(patches.get(part.id)!.diameter!,parentDiameter)});
+  }
   next={...project,parts:project.parts.map(p=>patches.has(p.id)?{...p,...patches.get(p.id)}:p)};
   if(mode==='length')next=place(next,new Map(selection.nodes.map(n=>[n.part.id,selection.bounds.min[0]+(n.position[0]-selection.bounds.min[0])*factor])));
  }

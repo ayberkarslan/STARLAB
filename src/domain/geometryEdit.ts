@@ -6,7 +6,7 @@ export function geometryPatch(part:Part,mode:GeometryEdit,delta:number,step=1,di
  const key=mode==='move'?'offset':mode;
  const minimum=key==='offset'?-Infinity:key==='diameter'?Math.max(diameterFloor,['body','nose','motor'].includes(part.kind)?2*(part.inputs?.wallThickness??0):1):1;
  const value=Math.max(minimum,Math.round((part[key]+delta)/step)*step);
- return {[key]:Math.round(value*1000)/1000};
+ return {[key]:Math.max(minimum,Math.round(value*1000)/1000)};
 }
 export function editGeometry(project:Project,id:string,patch:GeometryPatch):Project {
  const part=project.parts.find(p=>p.id===id);if(!part||['rocket','stage','assembly'].includes(part.kind))return project;
