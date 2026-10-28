@@ -1,0 +1,13 @@
+import {describe,it,expect} from 'vitest';
+import {initialProject} from './project';
+import {selectIds,patchSelection,removeSelection,scopedProject,commonFocus} from './selection';
+import {transformSelection,geometrySelection} from './selectionGeometry';
+import {resolveParts} from './geometry';
+describe('selection commands',()=>{
+ it('toggles arbitrary parts and scopes both tree and flow',()=>{expect(selectIds(['upper'],'lower',true)).toEqual(['upper','lower']);expect(selectIds(['upper','lower'],'upper',true)).toEqual(['lower']);const p=initialProject();expect(scopedProject(p,'avionics').parts.map(p=>p.id)).toEqual(['avionics','chute','cord']);expect(scopedProject(p,'rocket','motor').parts.some(p=>p.id==='nose')).toBe(false);expect(commonFocus(p,['upper','avionics'])).toBe('sustainer')});
+ it('merges inputs per part and validates a whole batch atomically',()=>{const p=initialProject();p.parts.find(p=>p.id==='upper')!.inputs={density:1500};p.parts.find(p=>p.id==='lower')!.inputs={centerOfMass:100};const next=patchSelection(p,['upper','lower'],{inputs:{wallThickness:2}});expect(next.parts.find(p=>p.id==='upper')!.inputs).toEqual({density:1500,wallThickness:2});expect(next.parts.find(p=>p.id==='lower')!.inputs?.centerOfMass).toBe(100);expect(()=>patchSelection(p,['upper','lower'],{inputs:{wallThickness:1000}})).toThrow();expect(p.parts.find(p=>p.id==='upper')!.inputs?.wallThickness).toBeUndefined()});
+ it('deletes overlapping subtrees once',()=>{const p=removeSelection(initialProject(),['upper','umotor']);expect(p.parts.some(p=>['upper','ufins','umotor'].includes(p.id))).toBe(false)});
+ it('moves serial siblings by the same world delta',()=>{const p=initialProject(),next=transformSelection(p,['nose','upper'],'move',20);for(const id of ['nose','upper'])expect(resolveParts(next).find(n=>n.part.id===id)!.position[0]-resolveParts(p).find(n=>n.part.id===id)!.position[0]).toBe(20)});
+ it('stretches selected shapes and their spacing as one bounding box',()=>{const p=initialProject(),before=geometrySelection(p,['chute','cord']);const width=before.bounds.max[0]-before.bounds.min[0];const next=transformSelection(p,['chute','cord'],'length',width);const after=geometrySelection(next,['chute','cord']);expect(after.bounds.max[0]-after.bounds.min[0]).toBeCloseTo(width*2);expect(next.parts.find(p=>p.id==='chute')!.length).toBe(240);expect(next.parts.find(p=>p.id==='nose')).toBe(p.parts.find(p=>p.id==='nose'))});
+ it('scales a subsystem in its own scope without changing another stage',()=>{const p=initialProject(),next=transformSelection(p,['avionics'],'length',100);expect(next.parts.find(p=>p.id==='chute')!.length).toBeGreaterThan(120);expect(next.parts.find(p=>p.id==='lower')).toBe(p.parts.find(p=>p.id==='lower'))});
+});
