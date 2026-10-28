@@ -19,6 +19,8 @@ import { focusPath, nextFocus } from './domain/navigation';
 import {t} from './i18n';
 import {parseStar,serializeStar,starFilename,STAR_MAX_BYTES} from './domain/starFile';
 import {useProjectHistory} from './useProjectHistory';
+import {createProjectInputs} from './engine/projectInputs';
+import {download} from './components/engineering/shared';
 import '@stardrop/ui/styles.css';
 import './styles.css';
 import './workspace.css';
@@ -76,7 +78,7 @@ function App(){
  'Dosya':[{label:'Proje aç…',shortcut:'Ctrl O',action:()=>file.current?.click()},{label:'.star olarak dışa aktar…',shortcut:'Ctrl S',action:exportProject}],
  'Düzenle':[{label:'Geri al',shortcut:'Ctrl Z',disabled:!canUndo,action:undo},{label:'İleri al',shortcut:'Ctrl Shift Z',disabled:!canRedo,action:redo},{label:'Bileşen ekle…',action:()=>{openPage(0);setAdding(true)}},{label:'Seçili bileşeni sil…',shortcut:'Del',disabled:part.kind==='rocket'||!selected,action:()=>{if(part.kind!=='rocket')setDeleting(true)}}],
  'Görünüm':[{label:showTree?'Bileşen ağacını gizle':'Bileşen ağacını göster',action:()=>setShowTree(v=>!v)},{label:'Seçilene odaklan',action:focusSelected},{label:'Tüm roketi göster',action:()=>{setFocus(rootId);setZoom(1)}}],
- 'Araçlar':[{label:'Tasarımı tanı…',action:()=>setHelp(true)}],
+ 'Araçlar':[{label:'Hesap girdilerini dışa aktar…',action:()=>{try{download(`${starFilename(project.name)}.inputs.json`,JSON.stringify(createProjectInputs(project),null,2),'application/json')}catch(error){setNotice(error instanceof Error?error.message:'Girdiler hazırlanamadı.')}}}],
  'Yardım':[{label:'Tasarım rehberi',action:()=>setHelp(true)}]};
  return <div className="app" onBlurCapture={endGroup}><main>
  <div className="menu-bar" ref={menuRoot}><div className="menu-left"><div className="menus">{Object.entries(menuItems).map(([label,items])=><div className="menu-root" key={label} onPointerEnter={event=>{if(event.pointerType!=='touch')setMenu(label)}} onPointerLeave={event=>{if(event.pointerType!=='touch')setMenu(current=>current===label?null:current)}}><button aria-expanded={menu===label} aria-haspopup="true" onClick={()=>setMenu(label)}>{label}</button>{menu===label&&<div className="menu-popup">{items.map(item=><button key={item.label} disabled={item.disabled} onClick={()=>{item.action();setMenu(null)}}><span>{item.label}</span>{item.shortcut&&<kbd>{item.shortcut}</kbd>}</button>)}</div>}</div>)}</div></div><div className="menu-brand"><img className="brand-image" src="/brand/starlab.png" alt="STARLAB logosu"/> STARLAB</div><div className="menu-project" style={{'--title-width':Math.min(Math.max(project.name.length,8),26)+'ch'} as React.CSSProperties}><input aria-label="Proje adı" value={project.name} style={{width:'var(--title-width)'}} onChange={e=>setProject({...project,name:e.target.value})}/><span className={saved?'save-indicator saved':'save-indicator pending'} role="status" aria-label={saved?'Kaydedildi':'Kaydedilmedi'} title={saved?'Yerel kayıt güncel': 'Yerel kayıt bekliyor'}>{saved?<Check size={15}/>:<RefreshCw size={15}/>}</span></div></div>
