@@ -17,7 +17,7 @@ export function validate(value:unknown):Project {
  const ids=new Set<string>();for(const n of p.parts){if(!n||typeof n.id!=='string'||ids.has(n.id)||!Object.hasOwn(catalog,n.kind)||typeof n.name!=='string'||typeof n.material!=='string'||![n.length,n.diameter,n.offset,n.mass].every(Number.isFinite)||n.length<0||n.diameter<0||n.mass<0)throw Error('Parça verileri geçersiz.');ids.add(n.id);}
  if(p.parts.filter(n=>n.kind==='rocket').length!==1)throw Error('Tek roket kökü gerekli.');
  for(const n of p.parts){if(n.kind==='rocket'){if(n.parentId!==null)throw Error('Geçersiz kök.');continue;}const parent=p.parts.find(a=>a.id===n.parentId);if(!parent||!catalog[n.kind].parents.includes(parent.kind))throw Error('Geçersiz parça bağlantısı.');const seen=new Set([n.id]);let current:Part|undefined=parent;while(current){if(seen.has(current.id))throw Error('Döngüsel parça bağlantısı.');seen.add(current.id);current=p.parts.find(a=>a.id===current?.parentId);}}
- if(p.flight!==undefined)validateFlight(p.flight);
+ if(p.flight!==undefined){validateFlight(p.flight);const cleaned=cleanFlight(p,p.flight);if(JSON.stringify(cleaned.configurations)!==JSON.stringify(p.flight.configurations))throw Error('Uçuş ayarı yanlış bir bileşene bağlı.');}
  return p;
 }
 export function initialProject():Project {
