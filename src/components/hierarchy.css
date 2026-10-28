@@ -29,4 +29,23 @@
 .hierarchy-preview>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hierarchy-preview small{display:block;font-size:11px;white-space:normal;line-height:1.8;margin-top:7px}
 .hierarchy-preview.unavailable{border-style:dashed}
+.hierarchy-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,380px);flex:1;min-height:0;overflow:hidden}
+.hierarchy-browser{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.hierarchy-browser .tree-scroll{width:100%}
+.part-inspector{min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;border-left:1px solid var(--line);padding:12px 18px;background:#000}
+.inspector-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:12px}
+.inspector-toolbar>div{display:flex;gap:4px}
+.inspector-fields{display:grid;gap:16px;padding-bottom:4px}
+.inspector-fields .sd-field__input{font-size:13px;min-height:38px;padding:8px 10px}
+.inspector-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.inspector-number{display:grid;gap:8px;min-width:0;font-size:12px}
+.inspector-number>div{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.inspector-number input{width:100%;min-width:0;background:#000;color:#fff;border:0;padding:7px 0;font-size:13px}
+.inspector-number small{font-size:11px}
+.inspector-material{display:grid;gap:8px;font-size:12px;padding-bottom:12px}
+.inspector-material .sd-select__trigger{font-size:12px;min-height:38px}
+.inspector-material .sd-select__option{font-size:12px;padding:10px}
+.inspector-empty{display:flex;align-items:center;justify-content:center;gap:14px;font-size:12px}
+@media(max-width:850px){.hierarchy-body{grid-template-columns:minmax(0,1fr) 300px}.part-inspector{padding:10px 12px}.hierarchy-panel .panel-title{padding:0 12px}.hierarchy-panel .panel-title>span small{display:none}}
+@media(max-width:600px){.hierarchy-body{grid-template-columns:minmax(0,1fr) 230px}.inspector-numbers{grid-template-columns:minmax(0,1fr)}.inspector-toolbar{flex-wrap:wrap}.inspector-toolbar>div{margin-left:auto}}
 @media(max-width:650px){.hierarchy-hint{padding:5px 10px;font-size:11px}.hierarchy-hint>span{display:none}.hierarchy-panel .tree-footer{gap:10px;padding-left:10px;padding-right:10px}.flow-controls{gap:6px}}
