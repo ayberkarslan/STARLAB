@@ -1,4 +1,9 @@
 .hierarchy-panel .panel-title>span{display:flex;gap:12px;align-items:center}
+.hierarchy-actions{display:flex;align-items:center;gap:20px}
+.hierarchy-browser{position:relative}
+.hierarchy-body .part-inspector{border-left:0}
+.flow-floating{position:absolute;right:12px;bottom:12px;background:#000;border:1px solid var(--line);border-radius:4px;padding:4px 8px;z-index:3}
+.hierarchy-panel:has(.flow-floating) .flow-floating{right:auto;left:16px}
 .hierarchy-panel .panel-title .view-switch button{font-size:11px;padding:10px 2px}
 .hierarchy-draggable{touch-action:none;user-select:none;cursor:grab}
 .hierarchy-draggable:active{cursor:grabbing}
