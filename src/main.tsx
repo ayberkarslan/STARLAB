@@ -67,7 +67,7 @@ function App(){
     event.preventDefault();if(event.repeat)return;
     if(key==='z'){if(event.shiftKey)redo();else undo();setMenu(null)}
     else if(key==='y'){redo();setMenu(null)}else if(key==='s')exportProject();else file.current?.click();
-   }else if(event.key==='Delete'&&page===0&&!adding&&!deleting&&!help&&selected&&part.kind!=='rocket'){
+   }else if(event.key==='Delete'&&!command&&!event.repeat&&page===0&&!adding&&!deleting&&!help&&selected&&part.kind!=='rocket'){
     if((event.target as Element)?.closest('input,textarea,[contenteditable=true],[role=combobox]'))return;
     event.preventDefault();setDeleting(true);
    }
@@ -80,7 +80,7 @@ function App(){
  'Görünüm':[{label:showTree?'Bileşen ağacını gizle':'Bileşen ağacını göster',action:()=>setShowTree(v=>!v)},{label:'Seçilene odaklan',action:focusSelected},{label:'Tüm roketi göster',action:()=>{setFocus(rootId);setZoom(1)}}],
  'Araçlar':[{label:'Hesap girdilerini dışa aktar…',action:()=>{try{download(`${starFilename(project.name)}.inputs.json`,JSON.stringify(createProjectInputs(project),null,2),'application/json')}catch(error){setNotice(error instanceof Error?error.message:'Girdiler hazırlanamadı.')}}}],
  'Yardım':[{label:'Tasarım rehberi',action:()=>setHelp(true)}]};
- return <div className="app" onBlurCapture={endGroup}><main>
+ return <div className="app" onBlurCapture={endGroup}><main onPointerDownCapture={event=>{const target=event.target as Element;const canvas=target.closest<HTMLElement>('.drawing');if(canvas&&!target.closest('[data-canvas-controls]'))canvas.focus({preventScroll:true})}}>
  <div className="menu-bar" ref={menuRoot}><div className="menu-left"><div className="menus">{Object.entries(menuItems).map(([label,items])=><div className="menu-root" key={label} onPointerEnter={event=>{if(event.pointerType!=='touch')setMenu(label)}} onPointerLeave={event=>{if(event.pointerType!=='touch')setMenu(current=>current===label?null:current)}}><button aria-expanded={menu===label} aria-haspopup="true" onClick={()=>setMenu(label)}>{label}</button>{menu===label&&<div className="menu-popup">{items.map(item=><button key={item.label} disabled={item.disabled} onClick={()=>{item.action();setMenu(null)}}><span>{item.label}</span>{item.shortcut&&<kbd>{item.shortcut}</kbd>}</button>)}</div>}</div>)}</div></div><div className="menu-brand"><img className="brand-image" src="/brand/starlab.png" alt="STARLAB logosu"/> STARLAB</div><div className="menu-project" style={{'--title-width':Math.min(Math.max(project.name.length,8),26)+'ch'} as React.CSSProperties}><input aria-label="Proje adı" value={project.name} style={{width:'var(--title-width)'}} onChange={e=>setProject({...project,name:e.target.value})}/><span className={saved?'save-indicator saved':'save-indicator pending'} role="status" aria-label={saved?'Kaydedildi':'Kaydedilmedi'} title={saved?'Yerel kayıt güncel': 'Yerel kayıt bekliyor'}>{saved?<Check size={15}/>:<RefreshCw size={15}/>}</span></div></div>
  <input hidden ref={file} type="file" accept=".star,.json,application/json" onChange={e=>void importProject(e.target.files?.[0])}/>
  <nav className="task-tabs" aria-label="Çalışma alanları">{[[Layers,t('design')],[SlidersHorizontal,'Motorlar & konfigürasyon'],[Orbit,'Uçuş simülasyonları'],[ChartNoAxesCombined,t('analysis')]].map(([Icon,label],i)=>{const I=Icon as typeof Layers;return <button key={i} className={i===page?'active':''} aria-current={i===page?'page':undefined} onClick={()=>openPage(i)}><I size={15}/>{label as string}</button>})}</nav>
