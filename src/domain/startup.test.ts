@@ -1,0 +1,7 @@
+import {afterEach,expect,it,vi} from 'vitest';
+import {waitForStartup} from './startup';
+afterEach(()=>vi.useRealTimers());
+it('shows branding for two seconds even when assets are cached',async()=>{vi.useFakeTimers();let done=false;const ready=waitForStartup([Promise.resolve()],{signal:new AbortController().signal}).then(()=>{done=true});await vi.advanceTimersByTimeAsync(1999);expect(done).toBe(false);await vi.advanceTimersByTimeAsync(1);await ready;expect(done).toBe(true)});
+it('waits for slow assets beyond the minimum',async()=>{vi.useFakeTimers();let complete!:()=>void;let done=false;const asset=new Promise<void>(r=>{complete=r});const ready=waitForStartup([asset],{signal:new AbortController().signal}).then(()=>{done=true});await vi.advanceTimersByTimeAsync(3000);expect(done).toBe(false);complete();await ready;expect(done).toBe(true)});
+it('does not trap the app when an asset fails or never responds',async()=>{vi.useFakeTimers();const ready=waitForStartup([Promise.reject(Error('font unavailable')),new Promise(()=>{})],{signal:new AbortController().signal});await vi.advanceTimersByTimeAsync(8000);await expect(ready).resolves.toBeUndefined();expect(vi.getTimerCount()).toBe(0)});
+it('cancels pending timers when unmounted',async()=>{vi.useFakeTimers();const controller=new AbortController();const ready=waitForStartup([new Promise(()=>{})],{signal:controller.signal});const rejected=expect(ready).rejects.toMatchObject({name:'AbortError'});controller.abort();await rejected;expect(vi.getTimerCount()).toBe(0)});
