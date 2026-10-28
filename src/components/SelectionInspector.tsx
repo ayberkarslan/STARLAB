@@ -4,13 +4,16 @@ import {IconButton,SelectMenu,TextField} from '@stardrop/ui';
 import {Focus,Trash2,X,Layers,FolderPlus} from 'lucide-react';
 import {catalog,type Part} from '../domain/project';
 import type {PartInputs} from '../domain/partInputs';
-import {NumberInput} from './PartInspector';
+import {NumberInput} from './NumberInput';
+import MaterialField from './MaterialField';
+import {materialType,densityKeys,densityUnits} from '../domain/materials';
 
 interface Props {parts:Part[];onChange:(patch:Partial<Part>)=>void;onSelect:(id:string)=>void;onRemove:(id:string)=>void;onFocus:()=>void;onDelete:()=>void;onGroup?:()=>void}
 export default function SelectionInspector({parts,onChange,onSelect,onRemove,onFocus,onDelete,onGroup}:Props){
  const [tab,setTab]=useState('geometry');
  const common=(get:(p:Part)=>unknown)=>{const first=get(parts[0]);return {value:first,mixed:parts.some(p=>!Object.is(get(p),first))}};
  const allPhysical=parts.every(p=>!isStructural(p.kind));
+ const densityType=materialType(parts[0].kind),sameDensityType=parts.every(p=>materialType(p.kind)===densityType);
  const allShell=parts.every(p=>isShell(p.kind)),allFins=parts.every(p=>isFin(p.kind));
  const number=(key:'length'|'diameter'|'offset'|'mass'|keyof PartInputs,label:string,unit:string,input=false,optional=false,signed=false,min=0,max=Infinity)=>{
   const result=common(p=>key==='mass'?(p.inputs?.massProvided===false?undefined:p.inputs?.massProvided||p.mass>0?p.mass:undefined):input?p.inputs?.[key as keyof PartInputs]:p[key as 'length']);
@@ -24,7 +27,7 @@ export default function SelectionInspector({parts,onChange,onSelect,onRemove,onF
  <div className="inspector-fields" key={`${parts.map(p=>p.id).join(':')}:${tab}`}>
  {tab==='geometry'&&!allPhysical&&parts.some(p=>p.kind==='rocket')&&<p className="inspector-reference">Ortak geometri alanı yok.</p>}
  {tab==='geometry'&&<div className="inspector-numbers">{allPhysical&&<>{number('length','Uzunluk','mm',false,false,false,1)}{number('diameter','Dış çap','mm',false,false,false,Math.max(1,...parts.filter(p=>isShell(p.kind)).map(p=>2*(p.inputs?.wallThickness??0))))}</>}{parts.every(p=>p.kind!=='rocket')&&number('offset','Konum','mm',false,false,true)}{(allShell||allFins)&&number('wallThickness',allFins?'Kanat kalınlığı':'Et kalınlığı','mm',true,true,false,0,allShell?Math.min(...parts.map(p=>p.diameter/2)):Infinity)}</div>}
- {tab==='mass'&&<><div className="inspector-numbers">{number('mass','Girilen kütle','g',false,true)}{number('centerOfMass','Kütle merkezi · CG','mm',true,true,true)}{allPhysical&&number('density','Yoğunluk','kg/m³',true,true,false,Number.MIN_VALUE)}</div><label className="inspector-material"><span>Kütle kapsamı</span><SelectMenu label="Kütle kapsamı" value={scope.mixed?'mixed':scope.value as string} options={[...(scope.mixed?[{value:'mixed',label:'Farklı'}]:[]),{value:'component',label:'Yalnız bu bileşen'},{value:'subtree',label:'Alt bileşenlerle birlikte'}]} onChange={value=>{if(value!=='mixed')onChange({inputs:{massScope:value as PartInputs['massScope']}})}}/></label>{allPhysical&&<label className="inspector-material"><span>Malzeme</span><TextField aria-label="Malzeme" value={material.mixed?'':material.value as string} placeholder={material.mixed?'Farklı':'Malzeme adı'} onChange={event=>onChange({material:event.target.value||'Tanımlanmadı'})}/></label>}</>}
+ {tab==='mass'&&<><div className="inspector-numbers">{number('mass','Girilen kütle','g',false,true)}{number('centerOfMass','Kütle merkezi · CG','mm',true,true,true)}{allPhysical&&sameDensityType&&number(densityKeys[densityType],'Yoğunluk',densityUnits[densityType],true,true,false,Number.MIN_VALUE)}</div><label className="inspector-material"><span>Kütle kapsamı</span><SelectMenu label="Kütle kapsamı" value={scope.mixed?'mixed':scope.value as string} options={[...(scope.mixed?[{value:'mixed',label:'Farklı'}]:[]),{value:'component',label:'Yalnız bu bileşen'},{value:'subtree',label:'Alt bileşenlerle birlikte'}]} onChange={value=>{if(value!=='mixed')onChange({inputs:{massScope:value as PartInputs['massScope']}})}}/></label>{allPhysical&&sameDensityType&&<MaterialField material={material.value as string} materialData={parts[0].materialData} mixed={material.mixed} type={densityType} onChange={onChange}/>}</>}
  {tab==='aero'&&<div className="inspector-numbers">{number('centerOfPressure','Basınç merkezi · CP','mm',true,true,true)}{number('dragCoefficient','Sürükleme · Cd','—',true,true)}{number('mach','Mach','—',true,true)}{number('angleOfAttack','Hücum açısı','°',true,true,true,-180,180)}{allPhysical&&number('roughness','Pürüzlülük','µm',true,true)}</div>}
  </div></aside>;
 }

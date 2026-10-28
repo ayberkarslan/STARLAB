@@ -71,3 +71,6 @@
 .tree-panel .scope-enter{display:grid;place-items:center;flex:none;opacity:0;border:0;background:#000;padding:6px 12px;color:#fff}
 .tree-row:is(:hover,:focus-within,.active) .scope-enter{opacity:1}
 .hierarchy-panel .panel-title>span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.material-field .sd-select__popup{position:relative;top:auto;margin-top:6px;min-width:0;max-height:240px}
+.material-field .sd-select__search{min-width:0;width:100%}
+.material-field .sd-select__option{white-space:normal;line-height:1.7}
