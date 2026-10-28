@@ -1,12 +1,12 @@
 import {useState} from 'react';
 import {IconButton,SelectMenu,TextField} from '@stardrop/ui';
-import {Focus,Trash2,X,Layers} from 'lucide-react';
+import {Focus,Trash2,X,Layers,FolderPlus} from 'lucide-react';
 import {catalog,type Part} from '../domain/project';
 import type {PartInputs} from '../domain/partInputs';
 import {NumberInput} from './PartInspector';
 
-interface Props {parts:Part[];onChange:(patch:Partial<Part>)=>void;onSelect:(id:string)=>void;onRemove:(id:string)=>void;onFocus:()=>void;onDelete:()=>void}
-export default function SelectionInspector({parts,onChange,onSelect,onRemove,onFocus,onDelete}:Props){
+interface Props {parts:Part[];onChange:(patch:Partial<Part>)=>void;onSelect:(id:string)=>void;onRemove:(id:string)=>void;onFocus:()=>void;onDelete:()=>void;onGroup?:()=>void}
+export default function SelectionInspector({parts,onChange,onSelect,onRemove,onFocus,onDelete,onGroup}:Props){
  const [tab,setTab]=useState('geometry');
  const common=(get:(p:Part)=>unknown)=>{const first=get(parts[0]);return {value:first,mixed:parts.some(p=>!Object.is(get(p),first))}};
  const allPhysical=parts.every(p=>!['rocket','stage','assembly'].includes(p.kind));
@@ -17,7 +17,7 @@ export default function SelectionInspector({parts,onChange,onSelect,onRemove,onF
  };
  const material=common(p=>p.material==='Tanımlanmadı'?'':p.material),scope=common(p=>p.inputs?.massScope??'component');
  return <aside className="part-inspector selection-inspector" aria-label="Ortak bileşen özellikleri">
- <div className="inspector-toolbar"><span><Layers size={14}/> {parts.length} bileşen</span><div><IconButton size="sm" variant="ghost" label="Seçime odaklan" onClick={onFocus}><Focus size={15}/></IconButton><IconButton size="sm" variant="ghost" label="Seçili bileşenleri sil" disabled={parts.some(p=>p.kind==='rocket')} onClick={onDelete}><Trash2 size={15}/></IconButton></div></div>
+ <div className="inspector-toolbar"><span><Layers size={14}/> {parts.length} bileşen</span><div>{onGroup&&<IconButton size="sm" variant="ghost" label="Alt sistem oluştur" onClick={onGroup}><FolderPlus size={15}/></IconButton>}<IconButton size="sm" variant="ghost" label="Seçime odaklan" onClick={onFocus}><Focus size={15}/></IconButton><IconButton size="sm" variant="ghost" label="Seçili bileşenleri sil" disabled={parts.some(p=>p.kind==='rocket')} onClick={onDelete}><Trash2 size={15}/></IconButton></div></div>
  <div className="selection-chips" aria-label="Seçili bileşenler">{parts.map(p=><span key={p.id}><button title={catalog[p.kind].label} onClick={()=>onSelect(p.id)}>{p.name}</button><button aria-label={`${p.name} seçimden çıkar`} onClick={()=>onRemove(p.id)}><X size={12}/></button></span>)}</div>
  <div className="inspector-tabs" role="group" aria-label="Ortak özellik grubu">{[{id:'geometry',label:'Geometri'},{id:'mass',label:'Kütle'},{id:'aero',label:'Aero'}].map(t=><button key={t.id} aria-pressed={tab===t.id} onClick={()=>setTab(t.id)}>{t.label}</button>)}</div>
  <div className="inspector-fields" key={`${parts.map(p=>p.id).join(':')}:${tab}`}>

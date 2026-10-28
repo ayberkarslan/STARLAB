@@ -6,6 +6,7 @@ import {resolveParts,scopeParts,boundsOf,type ResolvedPart,type Bounds} from '..
 import {gridGeometry} from './geometry3d';
 import {geometryResource,retainGeometry,releaseGeometry,sceneMaterials,type SceneMaterials} from './resources3d';
 import type {ViewProps} from './ViewProps';
+import {geometrySelection} from '../domain/selectionGeometry';
 
 function PartMesh({node,bodyDiameter,selected,onSelect,materials}:{node:ResolvedPart;bodyDiameter:number;selected:boolean;onSelect:(id:string,additive?:boolean)=>void;materials:SceneMaterials}){
  const {kind,length,diameter}=node.part;
@@ -42,8 +43,9 @@ function StudioLights({bounds}:{bounds:Bounds}){
 function Scene(props:ViewProps){
  const materials=useMemo(sceneMaterials,[]);useEffect(()=>()=>{Object.values(materials).forEach(material=>material.dispose())},[materials]);
  const resolved=useMemo(()=>resolveParts(props.project),[props.project]);const scope=scopeParts(resolved,props.focus);const visible=new Set(scope.map(n=>n.part.id));const bounds=boundsOf(scope);const nodes=new Map(resolved.map(n=>[n.part.id,n]));
+ const active=new Set(geometrySelection(props.project,props.selectedIds??[props.selected]).nodes.map(n=>n.part.id));
  const children=new Map<string|null,ResolvedPart[]>();for(const node of resolved){const list=children.get(node.parentId)||[];list.push(node);children.set(node.parentId,list);}
- const branch=(node:ResolvedPart):React.ReactNode=><group key={node.part.id} position={node.localPosition.map(v=>v*.001) as [number,number,number]}>{node.physical&&visible.has(node.part.id)&&<PartMesh node={node} materials={materials} bodyDiameter={nodes.get(node.parentId||'')?.part.diameter||140} selected={props.selectedIds?.includes(node.part.id)??node.part.id===props.selected} onSelect={props.onSelect}/>} {(children.get(node.part.id)||[]).map(branch)}</group>;
+ const branch=(node:ResolvedPart):React.ReactNode=><group key={node.part.id} position={node.localPosition.map(v=>v*.001) as [number,number,number]}>{node.physical&&visible.has(node.part.id)&&<PartMesh node={node} materials={materials} bodyDiameter={nodes.get(node.parentId||'')?.part.diameter||140} selected={active.has(node.part.id)} onSelect={props.onSelect}/>} {(children.get(node.part.id)||[]).map(branch)}</group>;
  return <><CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom}/><StudioLights bounds={bounds}/><WorldGrid floor={bounds.min[1]*.001-.04}/>{(children.get(null)||[]).map(branch)}</>;
 }
 class Boundary extends React.Component<{children:React.ReactNode;onBack:()=>void},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?<div className="view-fallback" role="alert"><p>3D görünüm başlatılamadı.</p><button onClick={this.props.onBack}>2D görünüme dön</button></div>:this.props.children}}
