@@ -8,6 +8,7 @@ import RocketView from './components/RocketView';
 import HierarchyPanel from './components/HierarchyPanel';
 import PartInspector from './components/PartInspector';
 import ResizableSplit from './components/ResizableSplit';
+import Startup from './components/Startup';
 import {movePart,type MoveTarget} from './domain/move';
 import { focusPath, nextFocus } from './domain/navigation';
 import {t} from './i18n';
@@ -62,4 +63,4 @@ function App(){
  <Dialog open={deleting} onClose={()=>setDeleting(false)} title="Bileşen silinsin mi?"><p className="dialog-text">{part.name} ve ona bağlı {subtree(project,part.id).length-1} alt bileşen kaldırılacak.</p><Button variant="danger" onClick={()=>{const ids=new Set(subtree(project,part.id).map(n=>n.id));setProject(removePart(project,part.id));setSelected(part.parentId!);if(ids.has(focus))setFocus(part.parentId!);setDeleting(false)}}>Bileşeni ve alt bileşenleri sil</Button></Dialog>
  <Dialog open={help} onClose={()=>setHelp(false)} title="Önce yapıyı kuruyoruz."><div className="help-content"><p><strong>1. Bileşen ağacı</strong> Roket, kademeler ve onların içindeki sistemlerden oluşur. Ağaçtan bir parçayı seç; çift tıklayarak veya Düzenle düğmesiyle özelliklerini aç.</p><p><strong>2. Odaklanma</strong> Bir kademe ya da alt sistem seçip “Seçilene odaklan” dediğinde yalnız o bölüm görünür. Seçili elemana F ile gir; boşluğa tıklayıp F ile bir üst seviyeye çık. Yol çubuğundaki herhangi bir adım da o seviyeye döndürür.</p><p><strong>3. Sonraki adımlar</strong> Önce geometriyi kuracağız; ardından motor, ayrılma ve kurtarma konfigürasyonu, sonra aero ve uçuş simülasyonu gelecek.</p><p>Bu sürümde ölçüler ve malzemeler tasarım kaydıdır. Gerçek hesap modülleri sonraki aşamalarda bağlanacak.</p></div></Dialog></div>
 }
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
+createRoot(document.getElementById('root')!).render(<React.StrictMode><Startup><App/></Startup></React.StrictMode>);
