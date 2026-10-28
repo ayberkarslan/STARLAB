@@ -8,7 +8,7 @@ export function geometrySelection(project:Project,ids:string[]){
  for(const id of ids){const part=project.parts.find(p=>p.id===id);if(part&&['stage','assembly'].includes(part.kind))for(const p of subtree(project,id))set.add(p.id);}
  const nodes=all.filter(n=>set.has(n.part.id)&&n.physical);return {nodes,bounds:boundsOf(nodes)};
 }
-function place(project:Project,targets:Map<string,number>){
+export function place(project:Project,targets:Map<string,number>){
  let next=project;const order=resolveParts(project).filter(n=>targets.has(n.part.id)).map(n=>n.part.id);
  for(const id of order){const node=resolveParts(next).find(n=>n.part.id===id)!;const delta=targets.get(id)!-node.position[0];if(Math.abs(delta)<.00001)continue;next={...next,parts:next.parts.map(p=>p.id===id?{...p,offset:round(p.offset+delta)}:p)};}
  return next;
