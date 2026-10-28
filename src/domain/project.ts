@@ -1,4 +1,4 @@
-import {validateFlight,type FlightWorkspace} from './flight';
+import {validateFlight,cleanFlight,type FlightWorkspace} from './flight';
 export type Kind = 'rocket'|'stage'|'assembly'|'body'|'nose'|'fins'|'motor'|'parachute'|'cord';
 export interface Part { id:string; parentId:string|null; kind:Kind; name:string; length:number; diameter:number; offset:number; mass:number; material:string }
 export interface Project { version:1; name:string; parts:Part[]; flight?:FlightWorkspace }
@@ -11,7 +11,7 @@ export const catalog:Record<Kind,{label:string; parents:Kind[]; length:number; d
 export function children(p:Project,id:string){return p.parts.filter(n=>n.parentId===id)}
 export function subtree(p:Project,id:string):Part[]{const n=p.parts.find(n=>n.id===id);return n?[n,...children(p,id).flatMap(c=>subtree(p,c.id))]:[]}
 export function addPart(p:Project,parentId:string,kind:Kind):Project { const parent=p.parts.find(n=>n.id===parentId);if(!parent||!catalog[kind].parents.includes(parent.kind))throw Error('Bu parçaya eklenemez.');return {...p,parts:[...p.parts,{id:crypto.randomUUID(),parentId,kind,name:catalog[kind].label,length:catalog[kind].length,diameter:catalog[kind].diameter,offset:0,mass:0,material:'Tanımlanmadı'}]}; }
-export function removePart(p:Project,id:string):Project {if(p.parts.find(n=>n.id===id)?.kind==='rocket')throw Error('Roket silinemez.');const ids=new Set(subtree(p,id).map(n=>n.id));return {...p,parts:p.parts.filter(n=>!ids.has(n.id))};}
+export function removePart(p:Project,id:string):Project {if(p.parts.find(n=>n.id===id)?.kind==='rocket')throw Error('Roket silinemez.');const ids=new Set(subtree(p,id).map(n=>n.id));const next={...p,parts:p.parts.filter(n=>!ids.has(n.id))};if(next.flight)next.flight=cleanFlight(next,next.flight);return next;}
 export function validate(value:unknown):Project {
  const p=value as Project;if(!p||p.version!==1||typeof p.name!=='string'||!Array.isArray(p.parts)||!p.parts.length||p.parts.length>2000)throw Error('Geçersiz proje dosyası.');
  const ids=new Set<string>();for(const n of p.parts){if(!n||typeof n.id!=='string'||ids.has(n.id)||!Object.hasOwn(catalog,n.kind)||typeof n.name!=='string'||typeof n.material!=='string'||![n.length,n.diameter,n.offset,n.mass].every(Number.isFinite)||n.length<0||n.diameter<0||n.mass<0)throw Error('Parça verileri geçersiz.');ids.add(n.id);}
