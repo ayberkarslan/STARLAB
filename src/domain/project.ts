@@ -1,6 +1,7 @@
+import {validateFlight,type FlightWorkspace} from './flight';
 export type Kind = 'rocket'|'stage'|'assembly'|'body'|'nose'|'fins'|'motor'|'parachute'|'cord';
 export interface Part { id:string; parentId:string|null; kind:Kind; name:string; length:number; diameter:number; offset:number; mass:number; material:string }
-export interface Project { version:1; name:string; parts:Part[] }
+export interface Project { version:1; name:string; parts:Part[]; flight?:FlightWorkspace }
 export const catalog:Record<Kind,{label:string; parents:Kind[]; length:number; diameter:number}> = {
  rocket:{label:'Roket',parents:[],length:0,diameter:0}, stage:{label:'Kademe',parents:['rocket'],length:0,diameter:0},
  assembly:{label:'Alt sistem',parents:['stage','assembly'],length:0,diameter:0}, body:{label:'Gövde tüpü',parents:['stage','assembly'],length:800,diameter:140},
@@ -16,6 +17,7 @@ export function validate(value:unknown):Project {
  const ids=new Set<string>();for(const n of p.parts){if(!n||typeof n.id!=='string'||ids.has(n.id)||!Object.hasOwn(catalog,n.kind)||typeof n.name!=='string'||typeof n.material!=='string'||![n.length,n.diameter,n.offset,n.mass].every(Number.isFinite)||n.length<0||n.diameter<0||n.mass<0)throw Error('Parça verileri geçersiz.');ids.add(n.id);}
  if(p.parts.filter(n=>n.kind==='rocket').length!==1)throw Error('Tek roket kökü gerekli.');
  for(const n of p.parts){if(n.kind==='rocket'){if(n.parentId!==null)throw Error('Geçersiz kök.');continue;}const parent=p.parts.find(a=>a.id===n.parentId);if(!parent||!catalog[n.kind].parents.includes(parent.kind))throw Error('Geçersiz parça bağlantısı.');const seen=new Set([n.id]);let current:Part|undefined=parent;while(current){if(seen.has(current.id))throw Error('Döngüsel parça bağlantısı.');seen.add(current.id);current=p.parts.find(a=>a.id===current?.parentId);}}
+ if(p.flight!==undefined)validateFlight(p.flight);
  return p;
 }
 export function initialProject():Project {
