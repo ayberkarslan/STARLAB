@@ -27,6 +27,7 @@
 .engineering-list-item>span{display:grid;gap:9px;min-width:0;flex:1}
 .engineering-list-item strong{font-weight:400;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .engineering-list-item small{font-size:11px;line-height:1.6}
+.engineering-list-item>.engineering-badge{flex:none;display:inline-flex}
 .engineering-search{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:8px 16px}
 .engineering-search input{background:#000;color:#fff;min-width:0;width:100%;border:0;padding:9px 0;font-size:12px}
 .engineering-badge{border:1px solid var(--line);padding:5px 8px;border-radius:3px;font-size:11px;white-space:nowrap}
@@ -66,7 +67,7 @@
 .engineering-event-list{display:grid;gap:24px}
 .engineering-event{display:grid;gap:18px;padding:12px 0 20px;border-bottom:1px solid var(--line)}
 .engineering-event>strong{font-size:12px;font-weight:400}
-.engineering-fieldset{margin:0;border:0;display:block}
+.engineering-fieldset{margin:0;border:0;display:block;min-inline-size:0;width:100%;max-width:100%}
 .engineering-details{border-top:1px solid var(--line);margin-top:20px}
 .engineering-details summary{padding:16px 0;font-size:12px;cursor:pointer}
 .engineering-details>.engineering-field-grid{padding-bottom:8px}
