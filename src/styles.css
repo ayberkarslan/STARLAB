@@ -1,0 +1,63 @@
+:root{font-family:Michroma,system-ui,sans-serif;font-synthesis:none;color:#fff;background:#000;--sd-white:#fff;--sd-muted:#fff;--sd-line:#ffffff40;--sd-line-strong:#fff;--line:#ffffff40}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,select,textarea,svg text{font-family:inherit}
+button{color:inherit;cursor:pointer}
+button:disabled{cursor:default;opacity:.4}
+button:focus-visible,input:focus-visible{outline:1px solid #fff;outline-offset:3px}
+svg{flex-shrink:0}
+/* Workbench's thin scrollbar, with a white thumb on a black track. */
+*{scrollbar-width:thin;scrollbar-color:#fff #000}
+*::-webkit-scrollbar{width:4px;height:4px}
+*::-webkit-scrollbar-track,*::-webkit-scrollbar-corner{background:#000}
+*::-webkit-scrollbar-thumb{background:#fff;border-radius:0}
+*::-webkit-scrollbar-button{display:none}
+/* Square-ended white markers, shared across menus and controls. */
+:is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button){position:relative}
+:is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button)::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:#fff;opacity:0;pointer-events:none}
+:is(.menu-root>button,.tree-selection button,.breadcrumbs button,.zoom button,.delete-button,.sd-button,.sd-select__trigger,.sd-dialog__close,.toast button):is(:hover,:focus-visible):not(:disabled)::after,.menu-root>button[aria-expanded=true]::after,.sd-select__trigger[aria-expanded=true]::after{opacity:1}
+:is(.menu-popup button,.add-grid button,.sd-select__option){position:relative}
+:is(.menu-popup button,.add-grid button,.sd-select__option)::before,.tree-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:#fff;opacity:0;border-radius:0;pointer-events:none}
+:is(.menu-popup button,.add-grid button,.sd-select__option):is(:hover,:focus-visible)::before,.sd-select__option[aria-selected=true]::before,.tree-row:is(.active,:hover,:focus-within)::before{opacity:1}
+:is(.sd-button,.sd-select__trigger,.sd-select__option,.sd-select__popup,.sd-dialog,.sd-field__input,.sd-select__search){background:#000;color:#fff}
+:is(.sd-button,.sd-select__option):is(:hover,:focus-visible),.sd-select__option[aria-selected=true]{background:#000;color:#fff}
+.sd-button--danger{color:#fff;border-color:var(--line)}
+.sd-dialog{max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain}
+.sd-dialog__header,.sd-dialog__body{background:#000}
+.sd-dialog__header{border-color:var(--line)}
+.sd-select__option{border-radius:0}
+.sd-select__popup{max-height:min(240px,35dvh)}
+.inspector{background:#000}
+.inspector .panel-title{display:none}
+.inspector-body{padding:0}
+.eyebrow{font-size:9px;letter-spacing:.15em}
+.inspector h2{font-size:16px;font-weight:400;line-height:1.8;margin:10px 0 5px}
+.parent-label{font-size:9px}
+.divider{height:1px;background:var(--line);margin:22px 0}
+.inspector .sd-field__label,.field-label,.number-field{font-size:10px}
+.inspector .sd-field__input,.inspector .sd-select__trigger{font-size:11px;min-height:42px}
+.field-label{display:block;margin:17px 0 9px}
+.section-label{font-size:9px;letter-spacing:.1em;margin:26px 0 15px}
+.number-field{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;margin-bottom:12px}
+.number-field>div{display:flex;align-items:center;width:155px;border:1px solid var(--line);border-radius:5px}
+.number-field input{width:100%;min-width:0;background:none;border:0;color:#fff;padding:9px 8px;font-size:11px;appearance:textfield}
+.number-field input::-webkit-inner-spin-button{appearance:none}
+.number-field small{font-size:9px;padding-right:9px}
+.field-hint{font-size:9px;line-height:1.9;margin:12px 0 22px}
+.inspector-body>.sd-button{width:100%;margin-top:20px;font-size:10px}
+.delete-button{display:flex;align-items:center;justify-content:center;gap:8px;background:none;border:0;width:100%;padding:20px 0 8px;font-size:9px}
+.assembly-note{margin-top:26px;padding:20px 0;border-bottom:1px solid var(--line)}
+.assembly-note strong{display:block;font-size:11px;font-weight:400;margin:15px 0}
+.assembly-note p{font-size:10px;line-height:2}
+.assembly-note span{font-size:9px}
+.add-grid{display:grid;gap:8px}
+.add-grid button{border:1px solid var(--line);background:#000;display:flex;align-items:center;gap:15px;padding:16px;font-size:10px;border-radius:0 5px 5px 0}
+.add-grid button svg:last-child{margin-left:auto}
+.dialog-text,.help-content{font-size:10px;line-height:2}
+.help-content strong{display:block;font-weight:400}
+.error{width:100%}
+input[aria-invalid=true]{outline:1px solid #fff}
+.sd-dialog__body>.sd-button{margin-top:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);max-width:80vw;background:#000;border:1px solid #fff;padding:16px 20px;border-radius:6px;font-size:10px;display:flex;gap:20px;align-items:center;z-index:100}
+.toast button{border:0;background:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
