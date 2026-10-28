@@ -13,7 +13,7 @@ export default function CanvasSummary({project,focus,selection,onSelect,onFocus}
   return <aside className="canvas-summary" aria-label="Roket özeti" onPointerDown={e=>e.stopPropagation()}><dl><dt>Uzunluk</dt><dd>{Math.round(bounds.max[0]-bounds.min[0])} mm</dd><dt title={provided?'Kullanıcının girdiği roket kütlesi':'Toplam kütle hesabı henüz bağlı değil'}>{provided?'Girilen kütle':'Kütle'}</dt><dd>{provided?`${root.mass.toLocaleString('tr-TR')} g`:'—'}</dd></dl><span>{project.parts.filter(p=>p.kind==='stage'||p.kind==='parallelStage').length} kademe · {project.parts.filter(p=>!isStructural(p.kind)).length} parça</span></aside>;
  }
  return <aside className="canvas-summary selection-summary" aria-label="Görünüm seçimi" onPointerDown={e=>e.stopPropagation()}>
- <button className="summary-selection-title" title={parts.map(p=>p.name).join('\n')} aria-expanded={expanded} onClick={()=>parts.length>1?setExpanded(v=>!v):onFocus()}><span>{parts[0]?.name}{parts.length>1?` +${parts.length-1}`:''}</span>{parts.length>1&&(expanded?<ChevronUp size={13}/>:<ChevronDown size={13}/>)}</button>
+ <button className="summary-selection-title" title={parts.map(p=>p.name).join('\n')} aria-expanded={expanded} onClick={()=>parts.length>1?setExpanded(v=>!v):selected.length?onFocus():onSelect(parts[0].id)}><span>{parts[0]?.name}{parts.length>1?` +${parts.length-1}`:''}</span>{parts.length>1&&(expanded?<ChevronUp size={13}/>:<ChevronDown size={13}/>)}</button>
  {expanded&&<div className="summary-selection-list">{parts.map(p=><button key={p.id} title={p.name} onClick={()=>onSelect(p.id)}>{p.name}</button>)}</div>}
  </aside>;
 }
