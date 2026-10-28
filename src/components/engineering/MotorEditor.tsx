@@ -1,0 +1,10 @@
+import {useState} from 'react';
+import {Button,Dialog,TextField} from '@stardrop/ui';
+import {validateMotor,type Motor} from '../../domain/motors';
+import {NumberField} from './shared';
+export default function MotorEditor({motor,onClose,onSave}:{motor?:Motor;onClose:()=>void;onSave:(motor:Motor)=>void}){
+ const [draft,setDraft]=useState<Motor>(motor??{id:crypto.randomUUID(),name:'Yeni motor',manufacturer:'STARLAB',diameter:54,length:320,totalMass:1,propellantMass:.5,source:'custom',curve:[]});
+ const [curve,setCurve]=useState(motor?.curve.map(p=>`${p.t} ${p.thrust}`).join('\n')||'');const [error,setError]=useState('');
+ function save(){try{const points=curve.trim().split(/\r?\n/).map(line=>{const columns=line.trim().split(/[\s,;]+/);if(columns.length!==2)throw Error('Her satırda zaman ve itki olmalı.');return {t:Number(columns[0]),thrust:Number(columns[1])}});onSave(validateMotor({...draft,curve:points}));onClose()}catch(e){setError(e instanceof Error?e.message:'Motor kaydedilemedi.')}}
+ return <Dialog open onClose={onClose} title={motor?'Motoru düzenle':'Yeni motor'}><div className="engineering-dialog-form"><TextField label="Motor adı" value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/><TextField label="Üretici" value={draft.manufacturer} onChange={e=>setDraft({...draft,manufacturer:e.target.value})}/><div className="engineering-field-grid"><NumberField label="Çap" unit="mm" min={.1} value={draft.diameter} onChange={diameter=>setDraft({...draft,diameter})}/><NumberField label="Uzunluk" unit="mm" min={.1} value={draft.length} onChange={length=>setDraft({...draft,length})}/><NumberField label="Toplam kütle" unit="kg" min={.001} value={draft.totalMass} onChange={totalMass=>setDraft({...draft,totalMass})}/><NumberField label="Yakıt kütlesi" unit="kg" value={draft.propellantMass} onChange={propellantMass=>setDraft({...draft,propellantMass})}/></div><label><span>İtki eğrisi · s / N</span><textarea aria-label="İtki eğrisi" value={curve} placeholder={'0 0\n0.1 100\n1 0'} onChange={e=>setCurve(e.target.value)}/></label>{error&&<span role="alert">{error}</span>}<Button onClick={save}>Kaydet</Button></div></Dialog>;
+}
