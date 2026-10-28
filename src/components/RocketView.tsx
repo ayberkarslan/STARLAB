@@ -2,7 +2,7 @@ import { useMemo,useEffect,useRef,useState,type KeyboardEvent } from 'react';
 import { resolveParts,scopeParts,boundsOf,noseProfile,finProfile } from '../domain/geometry';
 import type { ViewProps } from './ViewProps';
 import type {Part} from '../domain/project';
-import {geometryPatch,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
+import {geometryPatch,minimumDiameter,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
 import {useGeometryDrag} from './useGeometryDrag';
 import {useCanvasNavigation} from './useCanvasNavigation';
 interface Props extends ViewProps {onEdit?:(id:string,patch:GeometryPatch)=>void;onPreview?:(part:Part|null)=>void;onZoom?:(zoom:number)=>void;resetKey?:number;snapEnabled?:boolean}
@@ -26,7 +26,7 @@ export default function RocketView({project,selected,focus,onSelect,zoom,onEdit,
    const element=Array.from(svg.current?.querySelectorAll<SVGGElement>('[data-part-id]')??[]).find(n=>n.dataset.partId===next.part.id);element?.focus();return;
   }
   if(!onEdit)return;event.preventDefault();event.stopPropagation();const positive=['ArrowRight','ArrowUp'].includes(event.key);
-  onEdit(part.id,geometryPatch(part,edit??'move',(positive?1:-1)*step));
+  onEdit(part.id,geometryPatch(part,edit??'move',(positive?1:-1)*step,step,minimumDiameter(project,part)));
  };
  const handle=(mode:'length'|'diameter',x:number,y:number)=>current&&<g className={`geometry-handle handle-${mode}`} role="slider" tabIndex={0} aria-label={mode==='length'?'Uzunluğu değiştir':'Çapı değiştir'} aria-valuenow={current.part[mode]} aria-valuemin={1} aria-valuetext={`${current.part[mode]} mm`} aria-orientation={mode==='length'?'horizontal':'vertical'} onPointerDown={event=>drag.start(event,current.part,mode)} onKeyDown={event=>keyEdit(event,current.part,mode)}>
  <title>{mode==='length'?'Uzunluk':'Çap'} · sürükle · Shift: 10 mm · Alt: 0,1 mm</title><rect className="handle-hit" x={x-unit*14} y={y-unit*14} width={unit*28} height={unit*28}/><rect className="handle-mark" x={x-unit*5} y={y-unit*5} width={unit*10} height={unit*10}/></g>;
