@@ -11,6 +11,7 @@ import RocketView from '../RocketView';
 import Plot from './Plot';
 import {Choice,Empty,Metric,Panel,download,fmt} from './shared';
 import {resultFields} from './SimulationWorkspace';
+import InputReview from './InputReview';
 
 export default function AnalysisWorkspace({project,flight}:{project:Project;flight:FlightWorkspace}){
  const [section,setSection]=useState('geometry'),[motorId,setMotorId]=useState('sample-54'),[compareMotor,setCompareMotor]=useState(''),[caseA,setCaseA]=useState(''),[caseB,setCaseB]=useState(''),[field,setField]=useState<'altitude'|'velocity'|'acceleration'>('altitude'),[selectedPart,setSelectedPart]=useState('');
@@ -20,6 +21,7 @@ export default function AnalysisWorkspace({project,flight}:{project:Project;flig
  const stageMass=project.parts.filter(p=>p.kind==='stage').map(stage=>({name:stage.name,mass:subtree(project,stage.id).reduce((total,p)=>total+p.mass,0)}));
  const categories=[{id:'geometry',label:'Geometri',icon:Box},{id:'mass',label:'Kütle',icon:Scale},{id:'thrust',label:'İtki',icon:Flame},{id:'aero',label:'Aerodinamik',icon:Wind},{id:'comparison',label:'Karşılaştırma',icon:ArrowRightLeft}];
  const active=categories.find(c=>c.id===section)!;const meta=resultFields.find(f=>f.value===field)!;
+ if(section==='mass'||section==='aero')return <div className="engineering-page"><Panel title="Analiz"><div className="engineering-tabs">{categories.map(c=><button key={c.id} aria-pressed={section===c.id} onClick={()=>setSection(c.id)}><c.icon size={15}/>{c.label}</button>)}</div><InputReview project={project} aero={section==='aero'}/></Panel></div>;
  const stale=(id:string)=>{const c=flight.cases.find(c=>c.id===id)!;const config=flight.configurations.find(cfg=>cfg.id===c.configurationId)!;return c.result?.signature!==simulationSignature(project,config,c.environment,flight)};
  function exportData(){if(section==='thrust')download('starlab-itki.csv',['t,thrust',...motor.curve.map(p=>`${p.t},${p.thrust}`)].join('\n'),'text/csv');else if(section==='comparison'&&first?.result)download('starlab-karsilastirma.csv',['case,t,altitude,velocity,acceleration',...[first,second].flatMap(c=>c?.result?.samples.map(p=>`${c.id},${p.t},${p.altitude},${p.velocity},${p.acceleration}`)||[])].join('\n'),'text/csv');else download('starlab-parcalar.csv',['id,name,length_mm,diameter_mm,mass_g',...physical.map(p=>`${p.id},"${p.name.replaceAll('"','""')}",${p.length},${p.diameter},${p.mass}`)].join('\n'),'text/csv');}
  const chooseMotor=(label:string,value:string,change:(value:string)=>void,optional=false)=><Choice label={label} value={value} options={[...(optional?[{value:'',label:'Yok'}]:[]),...motors.map(m=>({value:m.id,label:`${m.name}${m.source==='sample'?' · Örnek':''}`}))]} onChange={change}/>;
