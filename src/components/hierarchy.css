@@ -61,3 +61,8 @@
 @media(max-width:850px){.hierarchy-body{grid-template-columns:minmax(0,1fr) 300px}.part-inspector{padding:10px 12px}.hierarchy-panel .panel-title{padding:0 12px}.hierarchy-panel .panel-title>span small{display:none}}
 @media(max-width:600px){.hierarchy-body{grid-template-columns:minmax(0,1fr) 230px}.inspector-numbers{grid-template-columns:minmax(0,1fr)}.inspector-toolbar{flex-wrap:wrap}.inspector-toolbar>div{margin-left:auto}}
 @media(max-width:650px){.hierarchy-hint{padding:5px 10px;font-size:11px}.hierarchy-hint>span{display:none}.hierarchy-panel .tree-footer{gap:10px;padding-left:10px;padding-right:10px}.flow-controls{gap:6px}}
+.selection-inspector .inspector-toolbar>span{display:flex;align-items:center;gap:8px}
+.selection-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:110px;overflow:auto;margin-bottom:12px}
+.selection-chips>span{display:flex;align-items:center;min-width:0;max-width:100%;border:1px solid var(--line);border-left:2px solid #fff;background:#000}
+.selection-chips button{border:0;background:#000;color:#fff;padding:7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selection-chips button+button{display:grid;place-items:center;flex:none}
