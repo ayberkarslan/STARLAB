@@ -152,3 +152,17 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .group-move{cursor:grab}.group-move:active{cursor:grabbing}
 .group-move-mark{fill:none;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
 .group-move:is(:hover,:focus-visible) .group-move-mark{stroke-width:3}
+.drawing.empty::before{display:none}
+.empty-canvas-add{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:64px;height:64px;border:0;background:#000;color:#fff;cursor:pointer}
+.empty-canvas-add:focus-visible{outline:1px solid #fff;outline-offset:4px}
+.empty-canvas-add:hover svg{stroke-width:1.8}
+.canvas-summary{position:absolute;right:16px;bottom:14px;z-index:3;max-width:260px;background:#000e;padding:10px 12px;font-size:12px;line-height:1.8}
+.canvas-summary dl{display:grid;grid-template-columns:auto auto;gap:4px 24px;margin:0 0 4px}.canvas-summary dd{margin:0;text-align:right}
+.canvas-summary>span{display:block;font-size:12px}
+.selection-summary{min-width:0;padding:0;max-width:min(280px,45%)}
+.summary-selection-title{display:flex;align-items:center;gap:10px;width:100%;min-width:0;border:0;border-left:2px solid #fff;background:#000;color:#fff;padding:10px 12px;font-size:12px;text-align:left}
+.summary-selection-title>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.summary-selection-list{max-height:150px;overflow:auto;border:1px solid var(--line)}
+.summary-selection-list button{display:block;width:100%;padding:9px 12px;border:0;background:#000;color:#fff;font-size:12px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.summary-selection-list button:hover{box-shadow:inset 2px 0 #fff}
+.new-project-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
