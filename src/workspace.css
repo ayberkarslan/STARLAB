@@ -11,8 +11,6 @@ html,body{width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;oversc
 .menu-brand{display:flex!important}
 .menu-project .save-indicator{display:grid}
 .menu-project{position:relative;font-size:12px}
-.menu-project .save-indicator{position:absolute;left:calc(50% + var(--title-width)/2 + 10px)}
-@media(max-width:1100px){.menu-left{gap:10px}.menu-brand{font-size:0!important;gap:0}.menu-root>button{padding-left:6px;padding-right:6px}}
 .menus{display:flex;align-items:center;gap:4px}
 .menu-root{position:relative}
 .menu-root>button{border:0;background:#000;padding:13px 12px;font-size:11px}
@@ -26,8 +24,6 @@ html,body{width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;oversc
 .save-indicator{display:grid;place-items:center;flex:none}
 .save-indicator.saved{color:#6ee7a2}
 .save-indicator.pending{color:#efad57}
-@media(max-width:1300px){.menu-brand{display:none}.menu-left{gap:0}.menu-bar{grid-template-columns:minmax(0,1fr) minmax(160px,260px) minmax(0,1fr)}}
-@media(max-width:800px){.menu-bar{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 10px}.menu-project{max-width:180px}.menu-root>button{padding:12px 6px}}
 header{height:52px;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .project-heading{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
 .project-heading input{width:min(420px,45vw);min-width:0;border:0;background:none;color:#fff;font-size:12px;padding:8px 0}
@@ -100,7 +96,7 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .tree-hidden .tree-panel{display:none}
 @media(max-width:950px){.menu-caption,.saved,.summary>span small{display:none}}
 @media(max-width:650px){
- .menu-bar{padding:0 10px;gap:8px}.menu-brand{font-size:11px}.menus{gap:0}
+ .menus{gap:0}
  .menu-root>button{font-size:11px;padding:12px 7px}.menu-popup{min-width:220px}
  .menu-root:nth-last-child(-n+2) .menu-popup{left:auto;right:0}
  header{padding:0 12px;height:44px}.project-heading input{font-size:11px;width:55vw}.draft-label{display:none}
@@ -111,8 +107,23 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
  .viewport-tools .sd-button{font-size:11px}
 }
 @media(max-height:650px){
- .menu-bar{height:34px}.menu-root>button{padding-top:9px;padding-bottom:9px}
+ .menu-root>button{padding-top:9px;padding-bottom:9px}
  header{height:40px}nav.task-tabs button{padding-top:10px;padding-bottom:10px}
  .editor{margin-top:8px}.panel-title,.viewport-header{height:32px}
  .breadcrumbs{padding-top:4px;padding-bottom:4px}.viewport-status{display:none}.summary{height:28px}
+}
+
+/* Symmetric columns keep the brand centred independently of menu/title width. */
+.menu-bar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:20px;height:48px;padding:0 20px}
+.menu-left{grid-column:1;grid-row:1;justify-self:start;min-width:0}
+.menu-brand{grid-column:2;grid-row:1;justify-self:center;font-size:12px;gap:10px}
+.menu-project{grid-column:3;grid-row:1;justify-self:end;justify-content:flex-end;max-width:100%;gap:12px}
+.menu-project input{text-align:right;max-width:calc(100% - 30px)}
+.menu-project .save-indicator{position:static;flex:none}
+@media(max-width:1100px){.menu-root>button{padding-left:8px;padding-right:8px}.menu-bar{gap:14px}}
+@media(max-width:800px){
+ .menu-bar{height:88px;padding:0 12px;grid-template-rows:44px 44px;gap:0 12px}
+ .menu-left{grid-column:1/-1;grid-row:2}
+ .menu-project{max-width:180px}
+ .menu-brand{font-size:11px}
 }
