@@ -15,8 +15,8 @@ export const catalog:Record<Kind,ComponentDefinition>={
  body:{label:'Gövde tüpü',parents:containers,length:1000,diameter:60,category:'Yapı'},
  nose:{label:'Burun konisi',parents:containers,length:300,diameter:60,category:'Yapı'},
  transition:{label:'Geçiş konisi',parents:containers,length:100,diameter:60,category:'Yapı',geometry:{aftDiameter:48}},
- fins:{label:'Trapez kanat seti',parents:outer,length:250,diameter:300,category:'Aerodinamik',geometry:{finCount:3,tipChord:100,span:120,sweep:100,cantAngle:0}},
- freeformFins:{label:'Serbest kanat seti',parents:outer,length:250,diameter:300,category:'Aerodinamik',geometry:{finCount:3,tipChord:100,span:120,sweep:100,cantAngle:0,points:[[0,0],[100,120],[200,120],[250,0]]}},
+ fins:{label:'Trapez kanat seti',parents:outer,length:250,diameter:300,category:'Aerodinamik',geometry:{finCount:3,tipChord:100,sweep:100,cantAngle:0}},
+ freeformFins:{label:'Serbest kanat seti',parents:outer,length:250,diameter:300,category:'Aerodinamik',geometry:{finCount:3,tipChord:100,sweep:100,cantAngle:0,points:[[0,0],[100,120],[200,120],[250,0]]}},
  tubeFins:{label:'Tüp kanat seti',parents:outer,length:76.2,diameter:25.4,category:'Aerodinamik',geometry:{finCount:6,rotation:0}},
  motor:{label:'Motor yuvası',parents:['body','innerTube','assembly'],length:300,diameter:33,category:'İtki',geometry:{innerDiameter:30}},
  innerTube:{label:'İç tüp',parents:internal,length:300,diameter:33,category:'İç yapı',geometry:{innerDiameter:30}},
@@ -46,5 +46,6 @@ export function validateGeometry(value:unknown){
   if(key==='points'){if(!Array.isArray(n)||n.length<3||n.length>500||!n.every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))throw Error('Kanat noktaları geçersiz.');continue;}
   if(typeof n!=='number'||!Number.isFinite(n)||!['sweep','cantAngle','rotation','radialOffset'].includes(key)&&n<0)throw Error('Geometri alanı geçersiz.');
   if(['finCount','instanceCount'].includes(key)&&(!Number.isInteger(n)||n<1||n>64))throw Error('Parça adedi 1–64 arasında olmalı.');
+  if(key==='lineCount'&&(!Number.isInteger(n)||n>10000))throw Error('Askı ipi sayısı geçersiz.');
  }
 }

@@ -1,4 +1,4 @@
-.component-library{width:min(900px,calc(100vw - 40px));max-width:900px}
+.sd-dialog.component-library{width:min(900px,calc(100vw - 40px));max-width:900px}
 .component-library .sd-dialog__body{display:flex;flex-direction:column;gap:18px;min-height:0}
 .library-tabs{display:flex;gap:18px;overflow:auto;border-bottom:1px solid var(--line);flex:none}
 .library-tabs button{position:relative;border:0;background:#000;color:#fff;padding:10px 0;font-size:12px;white-space:nowrap}
@@ -7,6 +7,7 @@
 .library-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:min(420px,48vh);overflow:auto;align-content:start;padding:1px}
 .library-card{position:relative;display:flex;align-items:center;gap:12px;text-align:left;min-height:70px;padding:12px;border:1px solid var(--line);background:#000;color:#fff;font-size:12px;line-height:1.7}
 .library-card svg{width:54px;flex:none}.library-card[aria-pressed=true]{border-color:#fff}
+.library-card>span{min-width:0;overflow-wrap:anywhere}
 .library-card:is([aria-pressed=true],:hover)::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:#fff}
 .library-preview{display:flex;flex-direction:column;gap:20px;min-width:0;font-size:12px}
 .library-preview>svg{width:100%;height:150px;padding:20px}.library-preview strong{font-weight:400;line-height:1.8}

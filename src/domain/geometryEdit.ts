@@ -2,7 +2,7 @@ import {isStructural,isShell,isFin} from './componentCatalog';
 import type {Part,Project} from './project';
 export type GeometryEdit='move'|'length'|'diameter';
 export type GeometryPatch=Partial<Pick<Part,'offset'|'length'|'diameter'>>;
-export function minimumDiameter(project:Project,part:Part){return Math.max(1,isShell(part.kind)?2*(part.inputs?.wallThickness??0):0,isFin(part.kind)?(project.parts.find(p=>p.id===part.parentId)?.diameter??0):0)}
+export function minimumDiameter(project:Project,part:Part){return Math.max(1,part.geometry?.innerDiameter??0,isShell(part.kind)?2*(part.inputs?.wallThickness??0):0,isFin(part.kind)?(project.parts.find(p=>p.id===part.parentId)?.diameter??0):0)}
 export function geometryPatch(part:Part,mode:GeometryEdit,delta:number,step=1,diameterFloor=1):GeometryPatch {
  const key=mode==='move'?'offset':mode;
  const minimum=key==='offset'?-Infinity:key==='diameter'?Math.max(diameterFloor,isShell(part.kind)?2*(part.inputs?.wallThickness??0):1):1;
