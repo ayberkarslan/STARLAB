@@ -1,5 +1,5 @@
-import {isStructural,isSerial,isShell,isFin} from './componentCatalog';
-import {resolveParts,boundsOf} from './geometry';
+import {isStructural,isSerial,isShell,isFin,scaleAxialGeometry} from './componentCatalog';
+import {resolveParts,boundsOf,axialExtent} from './geometry';
 import {subtree,validate,type Project,type Part} from './project';
 import {selectionRoots} from './selection';
 import {minimumDiameter,type GeometryEdit} from './geometryEdit';
@@ -12,8 +12,9 @@ export function geometrySelection(project:Project,ids:string[]){
 export function place(project:Project,targets:Map<string,number>){
  const byParent=new Map<string|null,Part[]>();for(const p of project.parts){const list=byParent.get(p.parentId)??[];list.push(p);byParent.set(p.parentId,list)}
  const changed=new Map<string,Part>();
+ const byId=new Map(project.parts.map(p=>[p.id,p]));
  function visit(part:Part,world:number):number {
-  let cursor=0,extent=isStructural(part.kind)?0:part.length;
+  let cursor=0,extent=isStructural(part.kind)?0:axialExtent(part,byId.get(part.parentId??'')?.diameter??0);
   for(const child of byParent.get(part.id)??[]){
    const serial=isSerial(child.kind);const base=serial?cursor:0;
    const wanted=targets.get(child.id);const offset=wanted===undefined?child.offset:round(wanted-world-base);
@@ -47,7 +48,7 @@ export function transformSelection(project:Project,ids:string[],mode:GeometryEdi
    const parentDiameter=patches.get(part.parentId??'')?.diameter??project.parts.find(p=>p.id===part.parentId)?.diameter??1;
    patches.set(part.id,{diameter:Math.max(patches.get(part.id)!.diameter!,parentDiameter)});
   }
-  next={...project,parts:project.parts.map(p=>patches.has(p.id)?{...p,...patches.get(p.id)}:p)};
+  next={...project,parts:project.parts.map(p=>patches.has(p.id)?{...p,...patches.get(p.id),geometry:mode==='length'?scaleAxialGeometry(p.geometry,factor):p.geometry}:p)};
   if(mode==='length')next=place(next,new Map(selection.nodes.map(n=>[n.part.id,selection.bounds.min[0]+(n.position[0]-selection.bounds.min[0])*factor])));
  }
  if(next===project)return project;return validate(next);

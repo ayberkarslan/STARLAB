@@ -1,16 +1,19 @@
-import {isStructural,isSerial} from './componentCatalog';
+import {isStructural,isSerial,isFin} from './componentCatalog';
 import { type Part, type Project } from './project';
 export type Vec3 = [number,number,number];
 export interface Bounds { min:Vec3; max:Vec3 }
 export interface ResolvedPart { part:Part; parentId:string|null; localPosition:Vec3; position:Vec3; bounds:Bounds; physical:boolean }
 export function resolveParts(project:Project):ResolvedPart[]{
+ const byId=new Map(project.parts.map(p=>[p.id,p]));
  const byParent=new Map<string|null,Part[]>();for(const part of project.parts){const list=byParent.get(part.parentId)||[];list.push(part);byParent.set(part.parentId,list);}
  const resolved:ResolvedPart[]=[];
  function visit(part:Part,local:number,world:number):number {
   const physical=!isStructural(part.kind);
-  const radius=Math.max(part.diameter,1)/2;
-  const node:ResolvedPart={part,parentId:part.parentId,localPosition:[local,0,0],position:[world,0,0],physical,bounds:{min:[world,-radius,-radius],max:[world+Math.max(part.length,1),radius,radius]}};resolved.push(node);
-  let cursor=0;let extent=physical?part.length:0;
+  const profile=isFin(part.kind)?finProfile(part.length,part.diameter/2,(byId.get(part.parentId??'')?.diameter??0)/2,part.geometry):undefined;
+  const radius=Math.max(part.diameter,part.geometry?.aftDiameter??0,1,...(profile??[]).map(p=>Math.abs(p[1])*2))/2;
+  const end=axialExtent(part,byId.get(part.parentId??'')?.diameter??0);
+  const node:ResolvedPart={part,parentId:part.parentId,localPosition:[local,0,0],position:[world,0,0],physical,bounds:{min:[world+Math.min(0,...(profile??[]).map(p=>p[0])),-radius,-radius],max:[world+Math.max(end,1),radius,radius]}};resolved.push(node);
+  let cursor=0;let extent=physical?end:0;
   for(const child of byParent.get(part.id)||[]){const serial=isSerial(child.kind);const offset=(serial?cursor:0)+child.offset;const childEnd=visit(child,offset,world+offset);extent=Math.max(extent,offset+childEnd);if(serial)cursor=offset+childEnd;}
   return extent;
  }
@@ -22,6 +25,7 @@ export function boundsOf(parts:ResolvedPart[]):Bounds {
  const physical=parts.filter(n=>n.physical);if(!physical.length)return {min:[0,-50,-50],max:[100,50,50]};
  return {min:[0,1,2].map(i=>Math.min(...physical.map(n=>n.bounds.min[i]))) as Vec3,max:[0,1,2].map(i=>Math.max(...physical.map(n=>n.bounds.max[i]))) as Vec3};
 }
+export function axialExtent(part:Part,bodyDiameter:number){return isFin(part.kind)?Math.max(part.length,...finProfile(part.length,part.diameter/2,bodyDiameter/2,part.geometry).map(p=>p[0])):part.length}
 // Identical profile samples feed the SVG outline and the revolved 3D nose.
 export function noseProfile(length:number,radius:number,profile?:import('./componentCatalog').NoseProfile,parameter?:number):[number,number][]{return Array.from({length:49},(_,i)=>{
  const t=i/48;if(!profile)return [length*(1.1*t-.1*t*t),radius*(2*t-t*t)];

@@ -1,4 +1,4 @@
-import {isStructural,isShell,isFin} from './componentCatalog';
+import {isStructural,isShell,isFin,scaleAxialGeometry} from './componentCatalog';
 import type {Part,Project} from './project';
 export type GeometryEdit='move'|'length'|'diameter';
 export type GeometryPatch=Partial<Pick<Part,'offset'|'length'|'diameter'>>;
@@ -16,5 +16,5 @@ export function editGeometry(project:Project,id:string,patch:GeometryPatch):Proj
  }
  if(patch.diameter!==undefined&&patch.diameter<minimumDiameter(project,part))throw Error('Çap et kalınlığını ve bağlı gövdeyi karşılamalı.');
  if(Object.entries(patch).every(([key,value])=>part[key as keyof GeometryPatch]===value))return project;
- return {...project,parts:project.parts.map(p=>p.id===id?{...p,...patch}:p)};
+ return {...project,parts:project.parts.map(p=>p.id===id?{...p,...patch,geometry:patch.length!==undefined&&p.length>0?scaleAxialGeometry(p.geometry,patch.length/p.length):p.geometry}:p)};
 }

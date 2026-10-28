@@ -2,6 +2,9 @@ export type Kind='rocket'|'stage'|'assembly'|'pod'|'parallelStage'|'nose'|'body'
 export type ComponentCategory='Yapı'|'Aerodinamik'|'İç yapı'|'İtki'|'Kurtarma'|'Kılavuz';
 export type NoseProfile='conical'|'tangentOgive'|'secantOgive'|'elliptical'|'parabolic'|'power'|'haack'|'vonKarman';
 export interface ComponentGeometry {noseProfile?:NoseProfile;noseParameter?:number;innerDiameter?:number;aftDiameter?:number;shoulderLength?:number;shoulderDiameter?:number;shoulderThickness?:number;finCount?:number;tipChord?:number;span?:number;sweep?:number;cantAngle?:number;rotation?:number;canopyDiameter?:number;cordLength?:number;lineCount?:number;lineLength?:number;instanceCount?:number;instanceSeparation?:number;radialOffset?:number;points?:[number,number][]}
+export function scaleAxialGeometry(geometry:ComponentGeometry|undefined,factor:number){
+ if(!geometry||factor===1)return geometry;const next={...geometry};for(const key of ['tipChord','sweep','shoulderLength','instanceSeparation'] as const)if(next[key]!==undefined)next[key]=Math.round(next[key]!*factor*1000000)/1000000;return next;
+}
 export interface ComponentDefinition {label:string;parents:Kind[];length:number;diameter:number;category:ComponentCategory;geometry?:ComponentGeometry}
 const containers:Kind[]=['stage','assembly','pod','parallelStage'];
 const internal:Kind[]=['body','nose','transition','innerTube','motor','assembly'];
