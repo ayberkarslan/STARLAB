@@ -5,6 +5,8 @@
 export interface PartInputs {
  wallThickness?:number;
  density?:number;
+ surfaceDensity?:number;
+ linearDensity?:number;
  centerOfMass?:number;
  centerOfPressure?:number;
  dragCoefficient?:number;
@@ -18,11 +20,12 @@ export interface PartInputs {
 export function validatePartInputs(value:unknown,diameter:number,kind:string):asserts value is PartInputs {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Bileşen girdileri geçersiz.');
  const inputs=value as PartInputs;
- for(const key of ['wallThickness','density','centerOfMass','centerOfPressure','dragCoefficient','roughness','mach','angleOfAttack'] as const){
+ for(const key of ['wallThickness','density','surfaceDensity','linearDensity','centerOfMass','centerOfPressure','dragCoefficient','roughness','mach','angleOfAttack'] as const){
   const n=inputs[key];if(n===undefined)continue;
   if(typeof n!=='number'||!Number.isFinite(n)||(!['centerOfMass','centerOfPressure','angleOfAttack'].includes(key)&&n<0))throw Error('Bileşen sayısal girdisi geçersiz.');
  }
  if(inputs.density!==undefined&&inputs.density<=0)throw Error('Yoğunluk sıfırdan büyük olmalı.');
+ if([inputs.surfaceDensity,inputs.linearDensity].some(n=>n!==undefined&&n<=0))throw Error('Yoğunluk sıfırdan büyük olmalı.');
  if(inputs.wallThickness!==undefined&&['body','nose','motor'].includes(kind)&&inputs.wallThickness>diameter/2)throw Error('Et kalınlığı dış yarıçapı aşamaz.');
  if(inputs.angleOfAttack!==undefined&&Math.abs(inputs.angleOfAttack)>180)throw Error('Hücum açısı −180 ile 180 arasında olmalı.');
  if(inputs.massProvided!==undefined&&typeof inputs.massProvided!=='boolean')throw Error('Kütle durumu geçersiz.');
