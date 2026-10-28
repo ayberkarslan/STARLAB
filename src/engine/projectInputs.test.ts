@@ -14,4 +14,8 @@ describe('process input boundary',()=>{
   const p=initialProject();p.parts[3].inputs={wallThickness:2,density:1500,centerOfMass:120};const f=initialFlight();
   const packet=createFlightRequest(p,f,f.cases[0]);expect(packet.parts[3].inputs.wallThickness).toBe(2);expect(packet.parts[3].mass).toBeNull();expect(packet.units.parts.density).toBe('kg/m³');
  });
+ it('keeps line/surface units and unknown catalog modulus explicit',()=>{
+  const p=initialProject();p.parts[0].materialData={key:'test',name:'Test',type:'line',density:.016,shearModulus:0,group:'Test'};p.parts[0].inputs={linearDensity:.016};
+  const packet=createProjectInputs(p);expect(packet.project.parts[0].inputs.linearDensity).toBe(.016);expect(packet.project.parts[0].materialData?.shearModulus).toBeNull();expect(packet.units.materials.linearDensity).toBe('kg/m');
+ });
 });

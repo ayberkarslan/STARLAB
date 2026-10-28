@@ -38,4 +38,8 @@ export function noseProfile(length:number,radius:number,profile?:import('./compo
  if(profile==='haack'||profile==='vonKarman'){const theta=Math.acos(1-2*t),c=profile==='vonKarman'?0:parameter??0;r=Math.sqrt(Math.max(0,(theta-Math.sin(2*theta)/2+c*Math.sin(theta)**3)/Math.PI));}
  return [length*t,radius*Math.max(0,Math.min(1,r))];
 });}
-export function finProfile(length:number,radius:number,bodyRadius:number):[number,number][]{return [[0,bodyRadius],[length*.6,Math.max(radius,bodyRadius)],[length,Math.max(radius,bodyRadius)],[length,bodyRadius]];}
+export function finProfile(length:number,radius:number,bodyRadius:number,shape?:import('./componentCatalog').ComponentGeometry):[number,number][]{
+ if(shape?.points?.length){const xmax=Math.max(1,...shape.points.map(p=>p[0])),ymax=Math.max(1,...shape.points.map(p=>p[1]));return shape.points.map(([x,y])=>[x*length/xmax,bodyRadius+y*Math.max(0,radius-bodyRadius)/ymax]);}
+ if(shape?.tipChord!==undefined||shape?.sweep!==undefined){const sweep=shape.sweep??length*.6,tip=shape.tipChord??length*.4;return [[0,bodyRadius],[sweep,Math.max(radius,bodyRadius)],[sweep+tip,Math.max(radius,bodyRadius)],[length,bodyRadius]];}
+ return [[0,bodyRadius],[length*.6,Math.max(radius,bodyRadius)],[length,Math.max(radius,bodyRadius)],[length,bodyRadius]];
+}
