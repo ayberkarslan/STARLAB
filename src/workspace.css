@@ -13,6 +13,15 @@ html,body{width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;oversc
 .menu-popup{position:absolute;top:100%;left:0;min-width:270px;max-height:calc(100dvh - 50px);overflow:auto;padding:6px;background:#000;border:1px solid var(--line);border-radius:0 0 6px 6px;display:grid;gap:2px}
 .menu-popup button{text-align:left;padding:13px 12px;border:0;background:#000;font-size:11px;white-space:nowrap}
 .menu-caption{margin-left:auto;font-size:11px;letter-spacing:.12em}
+.menu-bar{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,320px) minmax(0,1fr);gap:16px;height:48px}
+.menu-left{display:flex;align-items:center;gap:20px;min-width:0}
+.menu-project{display:flex;align-items:center;justify-content:center;gap:10px;min-width:0}
+.menu-project input{border:0;background:#000;color:#fff;font:12px 'YRT Michroma',sans-serif;text-align:center;min-width:0;max-width:calc(100% - 28px);padding:6px 0}
+.save-indicator{display:grid;place-items:center;flex:none}
+.save-indicator.saved{color:#6ee7a2}
+.save-indicator.pending{color:#efad57}
+@media(max-width:1300px){.menu-brand{display:none}.menu-left{gap:0}.menu-bar{grid-template-columns:minmax(0,1fr) minmax(160px,260px) minmax(0,1fr)}}
+@media(max-width:800px){.menu-bar{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 10px}.menu-project{max-width:180px}.menu-root>button{padding:12px 6px}}
 header{height:52px;padding:0 24px;display:flex;justify-content:space-between;align-items:center;gap:20px}
 .project-heading{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
 .project-heading input{width:min(420px,45vw);min-width:0;border:0;background:none;color:#fff;font-size:12px;padding:8px 0}
