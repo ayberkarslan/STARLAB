@@ -1,3 +1,4 @@
+import {isStructural} from './domain/componentCatalog';
 import React,{useState,useRef,useEffect,useMemo,lazy,Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Button,IconButton as KitIconButton,Dialog} from '@stardrop/ui';
@@ -83,7 +84,7 @@ function App(){
     if(key==='z'){if(event.shiftKey)redo();else undo();setMenu(null)}
     else if(key==='y'){redo();setMenu(null)}else if(key==='s')exportProject();else file.current?.click();
    }else if(command&&key==='a'&&page===0&&(event.target as Element)?.closest('.drawing,.hierarchy-browser')&&!(event.target as Element).closest('input,textarea')){
-    event.preventDefault();setSelection(subtree(project,focus).filter(p=>!['rocket','stage','assembly'].includes(p.kind)).map(p=>p.id));
+    event.preventDefault();setSelection(subtree(project,focus).filter(p=>!isStructural(p.kind)).map(p=>p.id));
    }else if(event.key==='Delete'&&!command&&!event.repeat&&page===0&&!adding&&!deleting&&!help&&canDelete){
     if((event.target as Element)?.closest('input,textarea,[contenteditable=true],[role=combobox]'))return;
     event.preventDefault();setDeleting(true);

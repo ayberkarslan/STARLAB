@@ -1,3 +1,4 @@
+import {isStructural} from '../domain/componentCatalog';
 import {useEffect,useRef,useState,type PointerEvent as ReactPointerEvent,type RefObject} from 'react';
 import type {Part,Project} from '../domain/project';
 import {geometryPatch,minimumDiameter,type GeometryEdit,type GeometryPatch} from '../domain/geometryEdit';
@@ -30,7 +31,7 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   const root=svg.current,inverse=root?.getScreenCTM()?.inverse();if(!root||!inverse)return;
   event.preventDefault();event.stopPropagation();event.currentTarget.focus({preventScroll:true});
   const diameterFloor=minimumDiameter(project,part);const candidates=snapCandidates(project,part,mode).filter(c=>c.key!=='diameter'||c.value>=diameterFloor);
-  const ids=batch?.ids.includes(part.id)?batch.ids:[part.id];const batchIds=batch&&(ids.length>1||['stage','assembly'].includes(part.kind))?ids:undefined;
+  const ids=batch?.ids.includes(part.id)?batch.ids:[part.id];const batchIds=batch&&(ids.length>1||(isStructural(part.kind)&&part.kind!=='rocket'))?ids:undefined;
   const selected=batchIds?geometrySelection(project,batchIds):undefined;
   const reference=selected?{...part,length:selected.bounds.max[0]-selected.bounds.min[0],diameter:Math.max(...selected.nodes.map(n=>n.part.diameter)),offset:0}:part;
   gesture.current={pointer:event.pointerId,part:reference,mode,inverse,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(inverse),clientX:event.clientX,clientY:event.clientY,patch:{},changed:false,candidates:batchIds?selectionSnapCandidates(project,batchIds,mode):candidates,snap:null,diameterFloor,batchIds,base:project};

@@ -7,14 +7,16 @@ import {gridGeometry} from './geometry3d';
 import {geometryResource,retainGeometry,releaseGeometry,sceneMaterials,type SceneMaterials} from './resources3d';
 import type {ViewProps} from './ViewProps';
 import {geometrySelection} from '../domain/selectionGeometry';
+import {isFin} from '../domain/componentCatalog';
 
 function PartMesh({node,bodyDiameter,selected,onSelect,materials}:{node:ResolvedPart;bodyDiameter:number;selected:boolean;onSelect:(id:string,additive?:boolean)=>void;materials:SceneMaterials}){
  const {kind,length,diameter}=node.part;
- const resource=useMemo(()=>geometryResource(kind,length,diameter,bodyDiameter),[kind,length,diameter,bodyDiameter]);
+ const resource=useMemo(()=>geometryResource(kind,length,diameter,bodyDiameter,node.part.geometry),[kind,length,diameter,bodyDiameter,node.part.geometry]);
  const {geometry,edges}=resource;
  useEffect(()=>{retainGeometry(resource);return()=>releaseGeometry(resource)},[resource]);
  function pick(event:ThreeEvent<MouseEvent>){if(event.delta>5)return;event.stopPropagation();onSelect(node.part.id,event.shiftKey);}
- return <>{Array.from({length:kind==='fins'?3:1},(_,i)=><group key={i} rotation={[i*Math.PI*2/3,0,0]}>
+ const count=isFin(kind)?node.part.geometry?.finCount??3:1;
+ return <>{Array.from({length:count},(_,i)=><group key={i} rotation={[i*Math.PI*2/count,0,0]}>
  <mesh geometry={geometry} material={materials.surface} dispose={null} onClick={pick}/>
  <lineSegments geometry={edges} material={materials.edge} dispose={null}/>
  {selected&&<mesh geometry={geometry} material={materials.selected} dispose={null} raycast={()=>{}}/>}

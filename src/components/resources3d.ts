@@ -1,13 +1,14 @@
 import {EdgesGeometry,MeshBasicMaterial,MeshStandardMaterial,LineBasicMaterial,type BufferGeometry} from 'three';
 import {geometryFactories} from './geometry3d';
 import type {Kind} from '../domain/project';
+import {isFin,type ComponentGeometry} from '../domain/componentCatalog';
 interface Resource { key:string; geometry:BufferGeometry; edges:EdgesGeometry; users:number }
 const cache=new Map<string,Resource>();
-export function geometryResource(kind:Kind,length:number,diameter:number,bodyDiameter:number):Resource {
- const key=[kind,length,diameter,kind==='fins'?bodyDiameter:0].join(':');
+export function geometryResource(kind:Kind,length:number,diameter:number,bodyDiameter:number,shape?:ComponentGeometry):Resource {
+ const key=[kind,length,diameter,isFin(kind)?bodyDiameter:0,JSON.stringify(shape??{})].join(':');
  const existing=cache.get(key);if(existing)return existing;
  const factory=geometryFactories[kind];if(!factory)throw Error('Unsupported geometry');
- const geometry=factory(Math.max(length,1),Math.max(diameter,1),bodyDiameter);
+ const geometry=factory(Math.max(length,1),Math.max(diameter,1),bodyDiameter,shape);
  const resource={key,geometry,edges:new EdgesGeometry(geometry,20),users:0};cache.set(key,resource);return resource;
 }
 export function retainGeometry(resource:Resource){resource.users++;if(!cache.has(resource.key))cache.set(resource.key,resource);}

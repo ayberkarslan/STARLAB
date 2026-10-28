@@ -1,3 +1,4 @@
+import {isStructural} from '../../domain/componentCatalog';
 import {useState} from 'react';
 import {IconButton,SelectMenu} from '@stardrop/ui';
 import {Activity,ArrowRightLeft,Box,Download,Flame,Scale,Wind} from 'lucide-react';
@@ -17,7 +18,7 @@ export default function AnalysisWorkspace({project,flight}:{project:Project;flig
  const [section,setSection]=useState('geometry'),[motorId,setMotorId]=useState('sample-54'),[compareMotor,setCompareMotor]=useState(''),[caseA,setCaseA]=useState(''),[caseB,setCaseB]=useState(''),[field,setField]=useState<'altitude'|'velocity'|'acceleration'>('altitude'),[selectedPart,setSelectedPart]=useState('');
  const motors=allMotors(flight),motor=motors.find(m=>m.id===motorId)||motors[0],secondMotor=motors.find(m=>m.id===compareMotor);const stats=motorStats(motor);
  const available=flight.cases.filter(c=>c.result),first=available.find(c=>c.id===caseA)||available[0],second=available.find(c=>c.id===caseB&&c.id!==first?.id);
- const resolved=resolveParts(project),bounds=boundsOf(resolved);const physical=project.parts.filter(p=>!['rocket','stage','assembly'].includes(p.kind));const root=project.parts.find(p=>p.kind==='rocket')!;
+ const resolved=resolveParts(project),bounds=boundsOf(resolved);const physical=project.parts.filter(p=>!isStructural(p.kind));const root=project.parts.find(p=>p.kind==='rocket')!;
  const categories=[{id:'geometry',label:'Geometri',icon:Box},{id:'mass',label:'Kütle',icon:Scale},{id:'thrust',label:'İtki',icon:Flame},{id:'aero',label:'Aerodinamik',icon:Wind},{id:'comparison',label:'Karşılaştırma',icon:ArrowRightLeft}];
  const active=categories.find(c=>c.id===section)!;const meta=resultFields.find(f=>f.value===field)!;
  if(section==='mass'||section==='aero')return <div className="engineering-page"><Panel className="input-review-panel" title="Analiz"><div className="engineering-tabs">{categories.map(c=><button key={c.id} aria-pressed={section===c.id} onClick={()=>setSection(c.id)}><c.icon size={15}/>{c.label}</button>)}</div><InputReview project={project} aero={section==='aero'}/></Panel></div>;

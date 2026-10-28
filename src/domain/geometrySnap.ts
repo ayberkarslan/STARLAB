@@ -1,11 +1,12 @@
+import {} from './componentCatalog';
 import {resolveParts} from './geometry';
 import type {Project,Part} from './project';
 import type {GeometryEdit,GeometryPatch} from './geometryEdit';
 export interface GeometrySnap {key:'offset'|'length'|'diameter';value:number;targetId:string;axis:'x'|'diameter';line:number}
 export function snapCandidates(project:Project,part:Part,mode:GeometryEdit):GeometrySnap[]{
  const nodes=resolveParts(project),node=nodes.find(n=>n.part.id===part.id);if(!node)return [];
- const external=['body','nose'].includes(part.kind);
- const peers=nodes.filter(n=>n.part.id!==part.id&&n.physical&&(external?['body','nose'].includes(n.part.kind):n.part.kind===part.kind));
+ const external=['body','nose','transition'].includes(part.kind);
+ const peers=nodes.filter(n=>n.part.id!==part.id&&n.physical&&(external?['body','nose','transition'].includes(n.part.kind):n.part.kind===part.kind));
  if(mode==='diameter')return peers.sort((a,b)=>Number(b.part.kind===part.kind)-Number(a.part.kind===part.kind)).map(n=>({key:'diameter',value:n.part.diameter,targetId:n.part.id,axis:'diameter',line:n.part.diameter/2}));
  // Descendants follow their parent; they cannot be a stationary alignment target.
  const descendants=new Set([part.id]);for(const n of nodes)if(n.parentId&&descendants.has(n.parentId))descendants.add(n.part.id);
