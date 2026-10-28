@@ -25,7 +25,7 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
   return()=>{window.removeEventListener('keydown',key,true);window.removeEventListener('blur',cancel);window.removeEventListener('resize',cancel);cancel()};
  },[]);
  useEffect(()=>{finish(false)},[project,focus]);
- const start=(event:ReactPointerEvent<SVGGElement>,part:Part,mode:GeometryEdit)=>{
+ const start=(event:ReactPointerEvent<SVGElement>,part:Part,mode:GeometryEdit)=>{
   if(!callbacks.current.onEdit&&!callbacks.current.batch||event.button!==0||gesture.current)return;
   const root=svg.current,inverse=root?.getScreenCTM()?.inverse();if(!root||!inverse)return;
   event.preventDefault();event.stopPropagation();event.currentTarget.focus({preventScroll:true});
@@ -46,7 +46,7 @@ export function useGeometryDrag(svg:RefObject<SVGSVGElement>,project:Project,foc
    const step=event.shiftKey?10:event.altKey?0.1:1,key=g.mode==='move'?'offset':g.mode;
    const patch=geometryPatch(g.part,g.mode,delta,step);
    const aligned=callbacks.current.snapEnabled&&!event.altKey?snapGeometry(patch,g.candidates,Math.hypot(g.inverse.a,g.inverse.b),g.snap):{patch,snap:null};
-   g.next=transformSelection(g.base,g.batchIds,g.mode,aligned.patch[key]!-g.part[key],aligned.snap?.001:step);g.changed=g.next!==g.base;g.snap=aligned.snap;
+   g.next=transformSelection(g.base,g.batchIds,g.mode,aligned.patch[key]!-g.part[key],aligned.snap?0.001:step);g.changed=g.next!==g.base;g.snap=aligned.snap;
    const result=geometrySelection(g.next,g.batchIds);const actual=g.mode==='move'?result.bounds.min[0]-geometrySelection(g.base,g.batchIds).bounds.min[0]:g.mode==='length'?result.bounds.max[0]-result.bounds.min[0]:Math.max(...result.nodes.map(n=>n.part.diameter));
    if(g.snap&&Math.abs(actual-g.snap.value)>.01)g.snap=null;
    setDraft({id:g.part.id,patch:{},snap:g.snap,project:g.next});callbacks.current.batch?.onPreview(g.next.parts);return;

@@ -1,5 +1,5 @@
 import {resolveParts,boundsOf} from './geometry';
-import {subtree,validate,type Project} from './project';
+import {subtree,validate,type Project,type Part} from './project';
 import {selectionRoots} from './selection';
 import {minimumDiameter,type GeometryEdit} from './geometryEdit';
 const round=(n:number)=>Math.round(n*1000)/1000;
@@ -9,9 +9,20 @@ export function geometrySelection(project:Project,ids:string[]){
  const nodes=all.filter(n=>set.has(n.part.id)&&n.physical);return {nodes,bounds:boundsOf(nodes)};
 }
 export function place(project:Project,targets:Map<string,number>){
- let next=project;const order=resolveParts(project).filter(n=>targets.has(n.part.id)).map(n=>n.part.id);
- for(const id of order){const node=resolveParts(next).find(n=>n.part.id===id)!;const delta=targets.get(id)!-node.position[0];if(Math.abs(delta)<.00001)continue;next={...next,parts:next.parts.map(p=>p.id===id?{...p,offset:round(p.offset+delta)}:p)};}
- return next;
+ const byParent=new Map<string|null,Part[]>();for(const p of project.parts){const list=byParent.get(p.parentId)??[];list.push(p);byParent.set(p.parentId,list)}
+ const changed=new Map<string,Part>();
+ function visit(part:Part,world:number):number {
+  let cursor=0,extent=['rocket','stage','assembly'].includes(part.kind)?0:part.length;
+  for(const child of byParent.get(part.id)??[]){
+   const serial=['stage','body','nose'].includes(child.kind);const base=serial?cursor:0;
+   const wanted=targets.get(child.id);const offset=wanted===undefined?child.offset:round(wanted-world-base);
+   if(Math.abs(offset-child.offset)>.00001)changed.set(child.id,{...child,offset});
+   const local=base+offset,childEnd=visit(child,world+local);extent=Math.max(extent,local+childEnd);if(serial)cursor=local+childEnd;
+  }
+  return extent;
+ }
+ for(const root of byParent.get(null)??[])visit(root,0);
+ return changed.size?{...project,parts:project.parts.map(p=>changed.get(p.id)??p)}:project;
 }
 /** Changes geometry inputs only. World positions are used to avoid double transforms. */
 export function transformSelection(project:Project,ids:string[],mode:GeometryEdit,delta:number,step=1):Project {
@@ -29,6 +40,7 @@ export function transformSelection(project:Project,ids:string[],mode:GeometryEdi
    const floor=mode==='length'?1:part.kind==='fins'&&selected.has(part.parentId??'')?1:minimumDiameter(project,part);
    factor=Math.max(factor,floor/Math.max(part[mode],1));
   }
+  if(Math.abs(factor-1)<1e-12&&selection.nodes.every(n=>n.part[mode]>=1))return project;
   const patches=new Map(selection.nodes.map(n=>[n.part.id,{[mode]:Math.max(1,round(n.part[mode]*factor))}]));
   next={...project,parts:project.parts.map(p=>patches.has(p.id)?{...p,...patches.get(p.id)}:p)};
   if(mode==='length')next=place(next,new Map(selection.nodes.map(n=>[n.part.id,selection.bounds.min[0]+(n.position[0]-selection.bounds.min[0])*factor])));

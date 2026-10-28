@@ -66,7 +66,7 @@
 .selection-chips>span{display:flex;align-items:center;min-width:0;max-width:100%;border:1px solid var(--line);border-left:2px solid #fff;background:#000}
 .selection-chips button{border:0;background:#000;color:#fff;padding:7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .selection-chips button+button{display:grid;place-items:center;flex:none}
-.hierarchy-search{display:flex;align-items:center;gap:10px;padding:4px 16px;border-bottom:1px solid var(--line);flex:none}
+.hierarchy-search{display:flex;align-items:center;gap:10px;flex:1;min-width:100px;max-width:360px;margin-left:auto;margin-right:20px}
 .hierarchy-search input{min-width:0;flex:1;border:0;background:#000;color:#fff;padding:9px 0;font-size:12px}
 .tree-panel .scope-enter{display:grid;place-items:center;flex:none;opacity:0;border:0;background:#000;padding:6px 12px;color:#fff}
 .tree-row:is(:hover,:focus-within,.active) .scope-enter{opacity:1}

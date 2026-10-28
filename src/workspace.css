@@ -148,3 +148,7 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .menu-popup button{display:flex;align-items:center;justify-content:space-between;gap:24px}
 .menu-popup button:disabled{opacity:.4;cursor:default}
 .menu-popup kbd{font-size:11px;white-space:nowrap}
+.geometry-group-hit{fill:transparent;stroke:none;cursor:grab}
+.group-move{cursor:grab}.group-move:active{cursor:grabbing}
+.group-move-mark{fill:none;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
+.group-move:is(:hover,:focus-visible) .group-move-mark{stroke-width:3}
