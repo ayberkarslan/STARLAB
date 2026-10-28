@@ -43,6 +43,11 @@
 .inspector-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:12px}
 .inspector-toolbar>div{display:flex;gap:4px}
 .inspector-fields{display:grid;gap:16px;padding-bottom:4px}
+.inspector-tabs{display:flex;gap:16px;margin-bottom:18px;border-bottom:1px solid var(--line);overflow-x:auto;flex-shrink:0}
+.inspector-tabs button{position:relative;background:#000;color:#fff;border:0;padding:10px 0;font-size:12px;white-space:nowrap}
+.inspector-tabs button[aria-pressed=true]::after,.inspector-tabs button:hover::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#fff}
+.inspector-reference{font-size:12px;line-height:1.9;margin:0}
+.inspector-fields textarea{min-height:100px;resize:vertical;font-size:13px}
 .inspector-fields .sd-field__input{font-size:13px;min-height:38px;padding:8px 10px}
 .inspector-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .inspector-number{display:grid;gap:8px;min-width:0;font-size:12px}
