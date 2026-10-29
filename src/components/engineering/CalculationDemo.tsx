@@ -1,0 +1,44 @@
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {IconButton,SelectMenu} from '@stardrop/ui';
+import {Maximize,Minus,Plus} from 'lucide-react';
+import type {Part,Project} from '../../domain/project';
+import type {GraphSnapshot} from '../../engine/graph';
+import {createTubeGraph,tubeInputs} from '../../engine/tube';
+import {NumberInput} from '../NumberInput';
+import {useCanvasNavigation} from '../useCanvasNavigation';
+import ResizableSplit from '../ResizableSplit';
+import {Empty} from './shared';
+import './calculation-demo.css';
+
+export default function CalculationDemo({project,onChange}:{project:Project;onChange:(id:string,patch:Partial<Part>)=>void}){
+ const bodies=project.parts.filter(p=>p.kind==='body');const [partId,setPartId]=useState(''),[snapshot,setSnapshot]=useState<GraphSnapshot>(),[error,setError]=useState(''),[running,setRunning]=useState(false),[zoom,setZoom]=useState(1),[selected,setSelected]=useState('mass');
+ const part=bodies.find(p=>p.id===partId)??bodies[0];const graph=useMemo(createTubeGraph,[]);
+ const inputs=part?tubeInputs(part):{};const inputKey=JSON.stringify(inputs);
+ useEffect(()=>{const controller=new AbortController();setRunning(true);setError('');void graph.evaluate(inputs,controller.signal).then(result=>{if(!controller.signal.aborted){setSnapshot(result);setRunning(false)}}).catch(e=>{if(!controller.signal.aborted){setError(e instanceof Error?e.message:'Hesap tamamlanamadı.');setRunning(false)}});return()=>controller.abort()},[graph,inputKey,part?.id]);
+ const items=[...graph.sources,...graph.nodes],levels=new Map(graph.sources.map(s=>[s.id,0]));
+ for(const n of graph.nodes)levels.set(n.id,1+Math.max(0,...Object.values(n.inputs).map(d=>levels.get(d.id)??0)));
+ const columns=Array.from({length:Math.max(...levels.values())+1},(_,i)=>items.filter(n=>levels.get(n.id)===i));
+ const height=Math.max(300,Math.max(...columns.map(c=>c.length))*108+40),width=columns.length*280+40;
+ const positions=new Map(columns.flatMap((col,x)=>col.map((item,y)=>[item.id,{x:20+x*280,y:(height-col.length*108)/2+y*108}] as const)));
+ const svg=useRef<SVGSVGElement>(null),navigation=useCanvasNavigation(svg,{x:0,y:0,width,height},zoom,setZoom,part?.id??'',false);
+ const [pan,setPan]=useState({x:0,y:0}),drag=useRef<{x:number;y:number;dx:number;dy:number;pan:{x:number;y:number}}>();
+ // Pan by pointer dragging; touchpad wheel/pinch uses the shared canvas hook.
+ const entry=items.find(n=>n.id===selected),node=graph.nodes.find(n=>n.id===selected),active=snapshot?.results[selected];
+ const format=(value:unknown)=>typeof value==='number'?value.toLocaleString('tr-TR',{maximumSignificantDigits:7}):JSON.stringify(value);
+ const frame=navigation.frame;
+ if(!part)return <Empty>Örneği kullanmak için tasarıma bir gövde tüpü ekle</Empty>;
+ const fields=<div className="engineering-body input-settings calculation-inputs"><SelectMenu label="Hesaplanacak gövde" value={part.id} options={bodies.map(p=>({value:p.id,label:p.name}))} onChange={id=>{setPartId(id);setSnapshot(undefined);setPan({x:0,y:0})}}/>
+  <div className="engineering-field-grid"><NumberInput label="Gövde uzunluğu" unit="mm" value={part.length} min={Number.MIN_VALUE} onChange={v=>onChange(part.id,{length:v!})}/><NumberInput label="Gövde dış çapı" unit="mm" value={part.diameter} min={Math.max(Number.MIN_VALUE,2*(part.inputs?.wallThickness??0))} onChange={v=>onChange(part.id,{diameter:v!})}/><NumberInput label="Gövde et kalınlığı" unit="mm" optional value={part.inputs?.wallThickness} max={part.diameter/2} onChange={v=>onChange(part.id,{inputs:{wallThickness:v}})}/><NumberInput label="Gövde yoğunluğu" unit="kg/m³" optional min={Number.MIN_VALUE} value={part.inputs?.density} onChange={v=>onChange(part.id,{inputs:{density:v}})}/></div>
+  <div className="calculation-result" aria-label="Seçili hesap"><strong>{entry?.label}</strong>{active?.state.status==='ready'?<span>{format(active.state.value)} <small>{entry?.output.unit}</small></span>:<span>{active?.state.status==='missing'?'Girdi gerekli':active?.state.status==='blocked'?'Girdi bekleniyor':active?.state.status==='error'?active.state.error:'—'}</span>}
+   {node&&<><span>{active?.runs??0} çalıştırma</span><div>{Object.entries(node.inputs).map(([name,ref])=><button key={name} onClick={()=>setSelected(ref.id)}>{items.find(n=>n.id===ref.id)?.label} <small>{ref.output.unit}</small></button>)}</div><span title={node.provenance}>{node.provenance}</span></>}
+  </div><details className="engineering-details"><summary>Model kapsamı</summary><p className="calculation-scope">Tek, homojen gövde tüpü. Girilen kütle/CG düzeltmeleri ve alt bileşenler bu örneğe dahil değil. CG bileşen başlangıcından; ataletler yerel CG etrafında. Sonuçlar SI biriminde.</p></details>
+ </div>;
+ const canvas=<div className="calculation-canvas"><div className="calculation-toolbar"><span aria-live="polite">{running?'Hesaplanıyor':`Son işlem · ${snapshot?.updated.length??0} node`}</span><div><IconButton variant="ghost" size="sm" label="Hesap ağını uzaklaştır" onClick={()=>setZoom(z=>Math.max(.25,z/1.2))}><Minus size={15}/></IconButton><IconButton variant="ghost" size="sm" label="Hesap ağını yakınlaştır" onClick={()=>setZoom(z=>Math.min(8,z*1.2))}><Plus size={15}/></IconButton><IconButton variant="ghost" size="sm" label="Hesap ağını sığdır" onClick={()=>{navigation.reset();setPan({x:0,y:0})}}><Maximize size={15}/></IconButton></div></div>
+  <svg ref={svg} className="calculation-map" viewBox={`${frame.x+pan.x} ${frame.y+pan.y} ${frame.width} ${frame.height}`} aria-label="Modüler hesaplama ağı" onPointerDown={e=>{if((e.target as Element).closest('[data-node]'))return;const matrix=svg.current?.getScreenCTM()?.inverse();if(!matrix)return;drag.current={x:e.clientX,y:e.clientY,dx:matrix.a,dy:matrix.d,pan};e.currentTarget.setPointerCapture(e.pointerId)}} onPointerMove={e=>{if(!drag.current)return;const start=drag.current;setPan({x:start.pan.x-(e.clientX-start.x)*start.dx,y:start.pan.y-(e.clientY-start.y)*start.dy})}} onPointerUp={()=>{drag.current=undefined}} onPointerCancel={()=>{drag.current=undefined}}>
+   <defs><marker id="calc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10" fill="none" stroke="white"/></marker></defs>
+   {graph.nodes.flatMap(n=>Object.values(n.inputs).map(ref=>{const a=positions.get(ref.id)!,b=positions.get(n.id)!;return <path key={`${ref.id}-${n.id}`} className={`calculation-edge ${snapshot?.changed.includes(ref.id)?'changed':''}`} d={`M${a.x+220},${a.y+40}C${a.x+250},${a.y+40} ${b.x-30},${b.y+40} ${b.x},${b.y+40}`} markerEnd="url(#calc-arrow)"/>}))}
+   {items.map(item=>{const pos=positions.get(item.id)!,result=snapshot?.results[item.id];return <foreignObject key={item.id} x={pos.x} y={pos.y} width="220" height="84"><button data-node={item.id} className={`calculation-node ${result?.action==='computed'?'computed':''}`} aria-pressed={selected===item.id} onClick={()=>setSelected(item.id)}><span>{item.label}</span><strong>{running?'…':result?.state.status==='ready'?`${format(result.state.value)} ${item.output.unit}`:'—'}</strong><small>{result?.state.status==='error'?'Hata':result?.state.status==='missing'?'Eksik':result?.state.status==='blocked'?'Bekliyor':result?.action==='computed'?'Çalıştı':result?.action==='cached'?'Önbellek':'Girdi'}</small></button></foreignObject>})}
+  </svg>{error&&<p className="series-error" role="alert">{error}</p>}
+ </div>;
+ return <ResizableSplit className="engineering-split" axis="x" storageKey="calculations.graph" label="Hesap girdileri ve ağ genişliği" initialRatio={.3} minFirst={300} minSecond={350}>{fields}{canvas}</ResizableSplit>;
+}
