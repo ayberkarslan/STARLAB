@@ -50,4 +50,5 @@ export function validateEnvironmentInputs(v:EnvironmentInputs){
   if(t.poles!==undefined&&(!Number.isInteger(t.poles)||t.poles<1||t.poles>100)||t.sampleRate!==undefined&&t.sampleRate<=0||t.seed!==undefined&&(!Number.isInteger(t.seed)||t.seed>4294967295))throw Error('Türbülans örnekleme girdisi geçersiz.');
  }
  if(v.dateTimeUtc!==undefined&&(typeof v.dateTimeUtc!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/.test(v.dateTimeUtc)||!Number.isFinite(Date.parse(v.dateTimeUtc))))throw Error('Tarih UTC biçiminde olmalı.');
+ if(v.dateTimeUtc!==undefined&&new Date(v.dateTimeUtc).toISOString().slice(0,16)!==v.dateTimeUtc.slice(0,16))throw Error('Takvim tarihi geçersiz.');
 }

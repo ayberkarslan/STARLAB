@@ -17,7 +17,7 @@ export function inputReadiness(project:Project,flight:FlightWorkspace):InputGrou
   if(isShell(p.kind)&&g.filled!==true&&g.innerDiameter===undefined&&i.wallThickness===undefined)fields.push('Et kalınlığı');
   if(isFin(p.kind)){if(i.wallThickness===undefined)fields.push('Kanat kalınlığı');if(g.finCrossSection===undefined)fields.push('Kanat kesiti');if(g.finCount===undefined)fields.push('Kanat sayısı');}
   const supplied=i.massProvided===true||i.massProvided!==false&&p.mass>0;
-  if(!supplied&&i[densityKeys[materialType(p.kind)]]===undefined)fields.push(p.kind==='mass'?'Kütle':'Kütle veya yoğunluk');
+  if(!supplied&&(p.kind==='mass'||i[densityKeys[materialType(p.kind)]]===undefined))fields.push(p.kind==='mass'?'Kütle':'Kütle veya yoğunluk');
   return fields.length?[{target:p.name,partId:p.id,fields}]:[];
  });
  if(!physical.length)geometry.push({target:'Tasarım',fields:['Bileşen ekle']});
