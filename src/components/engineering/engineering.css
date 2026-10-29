@@ -114,3 +114,6 @@
 .series-table input{width:100%;min-width:88px;background:#000;color:#fff;border:0;border-bottom:1px solid transparent;font:inherit;padding:9px 0}
 .series-table input:focus{outline:none;border-bottom-color:#fff}
 .series-error{font-size:12px;line-height:1.7;margin:0}
+
+.environment-surface{margin-top:18px}
+.input-settings .sd-field__label,.input-settings .sd-field__input{font-size:12px}

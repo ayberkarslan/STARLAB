@@ -1,3 +1,4 @@
+import {validateEnvironmentInputs,type EnvironmentInputs} from './environmentInputs';
 import {type Motor,sampleMotors,validateMotor,motorFits} from './motors';
 import type {Project} from './project';
 export type IgnitionEvent='launch'|'previousBurnout'|'separation';
@@ -5,7 +6,7 @@ export interface MotorAssignment {motorId:string;event:IgnitionEvent;delay:numbe
 export interface Separation {event:'burnout'|'never';delay:number}
 export interface Recovery {event:'apogee'|'altitude'|'never';delay:number;altitude:number}
 export interface FlightConfiguration {id:string;name:string;mounts:Record<string,MotorAssignment>;separations:Record<string,Separation>;recovery:Record<string,Recovery>}
-export interface Environment {latitude:number;longitude:number;altitude:number;temperature:number;pressure:number;windSpeed:number;windDirection:number;railLength:number;railAngle:number;railHeading:number;timeStep:number;maxTime:number}
+export interface Environment extends EnvironmentInputs {latitude:number;longitude:number;altitude:number;temperature:number;pressure:number;windSpeed:number;windDirection:number;railLength:number;railAngle:number;railHeading:number;timeStep:number;maxTime:number}
 export interface FlightSample {t:number;altitude:number;velocity:number;acceleration:number}
 export interface FlightResult {source:'imported'|'solver';signature:string;samples:FlightSample[]}
 export interface SimulationCase {id:string;name:string;configurationId:string;environment:Environment;result?:FlightResult}
@@ -15,7 +16,7 @@ export function initialFlight():FlightWorkspace{return {motors:[],configurations
 export function allMotors(flight:FlightWorkspace){return [...sampleMotors,...flight.motors];}
 export function configurationIssues(project:Project,flight:FlightWorkspace,config:FlightConfiguration):string[]{const motors=allMotors(flight);const mounts=project.parts.filter(p=>p.kind==='motor');const issues:string[]=[];if(!mounts.length)issues.push('Tasarımda motor yuvası yok.');for(const mount of mounts){const assignment=config.mounts[mount.id];const motor=motors.find(m=>m.id===assignment?.motorId);if(!motor)issues.push(`${mount.name}: motor seçilmedi.`);else if(!motorFits(motor,mount))issues.push(`${mount.name}: motor ölçüleri uymuyor.`);}return issues;}
 export function simulationSignature(project:Project,config:FlightConfiguration,environment:Environment,flight:FlightWorkspace){const content=JSON.stringify({parts:project.parts,...(project.aerodynamics?{aerodynamics:project.aerodynamics}:{}),config,environment,motors:allMotors(flight).filter(m=>Object.values(config.mounts).some(a=>a.motorId===m.id))});let hash=2166136261;for(let i=0;i<content.length;i++)hash=Math.imul(hash^content.charCodeAt(i),16777619);return (hash>>>0).toString(16);}
-export function validateEnvironment(e:Environment){const ranges:Record<keyof Environment,[number,number]>={latitude:[-90,90],longitude:[-180,180],altitude:[-500,100000],temperature:[-100,100],pressure:[1,200000],windSpeed:[0,200],windDirection:[0,360],railLength:[.01,100],railAngle:[0,90],railHeading:[0,360],timeStep:[.0001,1],maxTime:[1,10000]};for(const [key,[min,max]]of Object.entries(ranges)){const value=e?.[key as keyof Environment];if(!Number.isFinite(value)||value<min||value>max)throw Error('Simülasyon koşulları geçersiz.');}return e;}
+export function validateEnvironment(e:Environment){const ranges:Record<string,[number,number]>={latitude:[-90,90],longitude:[-180,180],altitude:[-500,100000],temperature:[-100,100],pressure:[1,200000],windSpeed:[0,200],windDirection:[0,360],railLength:[.01,100],railAngle:[0,90],railHeading:[0,360],timeStep:[.0001,1],maxTime:[1,10000]};for(const [key,[min,max]]of Object.entries(ranges)){const value=e?.[key as keyof Environment];if(!Number.isFinite(value)||value<min||value>max)throw Error('Simülasyon koşulları geçersiz.');}validateEnvironmentInputs(e);return e;}
 const record=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Array.isArray(v);
 export function validateFlight(f:FlightWorkspace){
  if(!f||!Array.isArray(f.motors)||!Array.isArray(f.configurations)||!f.configurations.length||!Array.isArray(f.cases)||f.motors.length>500||f.configurations.length>100||f.cases.length>100)throw Error('Uçuş çalışma alanı geçersiz.');
