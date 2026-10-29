@@ -6,6 +6,10 @@ import {isShell,type Kind} from './componentCatalog';
 export interface PartInputs {
  wallThickness?:number;
  density?:number;
+ /** Effective shear modulus in Pa; unset is unknown, not zero. */
+ shearModulus?:number;
+ /** Normal-force coefficient slope per radian; supplied override, not a result. */
+ normalForceSlope?:number;
  surfaceDensity?:number;
  linearDensity?:number;
  centerOfMass?:number;
@@ -21,10 +25,11 @@ export interface PartInputs {
 export function validatePartInputs(value:unknown,diameter:number,kind:Kind):asserts value is PartInputs {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Bileşen girdileri geçersiz.');
  const inputs=value as PartInputs;
- for(const key of ['wallThickness','density','surfaceDensity','linearDensity','centerOfMass','centerOfPressure','dragCoefficient','roughness','mach','angleOfAttack'] as const){
+ for(const key of ['wallThickness','density','shearModulus','normalForceSlope','surfaceDensity','linearDensity','centerOfMass','centerOfPressure','dragCoefficient','roughness','mach','angleOfAttack'] as const){
   const n=inputs[key];if(n===undefined)continue;
-  if(typeof n!=='number'||!Number.isFinite(n)||(!['centerOfMass','centerOfPressure','angleOfAttack'].includes(key)&&n<0))throw Error('Bileşen sayısal girdisi geçersiz.');
+  if(typeof n!=='number'||!Number.isFinite(n)||(!['centerOfMass','centerOfPressure','angleOfAttack','normalForceSlope'].includes(key)&&n<0))throw Error('Bileşen sayısal girdisi geçersiz.');
  }
+ if(inputs.shearModulus!==undefined&&inputs.shearModulus<=0)throw Error('Kayma modülü sıfırdan büyük olmalı.');
  if(inputs.density!==undefined&&inputs.density<=0)throw Error('Yoğunluk sıfırdan büyük olmalı.');
  if([inputs.surfaceDensity,inputs.linearDensity].some(n=>n!==undefined&&n<=0))throw Error('Yoğunluk sıfırdan büyük olmalı.');
  if(inputs.wallThickness!==undefined&&isShell(kind)&&inputs.wallThickness>diameter/2)throw Error('Et kalınlığı dış yarıçapı aşamaz.');

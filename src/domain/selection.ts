@@ -12,7 +12,7 @@ export function scopedProject(project:Project,focus:string,query=''):Project {
  const ids=new Set(parts.map(p=>p.id));return {...project,parts:parts.map(p=>p.parentId&&!ids.has(p.parentId)?{...p,parentId:null}:p)};
 }
 export function patchSelection(project:Project,ids:string[],patch:Partial<Part>):Project {
- const set=new Set(ids);const next={...project,parts:project.parts.map(p=>set.has(p.id)?{...p,...patch,inputs:patch.inputs?{...p.inputs,...patch.inputs}:p.inputs}:p)};
+ const set=new Set(ids);const next={...project,parts:project.parts.map(p=>set.has(p.id)?{...p,...patch,geometry:patch.geometry?{...p.geometry,...patch.geometry}:p.geometry,inputs:patch.inputs?{...p.inputs,...patch.inputs}:p.inputs}:p)};
  return validate(next);
 }
 export function removeSelection(project:Project,ids:string[]){let next=project;for(const p of selectionRoots(project,ids))next=removePart(next,p.id);return next}
