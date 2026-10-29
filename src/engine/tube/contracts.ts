@@ -1,0 +1,4 @@
+import type {Contract,Source} from '../graph';
+function scalar(id:string,unit:string,positive=false,frame?:string):Contract<number>{return {id,unit,frame,parse(value){if(typeof value!=='number'||!Number.isFinite(value)||(positive?value<=0:value<0))throw Error(`${id}: geçersiz değer`);return value}}}
+export const length=scalar('positive-length','m',true),wall=scalar('wall-length','m'),density=scalar('bulk-density','kg/m³',true),volume=scalar('volume','m³'),mass=scalar('mass','kg'),center=scalar('local-axial-cg','m',false,'component-leading-origin'),inertia=scalar('centroidal-inertia','kg·m²',false,'component-local-cg');
+export const tubeSources:Source[]=[{id:'length',label:'Uzunluk',output:length},{id:'radius',label:'Dış yarıçap',output:length},{id:'wall',label:'Et kalınlığı',output:wall},{id:'density',label:'Yoğunluk',output:density}];

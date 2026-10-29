@@ -1,5 +1,5 @@
 /** The scheduler knows contracts and connections, never rocket formulae. */
-export interface Contract<T=unknown> {id:string;unit:string;frame?:string;parse:(value:unknown)=>T;equal?:(a:T,b:T)=>boolean}
+export interface Contract<T=unknown> {id:string;unit:string;frame?:string;parse:(value:unknown)=>T;equal?(a:T,b:T):boolean}
 export interface Link<T=unknown> {id:string;output:Contract<T>}
 export interface Source<T=unknown> extends Link<T> {label:string}
 export interface CalculationNode extends Source {inputs:Record<string,Link>;run:(inputs:Record<string,unknown>,signal:AbortSignal)=>unknown|Promise<unknown>;provenance?:string}
