@@ -104,3 +104,13 @@
 .input-settings .sd-select__popup{position:relative;inset:auto}
 .input-settings .inspector-number{font-size:12px}
 .input-settings .inspector-number small{font-size:12px}
+.series-editor{display:flex;flex-direction:column;min-width:0;gap:12px;font-size:12px}
+.series-actions,.series-actions>div{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.series-table{overflow:auto;max-height:380px;overscroll-behavior:contain}
+.series-table table{border-collapse:collapse;width:100%;text-align:left}
+.series-table th,.series-table td{padding:9px 10px;border-bottom:1px solid var(--line);font-weight:400;white-space:nowrap}
+.series-table thead th{position:sticky;top:0;background:#000;z-index:1}
+.series-table th>span{display:block;margin-top:6px;font-size:12px}
+.series-table input{width:100%;min-width:88px;background:#000;color:#fff;border:0;border-bottom:1px solid transparent;font:inherit;padding:9px 0}
+.series-table input:focus{outline:none;border-bottom-color:#fff}
+.series-error{font-size:12px;line-height:1.7;margin:0}
