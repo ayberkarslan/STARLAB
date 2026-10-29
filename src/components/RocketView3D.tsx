@@ -34,15 +34,15 @@ function CameraRig({bounds,focus,zoom}:{bounds:Bounds;focus:string;zoom:number})
  useFrame(()=>controlRef.current?.update());return null;
 }
 function WorldGrid({floor}:{floor:number}){const geometry=useMemo(gridGeometry,[]);useEffect(()=>()=>geometry.dispose(),[geometry]);return <lineSegments geometry={geometry} position={[0,floor,0]} raycast={()=>{}}><lineBasicMaterial color="white" transparent opacity={.07}/></lineSegments>}
-function StudioLights({bounds}:{bounds:Bounds}){
+function StudioLights({bounds,presentation=false}:{bounds:Bounds;presentation?:boolean}){
  const target=useMemo(()=>new Vector3(...bounds.min).add(new Vector3(...bounds.max)).multiplyScalar(.0005),[...bounds.min,...bounds.max]);
  // Keep the light directions consistent when isolating a small subsystem.
  const span=Math.max(new Vector3(...bounds.max).sub(new Vector3(...bounds.min)).length()*.001,1);
- return <><hemisphereLight args={['white','white',.9]}/>{[
+ return <><hemisphereLight args={['white','white',presentation?.12:.9]}/>{[
   {offset:[-.5,1,1],intensity:3.5},
   {offset:[.6,.3,-1],intensity:2},
   {offset:[0,-.5,.6],intensity:.7},
- ].map(({offset,intensity},index)=><directionalLight key={index} color="white" intensity={intensity} position={[target.x+offset[0]*span,target.y+offset[1]*span,target.z+offset[2]*span]} onUpdate={light=>{light.target.position.copy(target);light.target.updateMatrixWorld()}}/>)}</>;
+ ].map(({offset,intensity},index)=><directionalLight key={index} color="white" intensity={presentation?intensity*.35:intensity} position={[target.x+offset[0]*span,target.y+offset[1]*span,target.z+offset[2]*span]} onUpdate={light=>{light.target.position.copy(target);light.target.updateMatrixWorld()}}/>)}</>;
 }
 function CinematicRig({bounds}:{bounds:Bounds}){
  const {camera,size,gl,scene}=useThree();const reduced=useMemo(()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches,[]);
@@ -50,12 +50,12 @@ function CinematicRig({bounds}:{bounds:Bounds}){
  useFrame(({clock})=>{const pose=cinematicPose(bounds,size.width/Math.max(size.height,1),reduced?0:clock.elapsedTime);camera.position.set(...pose.position);camera.lookAt(...pose.target);const perspective=camera as PerspectiveCamera;perspective.fov=32;perspective.near=pose.near;perspective.far=pose.far;perspective.updateProjectionMatrix()});return null;
 }
 function Scene(props:ViewProps&{presentation?:boolean}){
- const materials=useMemo(()=>{const result=sceneMaterials();if(props.presentation){result.surface.color.set('#b8b8b8');result.surface.metalness=.65;result.surface.roughness=.26;result.surface.envMapIntensity=1.2}return result},[props.presentation]);useEffect(()=>()=>{Object.values(materials).forEach(material=>material.dispose())},[materials]);
+ const materials=useMemo(()=>{const result=sceneMaterials();if(props.presentation){result.surface.color.set('#787878');result.surface.metalness=.85;result.surface.roughness=.2;result.surface.envMapIntensity=.85}return result},[props.presentation]);useEffect(()=>()=>{Object.values(materials).forEach(material=>material.dispose())},[materials]);
  const resolved=useMemo(()=>resolveParts(props.project),[props.project]);const scope=scopeParts(resolved,props.focus);const visible=new Set(scope.map(n=>n.part.id));const bounds=boundsOf(scope);const nodes=new Map(resolved.map(n=>[n.part.id,n]));
  const active=new Set(geometrySelection(props.project,props.selectedIds??[props.selected]).nodes.map(n=>n.part.id));
  const children=new Map<string|null,ResolvedPart[]>();for(const node of resolved){const list=children.get(node.parentId)||[];list.push(node);children.set(node.parentId,list);}
  const branch=(node:ResolvedPart):React.ReactNode=><group key={node.part.id} position={node.localPosition.map(v=>v*.001) as [number,number,number]}>{node.physical&&visible.has(node.part.id)&&(!props.presentation||!isInternal(node.part.kind))&&<PartMesh presentation={props.presentation} node={node} materials={materials} bodyDiameter={nodes.get(node.parentId||'')?.part.diameter||140} selected={active.has(node.part.id)} onSelect={props.onSelect}/>} {(children.get(node.part.id)||[]).map(branch)}</group>;
- return <>{props.presentation?<CinematicRig bounds={bounds}/>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom}/>}<StudioLights bounds={bounds}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
+ return <>{props.presentation?<CinematicRig bounds={bounds}/>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom}/>}<StudioLights bounds={bounds} presentation={props.presentation}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
 }
 class Boundary extends React.Component<{children:React.ReactNode;onBack:()=>void},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?<div className="view-fallback" role="alert"><p>3D görünüm başlatılamadı.</p><button onClick={this.props.onBack}>2D görünüme dön</button></div>:this.props.children}}
 export default function RocketView3D(props:ViewProps&{onBack:()=>void;presentation?:boolean}){
