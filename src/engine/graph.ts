@@ -13,6 +13,9 @@ export interface GraphSnapshot {revision:number;results:Record<string,Calculatio
 export function valueEqual(a:unknown,b:unknown):boolean {
  if(Object.is(a,b))return true;
  if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;
+ if(Array.isArray(a)&&Array.isArray(b)&&a.length!==b.length)return false;
+ // Non-JSON payloads need an explicit contract comparator; never assume equality.
+ if(!Array.isArray(a)&&[Object.getPrototypeOf(a),Object.getPrototypeOf(b)].some(p=>p!==Object.prototype&&p!==null))return false;
  const x=Object.keys(a),y=Object.keys(b);return x.length===y.length&&x.every(k=>Object.hasOwn(b,k)&&valueEqual((a as Record<string,unknown>)[k],(b as Record<string,unknown>)[k]));
 }
 function same(a:CalculationState|undefined,b:CalculationState,contract:Contract){return a?.status===b.status&&(a.status==='ready'&&b.status==='ready'?(contract.equal??valueEqual)(a.value,b.value):a.status!=='ready'&&b.status!=='ready'&&a.error===b.error)}
@@ -21,7 +24,7 @@ const cancelled=()=>new DOMException('Calculation superseded','AbortError');
 export class CalculationGraph {
  readonly sources:readonly Source[];
  readonly nodes:readonly CalculationNode[];
- private cache:Record<string,CalculationResult>={};
+ private cache:Record<string,CalculationResult>=Object.create(null);
  private pending?:AbortController;
  private revision=0;
  constructor(sources:Source[],nodes:CalculationNode[]){
@@ -36,17 +39,17 @@ export class CalculationGraph {
   const queue=nodes.filter(n=>indegree.get(n.id)===0),ordered:CalculationNode[]=[];
   for(let i=0;i<queue.length;i++){const node=queue[i];ordered.push(node);for(const id of children.get(node.id)??[]){const count=indegree.get(id)!-1;indegree.set(id,count);if(count===0)queue.push(byId.get(id)!);}}
   if(ordered.length!==nodes.length)throw Error('Calculation cycle');
-  this.sources=sources.map(source=>({...source}));this.nodes=ordered;
+  this.sources=Object.freeze(sources.map(source=>Object.freeze({...source,output:Object.freeze({...source.output})})));this.nodes=Object.freeze(ordered.map(node=>Object.freeze({...node,inputs:Object.freeze(Object.fromEntries(Object.entries(node.inputs).map(([key,ref])=>[key,Object.freeze({...ref,output:Object.freeze({...ref.output})})]))),output:Object.freeze({...node.output})})));
  }
  async evaluate(inputs:Record<string,unknown>,signal?:AbortSignal):Promise<GraphSnapshot>{
   this.pending?.abort();const controller=new AbortController();this.pending=controller;
   const stop=()=>controller.abort();signal?.addEventListener('abort',stop,{once:true});if(signal?.aborted)controller.abort();
   const check=()=>{if(controller.signal.aborted)throw cancelled()};
-  const results:Record<string,CalculationResult>={},dirty=new Set<string>(),updated:string[]=[];
+  const results:Record<string,CalculationResult>=Object.create(null),dirty=new Set<string>(),updated:string[]=[];
   const store=(entry:Source,state:CalculationState,runs:number,action:CalculationResult['action'])=>{results[entry.id]={state,runs,action};if(!same(this.cache[entry.id]?.state,state,entry.output))dirty.add(entry.id)};
   try{
    check();
-   for(const source of this.sources){let state:CalculationState;try{state=inputs[source.id]===undefined?{status:'missing',error:`${source.label}: veri gerekli`}:{status:'ready',value:structuredClone(source.output.parse(structuredClone(inputs[source.id])))}}catch(e){state={status:'error',error:failure(e)}}store(source,state,0,'source')}
+   for(const source of this.sources){let state:CalculationState;try{state=!Object.hasOwn(inputs,source.id)||inputs[source.id]===undefined?{status:'missing',error:`${source.label}: veri gerekli`}:{status:'ready',value:structuredClone(source.output.parse(structuredClone(inputs[source.id])))}}catch(e){state={status:'error',error:failure(e)}}store(source,state,0,'source')}
    for(const node of this.nodes){
     check();const previous=this.cache[node.id];
     if(previous&&!Object.values(node.inputs).some(ref=>dirty.has(ref.id))){results[node.id]={...previous,action:'cached'};continue}
