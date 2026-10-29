@@ -1,16 +1,18 @@
+import {validateAerodynamics,type AerodynamicInputs} from './aerodynamics';
 import {validateFlight,cleanFlight,type FlightWorkspace} from './flight';
 import {validatePartInputs,type PartInputs} from './partInputs';
 import {catalog,validateGeometry,type Kind,type ComponentGeometry} from './componentCatalog';
 import {validateMaterial,type MaterialData} from './materials';
 export {catalog};export type {Kind};
 export interface Part { id:string; parentId:string|null; kind:Kind; name:string; length:number; diameter:number; offset:number; mass:number; material:string; inputs?:PartInputs;geometry?:ComponentGeometry;materialData?:MaterialData }
-export interface Project { version:1; name:string; parts:Part[]; flight?:FlightWorkspace }
+export interface Project { version:1; name:string; parts:Part[]; flight?:FlightWorkspace; aerodynamics?:AerodynamicInputs }
 export function children(p:Project,id:string){return p.parts.filter(n=>n.parentId===id)}
 export function subtree(p:Project,id:string):Part[]{const n=p.parts.find(n=>n.id===id);return n?[n,...children(p,id).flatMap(c=>subtree(p,c.id))]:[]}
 export function addPart(p:Project,parentId:string,kind:Kind):Project { const parent=p.parts.find(n=>n.id===parentId);if(!parent||!catalog[kind].parents.includes(parent.kind))throw Error('Bu parçaya eklenemez.');return {...p,parts:[...p.parts,{id:crypto.randomUUID(),parentId,kind,name:catalog[kind].label,length:catalog[kind].length,diameter:catalog[kind].diameter,offset:0,mass:0,material:'Tanımlanmadı'}]}; }
 export function removePart(p:Project,id:string):Project {if(p.parts.find(n=>n.id===id)?.kind==='rocket')throw Error('Roket silinemez.');const ids=new Set(subtree(p,id).map(n=>n.id));const next={...p,parts:p.parts.filter(n=>!ids.has(n.id))};if(next.flight)next.flight=cleanFlight(next,next.flight);return next;}
 export function validate(value:unknown):Project {
  const p=value as Project;if(!p||p.version!==1||typeof p.name!=='string'||!Array.isArray(p.parts)||!p.parts.length||p.parts.length>2000)throw Error('Geçersiz proje dosyası.');
+ if(p.aerodynamics!==undefined)validateAerodynamics(p.aerodynamics);
  const ids=new Set<string>();for(const n of p.parts){if(!n||typeof n.id!=='string'||ids.has(n.id)||!Object.hasOwn(catalog,n.kind)||typeof n.name!=='string'||typeof n.material!=='string'||![n.length,n.diameter,n.offset,n.mass].every(Number.isFinite)||n.length<0||n.diameter<0||n.mass<0)throw Error('Parça verileri geçersiz.');ids.add(n.id);}
  for(const n of p.parts){if(n.inputs!==undefined)validatePartInputs(n.inputs,n.diameter,n.kind);if(n.geometry!==undefined){validateGeometry(n.geometry);if(n.geometry.innerDiameter!==undefined&&n.geometry.innerDiameter>n.diameter)throw Error('İç çap dış çapı aşamaz.');}if(n.materialData!==undefined)validateMaterial(n.materialData);}
  if(p.parts.filter(n=>n.kind==='rocket').length!==1)throw Error('Tek roket kökü gerekli.');

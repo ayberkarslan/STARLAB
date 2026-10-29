@@ -100,3 +100,7 @@
 .input-review th,.input-review td{padding:14px 16px;border-bottom:1px solid var(--line);font-weight:400}
 .input-review thead th{border-bottom-color:#fff}
 .input-review-panel{flex:1}
+
+.input-settings .sd-select__popup{position:relative;inset:auto}
+.input-settings .inspector-number{font-size:12px}
+.input-settings .inspector-number small{font-size:12px}

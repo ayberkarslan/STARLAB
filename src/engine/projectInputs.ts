@@ -1,8 +1,10 @@
+import {aerodynamicInput,aeroUnits} from '../domain/aerodynamics';
 import {validate,type Part,type Project} from '../domain/project';
 import {initialFlight} from '../domain/flight';
 import {portableProject} from '../domain/starFile';
 
 export const inputUnits={
+ aerodynamics:aeroUnits,
  parts:{length:'mm',diameter:'mm',offset:'mm',mass:'g',wallThickness:'mm',density:'kg/m³',shearModulus:'Pa',normalForceSlope:'1/rad',surfaceDensity:'kg/m²',linearDensity:'kg/m',centerOfMass:'mm',centerOfPressure:'mm',roughness:'µm',angleOfAttack:'deg',mach:'1',dragCoefficient:'1'},
  motors:{length:'mm',diameter:'mm',totalMass:'kg',propellantMass:'kg',time:'s',thrust:'N'},
  environment:{latitude:'deg',longitude:'deg',altitude:'m',temperature:'°C',pressure:'Pa',windSpeed:'m/s',windDirection:'deg',railLength:'m',railAngle:'deg',railHeading:'deg',timeStep:'s',maxTime:'s'},
@@ -22,5 +24,5 @@ export type PartInput=ReturnType<typeof partInput>;
 /** Serialization boundary only: no physics, estimated values or unit conversion. */
 export function createProjectInputs(project:Project){
  const portable=portableProject(validate(project));const flight=portable.flight??initialFlight();
- return structuredClone({format:'starlab.inputs',schemaVersion:1,units:inputUnits,coordinates:{axis:'x',positive:'aft',centers:'component-local-leading-origin',offset:'parent-local-origin'},project:{name:portable.name,parts:portable.parts.map(partInput),flight:{motors:flight.motors,configurations:flight.configurations,cases:flight.cases.map(({result,...inputs})=>inputs)}}});
+ return structuredClone({format:'starlab.inputs',schemaVersion:1,units:inputUnits,coordinates:{axis:'x',positive:'aft',centers:'component-local-leading-origin',offset:'parent-local-origin'},project:{name:portable.name,aerodynamics:aerodynamicInput(portable.aerodynamics),parts:portable.parts.map(partInput),flight:{motors:flight.motors,configurations:flight.configurations,cases:flight.cases.map(({result,...inputs})=>inputs)}}});
 }
