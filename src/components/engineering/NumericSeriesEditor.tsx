@@ -10,7 +10,7 @@ export default function NumericSeriesEditor({label,columns,value=[],onApply,maxR
  useEffect(()=>{setRows(encode());setError('');setPage(0)},[signature]);
  const pages=Math.max(1,Math.ceil(rows.length/25)),current=Math.min(page,pages-1);
  const dirty=JSON.stringify(rows)!==JSON.stringify(encode());
- function apply(){try{if(rows.length>maxRows)throw Error(`En fazla ${maxRows} satır girilebilir.`);const parsed=parseNumericRows(rows,columns);onApply(parsed);setRows(parsed.map(row=>columns.map(c=>row[c.key]===undefined?'':String(row[c.key]))));setError('')}catch(e){setError(e instanceof Error?e.message:'Veriler uygulanamadı.')}}
+ function apply(){try{if(rows.length>maxRows)throw Error(`En fazla ${maxRows} satır girilebilir.`);const parsed=parseNumericRows(rows,columns),normalized=parsed.map(row=>columns.map(c=>row[c.key]===undefined?'':String(row[c.key])));if(JSON.stringify(normalized)!==JSON.stringify(encode()))onApply(parsed);setRows(normalized);setError('')}catch(e){setError(e instanceof Error?e.message:'Veriler uygulanamadı.')}}
  async function load(input?:File){if(!input)return;try{if(input.size>2_000_000)throw Error('CSV en fazla 2 MB olabilir.');const next=parseSeriesCsv(await input.text(),columns);if(next.length>maxRows)throw Error(`En fazla ${maxRows} satır girilebilir.`);setRows(next);setPage(0);setError('')}catch(e){setError(e instanceof Error?e.message:'CSV okunamadı.')}finally{if(file.current)file.current.value=''}}
  return <div className="series-editor" role="group" aria-label={label}>
   <div className="series-actions"><span>{rows.length} satır{dirty?' · Düzenlendi':''}</span><div>
