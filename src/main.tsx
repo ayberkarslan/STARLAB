@@ -93,6 +93,7 @@ function App(){
   const shortcut=(event:KeyboardEvent)=>{
    if(event.defaultPrevented||event.isComposing||event.altKey||document.querySelector('dialog[open]'))return;
    const key=event.key.toLowerCase(),command=event.ctrlKey||event.metaKey;
+   if(command&&['z','y'].includes(key)&&(event.target as Element)?.closest('.series-editor input'))return;
    if(command&&['z','y','s','o','n'].includes(key)){
     event.preventDefault();if(event.repeat)return;
     if(key==='z'){if(event.shiftKey)redo();else undo();setMenu(null)}
@@ -122,7 +123,7 @@ function App(){
  </ResizableSplit></div>
  <div className="page-slot" hidden={page!==1}>{visited.has(1)&&<MotorWorkspace project={project} flight={flight} onChange={changeFlight}/>}</div>
  <div className="page-slot" hidden={page!==2}>{visited.has(2)&&<SimulationWorkspace project={project} flight={flight} onChange={changeFlight}/>}</div>
- <div className="page-slot" hidden={page!==3}>{visited.has(3)&&<AnalysisWorkspace project={project} flight={flight} onAerodynamicsChange={aerodynamics=>setProject(current=>({...current,aerodynamics}))}/>}</div>
+ <div className="page-slot" hidden={page!==3}>{visited.has(3)&&<AnalysisWorkspace project={project} flight={flight} onAerodynamicsChange={aerodynamics=>setProject(current=>({...current,aerodynamics}))} onInspect={id=>{navigateTo(rootId);setSelected(id);setShowTree(true);setPage(0)}} onWorkspace={openPage}/>}</div>
  {notice&&<div className="toast" role="status">{notice}<button aria-label={t('close')} onClick={()=>setNotice('')}><X size={14}/></button></div>}
  </main><ComponentLibrary open={adding} onClose={()=>setAdding(false)} project={project} parentId={part.id} onAdd={addComponent}/>
  <Dialog open={creating} onClose={()=>setCreating(false)} title="Yeni proje"><TextField aria-label="Yeni proje adı" value={newName} onChange={event=>setNewName(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'&&!event.nativeEvent.isComposing){event.preventDefault();replaceDocument(emptyProject(newName.trim()||'Yeni proje'))}}}/><div className="new-project-actions"><Button variant="ghost" onClick={exportProject}>Mevcut projeyi dışa aktar</Button><Button onClick={()=>replaceDocument(emptyProject(newName.trim()||"Yeni proje"))}>Oluştur</Button></div></Dialog>

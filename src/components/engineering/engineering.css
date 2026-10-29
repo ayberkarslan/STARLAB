@@ -117,3 +117,11 @@
 
 .environment-surface{margin-top:18px}
 .input-settings .sd-field__label,.input-settings .sd-field__input{font-size:12px}
+
+.input-checklist{display:grid;align-content:start;gap:12px}
+.input-check-group{border:1px solid var(--line);font-size:12px}
+.input-check-group>summary{display:flex;align-items:center;gap:14px;padding:18px;cursor:pointer;list-style:none}
+.input-check-group>summary>span:first-of-type{flex:1}
+.input-check-group[open]>summary>svg:first-child{transform:rotate(90deg)}
+.input-gap{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 20px;border-top:1px solid var(--line)}
+.input-gap>div{display:grid;gap:10px;line-height:1.7}
