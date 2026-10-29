@@ -1,5 +1,5 @@
 import {spawnSync} from 'node:child_process';
-import {readdirSync,mkdirSync} from 'node:fs';
+import {readdirSync,mkdirSync,chmodSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const files=readdirSync(root+'native/tube').filter(p=>p.endsWith('.cpp')).sort().map(p=>'native/tube/'+p);
@@ -7,4 +7,5 @@ mkdirSync(root+'public/engines',{recursive:true});
 const args=['--target=wasm32','-O2','-nostdlib','-fno-exceptions','-fno-rtti','-ffp-contract=off',...files,'-Wl,--no-entry','-Wl,--strip-all',...['volume','mass','cg','axial','transverse'].map(name=>'-Wl,--export=tube_'+name),'-o','public/engines/tube-v1.wasm'];
 const result=spawnSync(process.env.STARLAB_CLANGXX||'clang++',args,{cwd:root,stdio:'inherit'});
 if(result.error)throw result.error;
+if(result.status===0)chmodSync(root+'public/engines/tube-v1.wasm',0o644);
 process.exitCode=result.status??1;
