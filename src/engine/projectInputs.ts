@@ -6,7 +6,7 @@ import {portableProject} from '../domain/starFile';
 export const inputUnits={
  aerodynamics:aeroUnits,
  parts:{length:'mm',diameter:'mm',offset:'mm',mass:'g',wallThickness:'mm',density:'kg/m³',shearModulus:'Pa',normalForceSlope:'1/rad',surfaceDensity:'kg/m²',linearDensity:'kg/m',centerOfMass:'mm',centerOfPressure:'mm',roughness:'µm',angleOfAttack:'deg',mach:'1',dragCoefficient:'1'},
- motors:{length:'mm',diameter:'mm',totalMass:'kg',propellantMass:'kg',time:'s',thrust:'N'},
+ motors:{length:'mm',diameter:'mm',totalMass:'kg',propellantMass:'kg',time:'s',t:'s',thrust:'N',centerOfMass:'mm',inertiaXX:'kg·m²',inertiaYY:'kg·m²',inertiaZZ:'kg·m²'},
  environment:{latitude:'deg',longitude:'deg',altitude:'m',temperature:'°C',pressure:'Pa',windSpeed:'m/s',windDirection:'deg',railLength:'m',railAngle:'deg',railHeading:'deg',timeStep:'s',maxTime:'s'},
  events:{delay:'s',altitude:'m'},
  geometry:{innerDiameter:'mm',aftDiameter:'mm',shoulderLength:'mm',shoulderDiameter:'mm',shoulderThickness:'mm',tabHeight:'mm',tabLength:'mm',tipChord:'mm',span:'mm',sweep:'mm',canopyDiameter:'mm',cordLength:'mm',lineLength:'mm',instanceSeparation:'mm',radialOffset:'mm',points:'mm',cantAngle:'deg',rotation:'deg',noseParameter:'1',finCount:'count',lineCount:'count',instanceCount:'count'},
