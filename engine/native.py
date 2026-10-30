@@ -13,21 +13,24 @@ class NativeKernel:
             raise ValueError('Invalid native library path')
         self.library = ctypes.CDLL(str(library))
         for name, signature in build['exports'].items():
-            if signature['returns'] != 'double' or any(t not in ('double','double*') for t in signature['arguments']):
+            if signature['returns'] != 'double' or any(t not in ('double','double*','double-out*') for t in signature['arguments']):
                 raise ValueError('Unsupported native signature')
             fn = getattr(self.library, name)
-            fn.argtypes = [ctypes.POINTER(ctypes.c_double) if t=='double*' else ctypes.c_double for t in signature['arguments']]
+            fn.argtypes = [ctypes.POINTER(ctypes.c_double) if '*' in t else ctypes.c_double for t in signature['arguments']]
             fn.restype = ctypes.c_double
-            if 'double*' in signature['arguments']:
+            if any('*' in t for t in signature['arguments']):
                 def call(*args, function=fn, types=signature['arguments']):
                     if len(args)!=len(types):raise ValueError('Native argument count mismatch')
-                    converted=[]
+                    converted=[];outputs=[]
                     for value,kind in zip(args,types):
-                        if kind=='double*':
+                        if '*' in kind:
                             if not isinstance(value,list) or len(value)>20000:raise ValueError('Invalid native buffer')
-                            converted.append((ctypes.c_double*len(value))(*value))
+                            buffer=(ctypes.c_double*len(value))(*value);converted.append(buffer)
+                            if kind=='double-out*':outputs.append((value,buffer))
                         else:converted.append(value)
-                    return function(*converted)
+                    result=function(*converted)
+                    for target,buffer in outputs:target[:]=buffer
+                    return result
                 setattr(self,name,call)
             else:setattr(self, name, fn)
 

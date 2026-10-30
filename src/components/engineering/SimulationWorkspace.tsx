@@ -5,7 +5,7 @@ import {Button,IconButton,SelectMenu} from '@stardrop/ui';
 import {Check,Copy,Download,FileOutput,Play,Plus,Trash2,Upload,X,AlertCircle} from '@stardrop/ui/icons';
 import type {Project} from '../../domain/project';
 import {allMotors,configurationIssues,defaultEnvironment,parseResultCsv,simulationSignature,validateSamples,type Environment,type FlightWorkspace,type SimulationCase} from '../../domain/flight';
-import {getFlightSolver,createFlightRequest} from '../../engine/flightSolver';
+import {getFlightSolver,createFlightRequest,flightSolverIssues} from '../../engine/flightSolver';
 import ResizableSplit from '../ResizableSplit';
 import Plot from './Plot';
 import {Choice,Metric,NumberField,Panel,download,fmt} from './shared';
@@ -17,11 +17,10 @@ export default function SimulationWorkspace({project,flight,onChange}:{project:P
  const input=useRef<HTMLInputElement>(null),abort=useRef<AbortController|null>(null);useEffect(()=>()=>abort.current?.abort(),[]);
  const selected=flight.cases.find(c=>c.id===selectedId)||flight.cases[0],config=flight.configurations.find(c=>c.id===selected?.configurationId)||flight.configurations[0];
  const simulation=selected||{id:'',name:'',configurationId:config.id,environment:{...defaultEnvironment}};
- const issues=configurationIssues(project,flight,config);const signature=simulationSignature(project,config,simulation.environment,flight);const result=selected?.result;const stale=result&&result.signature!==signature;const solver=getFlightSolver();
+ const request=createFlightRequest(project,flight,simulation);const issues=[...new Set([...configurationIssues(project,flight,config),...flightSolverIssues(request)])];const signature=simulationSignature(project,config,simulation.environment,flight);const result=selected?.result;const stale=result&&result.signature!==signature;const solver=getFlightSolver();
  function update(patch:Partial<SimulationCase>){if(!selected)return;const latest=liveFlight.current;onChange({...latest,cases:latest.cases.map(c=>c.id===selected.id?{...c,...patch}:c)})}
  function environment(key:keyof Environment,value:number){update({environment:{...simulation.environment,[key]:value}})}
  function add(copy=false){const next:SimulationCase={id:crypto.randomUUID(),name:copy&&selected?`${selected.name} · Kopya`:`Simülasyon ${String(flight.cases.length+1).padStart(2,'0')}`,configurationId:config.id,environment:{...(copy&&selected?selected.environment:defaultEnvironment)}};onChange({...flight,cases:[...flight.cases,next]});setSelectedId(next.id)}
- const request=createFlightRequest(project,flight,simulation);
  useEffect(()=>{abort.current?.abort();setRunning(false)},[signature,selected?.id]);
  async function run(){if(!solver||!selected||issues.length||running)return;const controller=new AbortController();abort.current=controller;setRunning(true);try{const computed=await solver.solve(structuredClone(request),controller.signal);if(!controller.signal.aborted){if(computed.signature!==signature)throw Error('Hesap sonucu farklı bir girdiye ait.');update({result:{source:'solver',signature,samples:validateSamples(computed.samples)}})}}catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:'Hesap tamamlanamadı.')}finally{if(!controller.signal.aborted)setRunning(false)}}
  async function load(file?:File){if(!file||!selected)return;try{if(file.size>2_000_000)throw Error('Dosya 2 MB sınırını aşıyor.');update({result:{source:'imported',signature,samples:parseResultCsv(await file.text())}});setError('')}catch(e){setError(e instanceof Error?e.message:'Sonuç okunamadı.')}finally{if(input.current)input.current.value=''}}
