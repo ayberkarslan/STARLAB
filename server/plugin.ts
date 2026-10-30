@@ -7,7 +7,8 @@ import type {EngineRequest} from '../src/engine/protocol';
 const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),execute=promisify(execFile);
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
  const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false;
- server.middlewares.use('/api/calculations/tube',async(req,res)=>{
+ server.middlewares.use('/api/calculations',async(req,res,next)=>{
+  if(req.url!=='/structure'&&req.url!=='/tube'){next();return}
   if(req.method!=='POST'){res.statusCode=405;res.end();return}
   const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
   if(!req.headers['content-type']?.startsWith('application/json')){res.statusCode=415;res.end();return}

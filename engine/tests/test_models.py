@@ -40,3 +40,31 @@ class ModelTests(unittest.TestCase):
             result = graph.evaluate({**inputs, 'suppliedMass': mass}, self.kernel, {})
             self.assertEqual(result['results']['mass']['state']['status'], 'blocked')
             self.assertNotIn('value', result['results']['mass']['state'])
+
+    def test_worker_model_switching_preserves_isolated_caches_and_rejects_unknown_ports(self):
+        import subprocess, sys, json
+        from engine.native import ROOT
+        with subprocess.Popen([sys.executable, '-u', '-m', 'engine.worker'], cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding='utf-8') as worker:
+            try:
+                def request(id, model, inputs):
+                    worker.stdin.write(json.dumps({'protocolVersion': 1, 'requestId': id, 'model': model, 'inputs': inputs})+'\n')
+                    worker.stdin.flush()
+                    while True:
+                        event = json.loads(worker.stdout.readline())
+                        if event['type'] != 'progress':
+                            return event
+                tube = {'length': .3, 'radius': .0165, 'innerRadius': .015, 'density': 1500}
+                first = request('inner', 'inner-tube', tube)
+                mass = request('mass', 'mass-component', {'length': .2, 'radius': .025, 'suppliedMass': .3})
+                self.assertEqual(first['model'], 'inner-tube')
+                self.assertEqual(mass['model'], 'mass-component')
+                self.assertEqual(first['processId'], mass['processId'])
+                cached = request('again', 'inner-tube', tube)
+                self.assertEqual(cached['snapshot']['updated'], [])
+                self.assertEqual(cached['snapshot']['revision'], 2)
+                self.assertEqual(request('unknown-model', 'nose', {})['type'], 'error')
+                self.assertEqual(request('unknown-port', 'inner-tube', {**tube, 'suppliedMass': .3})['type'], 'error')
+                self.assertEqual(request('recovered', 'inner-tube', tube)['snapshot']['updated'], [])
+            finally:
+                worker.stdin.close()
+                worker.wait(timeout=5)

@@ -2,9 +2,9 @@ import type {GraphSnapshot} from './graph';
 export interface PortDescription {id:string;unit:string;frame?:string|null}
 export interface SourceDescription {id:string;label:string;output:PortDescription}
 export interface NodeDescription extends SourceDescription {inputs:Record<string,{id:string;output:PortDescription}>;version:string;schemaVersion:number;implementation:string;provenance:string;fingerprint:string}
-export interface EngineRequest {protocolVersion:1;requestId:string;sessionId:string;inputs:Record<string,number|undefined>}
+export interface EngineRequest {protocolVersion:1;requestId:string;sessionId:string;model?:string;inputs:Record<string,number|undefined>}
 export interface EngineProgress {type:'progress';requestId:string;nodeId:string;phase:string}
-export interface EngineResponse {type:'result';protocolVersion:1;requestId:string;processId:number;buildId:string;manifest:{sources:SourceDescription[];nodes:NodeDescription[]};snapshot:GraphSnapshot}
+export interface EngineResponse {type:'result';protocolVersion:1;requestId:string;processId:number;buildId:string;model?:string;manifest:{sources:SourceDescription[];nodes:NodeDescription[]};snapshot:GraphSnapshot}
 export function validateEngineResponse(value:unknown,requestId:string):asserts value is EngineResponse {
  const r=value as EngineResponse;
  if(!r||r.type!=='result'||r.protocolVersion!==1||r.requestId!==requestId||!Number.isInteger(r.processId)||typeof r.buildId!=='string'||!Array.isArray(r.manifest?.nodes)||!Array.isArray(r.manifest?.sources)||!r.snapshot||!Number.isInteger(r.snapshot.revision)||!Array.isArray(r.snapshot.updated)||!Array.isArray(r.snapshot.changed)||!r.snapshot.results)throw Error('Hesap motoru yanıtı geçersiz.');
