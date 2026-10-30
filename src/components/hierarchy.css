@@ -49,11 +49,6 @@
 .inspector-reference{font-size:12px;line-height:1.9;margin:0}
 .inspector-fields textarea{min-height:100px;resize:vertical;font-size:13px}
 .inspector-fields .sd-field__input{font-size:13px;min-height:38px;padding:8px 10px}
-.inspector-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.inspector-number{display:grid;gap:8px;min-width:0;font-size:12px}
-.inspector-number>div{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
-.inspector-number input{width:100%;min-width:0;background:#000;color:#fff;border:0;padding:7px 0;font-size:13px}
-.inspector-number small{font-size:11px}
 .inspector-material{display:grid;gap:8px;font-size:12px;padding-bottom:12px}
 .inspector-material .sd-select__trigger{font-size:12px;min-height:38px}
 .inspector-material .sd-select__option{font-size:12px;padding:10px}

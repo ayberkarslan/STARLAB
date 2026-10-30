@@ -81,3 +81,19 @@ export type { YRT_ButtonVariant as ButtonVariant, YRT_ButtonSize as ButtonSize,
   YRT_StatusTone as StatusTone, YRT_ButtonProps as ButtonProps,
   YRT_PanelProps as PanelProps, YRT_SelectOption as SelectOption,
   YRT_SelectMenuProps as SelectMenuProps };
+export {default as ResizableSplit,type ResizableSplitProps} from './layout/ResizableSplit';
+export {panelSizes} from './layout/panelSizes';
+export {NumberInput} from './fields/NumberInput';
+export {useCanvasNavigation,type CanvasFrame} from './hooks/useCanvasNavigation';
+export {default as LinePlot,type PlotSeries} from './data/Plot';
+export {default as NumericSeriesEditor} from './data/NumericSeriesEditor';
+export {parseNumericRows,parseSeriesCsv,type NumericColumn,type NumericRow} from './data/numericSeries';
+export {formatNumber,downloadFile} from './data/utils';
+export {Panel as WorkspacePanel,Metric,NumberField,Choice,Empty as WorkspaceEmpty} from './patterns/workspace';
+export {MenuBar,DesktopHeader,DesktopShell,TabBar,Breadcrumbs,SaveIndicator,type MenuAction,type MenuDefinition,type TabOption} from './navigation/navigation';
+export {Icon,Toolbar,SearchField,FieldGrid,PropertySection,ScrollArea,ListItem,SelectionChips,ZoomControls,CatalogCard,CatalogLayout,DataTable} from './patterns/controls';
+export {Toast,Tooltip,OrbitLoader} from './feedback/feedback';
+export {CanvasViewport,NodeCard,NodeGraph,TreeView,HierarchyFlow,type GraphItem,type GraphLink} from './patterns/canvas';
+export {hierarchyPositions,validateHierarchyMove,type HierarchyEntry,type HierarchyMove,type MovePlacement} from './patterns/hierarchy';
+export {default as StartupScreen} from './feedback/StartupScreen';
+export {waitForStartup} from './feedback/startupTiming';
