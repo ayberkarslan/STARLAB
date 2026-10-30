@@ -90,7 +90,7 @@ for id,formula,unit,file in [
 lines+=['## Doğrulama ve sınırlar','',
  'Yeni üretim yolu kaynak kaydı: '+link('native/source-provenance.json')+'.',
  'Karşılaştırma: `python3 scripts/check-legacy-design.py /home/ayberk/Projects/B3/roketsimdeneme1` — kaynak üretim fonksiyonları bağımsız derlenir, modüler native sonuçlarla karşılaştırılır; göreli tolerans 2e−13, mutlak taban 1e−14.',
- 'Motor: `python3 scripts/check-legacy-motor.py …`; yapı birleştirme: `python3 scripts/check-legacy-assembly.py …`.',
+ 'Motor: `python3 scripts/check-legacy-motor.py …`; atanan motor: `python3 scripts/check-legacy-installed-motor.py …` (300 durum / 1200 çıktı); yapı birleştirme: `python3 scripts/check-legacy-assembly.py …`.',
  'Gövde: `node scripts/check-legacy-parity.mjs …`; iç tüp/kütle: `node scripts/check-legacy-structure.mjs …`.',
  'DAG/FFI/regresyon testleri: `npm run test:engine`; arayüz veri sınırları: `npm test`.',
  'UI katalog özetinde src/domain/motors.ts::motorStats hâlâ var; bu, native motor modeli veya uçuş çözücüsü değildir. Uçuşun fizik hesabı bu UI yardımcı fonksiyonuna bağlanmayacak.',

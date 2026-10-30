@@ -3,7 +3,7 @@ import {validateEnvironmentInputs,type EnvironmentInputs} from './environmentInp
 import {type Motor,sampleMotors,validateMotor,motorFits} from './motors';
 import type {Project} from './project';
 export type IgnitionEvent='launch'|'previousBurnout'|'separation';
-export interface MotorAssignment {motorId:string;event:IgnitionEvent;delay:number}
+export interface MotorAssignment {motorId:string;event:IgnitionEvent;delay:number;offset?:number}
 export interface Separation {event:'burnout'|'never';delay:number}
 export interface Recovery extends RecoveryInputs {event:'apogee'|'altitude'|'never';delay:number;altitude:number}
 export interface FlightConfiguration {id:string;name:string;mounts:Record<string,MotorAssignment>;separations:Record<string,Separation>;recovery:Record<string,Recovery>}
@@ -23,7 +23,7 @@ export function validateFlight(f:FlightWorkspace){
  if(!f||!Array.isArray(f.motors)||!Array.isArray(f.configurations)||!f.configurations.length||!Array.isArray(f.cases)||f.motors.length>500||f.configurations.length>100||f.cases.length>100)throw Error('Uçuş çalışma alanı geçersiz.');
  const unique=(items:{id:string;name:string}[])=>{const seen=new Set<string>();for(const item of items){if(!item||typeof item.id!=='string'||!item.id||typeof item.name!=='string'||seen.has(item.id))throw Error('Uçuş kaydı geçersiz.');seen.add(item.id);}};
  unique(f.motors);unique(f.configurations);unique(f.cases);const motorIds=new Set(sampleMotors.map(m=>m.id));for(const motor of f.motors){validateMotor(motor);if(motorIds.has(motor.id))throw Error('Motor kimliği yineleniyor.');motorIds.add(motor.id);}
- for(const c of f.configurations){if(!record(c.mounts)||!record(c.separations)||!record(c.recovery))throw Error('Konfigürasyon geçersiz.');for(const a of Object.values(c.mounts)){if(!a||!motorIds.has(a.motorId)||!['launch','previousBurnout','separation'].includes(a.event)||!Number.isFinite(a.delay)||a.delay<0)throw Error('Ateşleme ayarı geçersiz.');}for(const a of Object.values(c.separations)){if(!a||!['burnout','never'].includes(a.event)||!Number.isFinite(a.delay)||a.delay<0)throw Error('Ayrılma ayarı geçersiz.');}for(const a of Object.values(c.recovery)){if(!a||!['apogee','altitude','never'].includes(a.event)||![a.delay,a.altitude].every(Number.isFinite)||a.delay<0||a.altitude<0)throw Error('Kurtarma ayarı geçersiz.');validateRecoveryInputs(a);}}
+ for(const c of f.configurations){if(!record(c.mounts)||!record(c.separations)||!record(c.recovery))throw Error('Konfigürasyon geçersiz.');for(const a of Object.values(c.mounts)){if(!a||!motorIds.has(a.motorId)||!['launch','previousBurnout','separation'].includes(a.event)||!Number.isFinite(a.delay)||a.delay<0||(a.offset!==undefined&&(!Number.isFinite(a.offset)||a.offset<0)))throw Error('Ateşleme ayarı geçersiz.');}for(const a of Object.values(c.separations)){if(!a||!['burnout','never'].includes(a.event)||!Number.isFinite(a.delay)||a.delay<0)throw Error('Ayrılma ayarı geçersiz.');}for(const a of Object.values(c.recovery)){if(!a||!['apogee','altitude','never'].includes(a.event)||![a.delay,a.altitude].every(Number.isFinite)||a.delay<0||a.altitude<0)throw Error('Kurtarma ayarı geçersiz.');validateRecoveryInputs(a);}}
  for(const c of f.cases){if(!f.configurations.some(config=>config.id===c.configurationId))throw Error('Simülasyon konfigürasyonu bulunamadı.');validateEnvironment(c.environment);if(c.result){if(!['imported','solver'].includes(c.result.source)||typeof c.result.signature!=='string')throw Error('Sonuç kaydı geçersiz.');validateSamples(c.result.samples);}}
  return f;
 }

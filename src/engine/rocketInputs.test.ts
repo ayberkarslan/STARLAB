@@ -8,3 +8,36 @@ it('projects world positions, includes every physical component once, and blocks
  project.parts.push(part('chute','body','parachute',100));expect(rocketInputs(project).issues.join()).toContain('chute');
  project.parts.pop();project.parts[2].inputs!.centerOfMass=100;expect(rocketInputs(project).issues.join()).toContain('düzeltmesi');
 });
+
+import {initialFlight} from '../domain/flight';
+import type {Motor} from '../domain/motors';
+import {parseStar,serializeStar} from '../domain/starFile';
+function installed(){
+ const project=emptyProject(),flight=initialFlight();project.flight=flight;
+ project.parts.push(part('stage','rocket','stage',0),part('body','stage','body',1000),{...part('mount','body','motor',400),offset:600,geometry:{innerDiameter:56}});
+ const motor:Motor={id:'test-motor',name:'Test',manufacturer:'Test',source:'custom',diameter:50,length:200,totalMass:1,propellantMass:.4,curve:[{t:0,thrust:0},{t:1,thrust:10},{t:2,thrust:0}]};
+ flight.motors.push(motor);flight.configurations[0].mounts.mount={motorId:motor.id,event:'launch',delay:1,offset:50};
+ return {project,flight,motor,assignment:flight.configurations[0].mounts.mount};
+}
+it('serializes mount and motor separately with explicit coordinates, time and delay',()=>{
+ const {project,flight}=installed(),r=rocketInputs(project,flight,undefined,2);
+ expect(r.issues).toEqual([]);expect(r.assembly).toHaveLength(3);
+ expect(r.assembly[1]).toMatchObject({id:'part:mount',model:'inner-tube',position:.6,inputs:{innerRadius:.028,density:2700}});
+ expect(r.assembly[2]).toMatchObject({id:'motor:mount',model:'installed-motor',position:.65,inputs:{time:2,delay:1,wet:1,propellant:.4,length:.2,radius:.025,curve:[0,0,1,10,2,0]}});
+});
+it('blocks missing placement, impossible fit, unsupported events and measured profiles',()=>{
+ const {project,flight,assignment,motor}=installed();delete assignment.offset;
+ expect(rocketInputs(project,flight).issues.join()).toContain('başlangıcını');
+ assignment.offset=250;expect(rocketInputs(project,flight).issues.join()).toContain('başlangıcını');
+ assignment.offset=50;motor.diameter=58;expect(rocketInputs(project,flight).issues.join()).toContain('ölçüleri');
+ delete project.parts.at(-1)!.geometry;expect(rocketInputs(project,flight).issues.join()).toContain('ölçüleri');
+ motor.diameter=50;assignment.event='separation';expect(rocketInputs(project,flight).issues.join()).toContain('gecikmesi');
+ assignment.event='launch';motor.massProfile=[{t:0,totalMass:1,propellantMass:.4},{t:2,totalMass:.6,propellantMass:0}];
+ expect(rocketInputs(project,flight).issues.join()).toContain('bağımsız kütle profili');
+ expect(rocketInputs(project,flight,undefined,-1).issues.length).toBeGreaterThan(0);
+ expect(rocketInputs(project,flight,'missing').issues.join()).toContain('motor seçilmedi');
+});
+it('preserves motor placement in star files and rejects invalid persisted offsets',()=>{
+ const {project,assignment}=installed();expect(parseStar(serializeStar(project)).flight!.configurations[0].mounts.mount).toEqual(assignment);
+ assignment.offset=-1;expect(()=>parseStar(serializeStar(project))).toThrow();
+});
