@@ -37,3 +37,15 @@ class AeroTests(unittest.TestCase):
   changed['inputs']['alpha']=.2;m,g,inputs=prepare(changed,models,g);r=g.evaluate(inputs,k,{})
   self.assertEqual(r['results']['total_cg']['action'],'cached')
   with self.assertRaises(ValueError):prepare({**request,'inputs':{**request['inputs'],'cg':.1}},models,None)
+
+ def test_explicit_pressure_source_and_mode_switch(self):
+  request={'inputs':{key:v for key,v in AERO.items() if key not in ['cg','density']},'assembly':[{'id':'body','model':'tube','position':0,'inputs':{'length':1,'radius':.05,'wall':.002,'density':2700}}]}
+  request['inputs']['pressure']=1000;k=NativeKernel(NativeKernel.read_build());models=discover_models()
+  model,g,values=prepare(request,models,None);r=g.evaluate(values,k,{})
+  self.assertNotIn('aero_dynamicPressure',{n.id for n in model.nodes});self.assertEqual(r['results']['aero_dynamicPressure']['state']['value'],1000)
+  self.assertEqual(r['results']['aero_axialForce']['state']['value'],-5)
+  del request['inputs']['pressure'];request['inputs']['density']=1.2
+  model,g,values=prepare(request,models,g);r=g.evaluate(values,k,{})
+  self.assertEqual(r['results']['aero_dynamicPressure']['state']['value'],6000)
+  request['inputs']['alpha']=4;model,g,values=prepare(request,models,g);r=g.evaluate(values,k,{})
+  self.assertEqual(r['results']['aero_normalForce']['state']['status'],'blocked')
