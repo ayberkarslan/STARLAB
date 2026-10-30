@@ -42,7 +42,7 @@ export function validateEnvironmentInputs(v:EnvironmentInputs){
  if(v.windModel!==undefined&&!['constant','profile','powerLaw','logarithmic'].includes(v.windModel))throw Error('Rüzgâr modeli geçersiz.');
  if(v.atmosphereProfile!==undefined)series(v.atmosphereProfile,atmosphereColumns);
  if(v.windProfile!==undefined)series(v.windProfile,windColumns);
- for(const key of ['windReferenceHeight','windMinimumHeight','windShearExponent','windRoughnessLength','windDirectionGradient'] as const){const n=v[key];if(n!==undefined&&(typeof n!=='number'||!Number.isFinite(n)||key!=='windDirectionGradient'&&(key==='windShearExponent'?n<0:n<=0)))throw Error('Rüzgâr profili parametresi geçersiz.');}
+ for(const key of ['windReferenceHeight','windMinimumHeight','windShearExponent','windRoughnessLength','windDirectionGradient'] as const){const n=v[key];if(n!==undefined&&(typeof n!=='number'||!Number.isFinite(n)||key!=='windDirectionGradient'&&(['windShearExponent','windMinimumHeight'].includes(key)?n<0:n<=0)))throw Error('Rüzgâr profili parametresi geçersiz.');}
  if(v.windReferenceHeight!==undefined&&v.windMinimumHeight!==undefined&&v.windMinimumHeight>v.windReferenceHeight)throw Error('Asgari rüzgâr yüksekliği referans yüksekliğini aşamaz.');
  if(v.turbulence!==undefined){
   const t=v.turbulence;if(!t||typeof t.enabled!=='boolean')throw Error('Türbülans ayarı geçersiz.');
