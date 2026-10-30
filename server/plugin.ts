@@ -14,7 +14,7 @@ export default function enginePlugin():Plugin{return {name:'starlab-native-engin
   if(!req.headers['content-type']?.startsWith('application/json')){res.statusCode=415;res.end();return}
   const controller=new AbortController();res.on('close',()=>{if(!res.writableEnded)controller.abort()});let data='';
   try{
-   for await(const chunk of req){data+=chunk.toString();if(data.length>65536)throw Error('Hesap isteği çok büyük.')}
+   for await(const chunk of req){data+=chunk.toString();if(data.length>1_000_000)throw Error('Hesap isteği çok büyük.')}
    const request=JSON.parse(data) as EngineRequest;
    res.setHeader('Content-Type','application/x-ndjson; charset=utf-8');res.setHeader('Cache-Control','no-store');
    const result=await service.evaluate(request,event=>{if(!res.destroyed)res.write(JSON.stringify(event)+'\n')},controller.signal);
