@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState,type RefObject} from 'react';
 export interface CanvasFrame {x:number;y:number;width:number;height:number}
-export function useCanvasNavigation(svg:RefObject<SVGSVGElement>,base:CanvasFrame,zoom:number,onZoom:((zoom:number)=>void)|undefined,focus:string,blocked:boolean){
+export function useCanvasNavigation(svg:RefObject<SVGSVGElement>,base:CanvasFrame,zoom:number,onZoom:((zoom:number)=>void)|undefined,focus:string,blocked:boolean,enabled=true){
  const [pan,setPan]=useState({x:0,y:0}),[localZoom,setLocalZoom]=useState(zoom);
  const scale=onZoom?zoom:localZoom;
  const frame={x:base.x+pan.x+base.width*(1-1/scale)/2,y:base.y+pan.y+base.height*(1-1/scale)/2,width:base.width/scale,height:base.height/scale};
@@ -9,7 +9,7 @@ export function useCanvasNavigation(svg:RefObject<SVGSVGElement>,base:CanvasFram
  useEffect(()=>setPan({x:0,y:0}),[focus]);
  useEffect(()=>setLocalZoom(zoom),[zoom]);
  useEffect(()=>{
-  const element=svg.current;if(!element)return;
+  const element=svg.current;if(!element||!enabled)return;
   const wheel=(event:WheelEvent)=>{
    event.preventDefault();event.stopPropagation();const s=latest.current;if(s.blocked)return;
    const inverse=element.getScreenCTM()?.inverse();if(!inverse)return;
@@ -26,6 +26,6 @@ export function useCanvasNavigation(svg:RefObject<SVGSVGElement>,base:CanvasFram
    }
   };
   element.addEventListener('wheel',wheel,{passive:false});return()=>element.removeEventListener('wheel',wheel);
- },[svg]);
+ },[svg,enabled]);
  return {frame,reset};
 }

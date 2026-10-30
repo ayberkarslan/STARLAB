@@ -1,3 +1,4 @@
+// Test-only WASM prototype. The application uses the native engine service.
 /// <reference types="vite/client" />
 import {CalculationGraph,type CalculationNode} from '../graph';
 import {tubeSources} from './contracts';

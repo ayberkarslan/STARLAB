@@ -1,4 +1,5 @@
-/** The scheduler knows contracts and connections, never rocket formulae. */
+/** Historical in-browser prototype and shared snapshot types.
+ * Production scheduling runs independently in engine/graph.py. */
 export interface Contract<T=unknown> {id:string;unit:string;frame?:string;parse:(value:unknown)=>T;equal?(a:T,b:T):boolean}
 export interface Link<T=unknown> {id:string;output:Contract<T>}
 export interface Source<T=unknown> extends Link<T> {label:string}
