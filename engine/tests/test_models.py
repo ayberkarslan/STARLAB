@@ -62,7 +62,7 @@ class ModelTests(unittest.TestCase):
                 cached = request('again', 'inner-tube', tube)
                 self.assertEqual(cached['snapshot']['updated'], [])
                 self.assertEqual(cached['snapshot']['revision'], 2)
-                self.assertEqual(request('unknown-model', 'nose', {})['type'], 'error')
+                self.assertEqual(request('unknown-model', 'unsupported-model', {})['type'], 'error')
                 self.assertEqual(request('unknown-port', 'inner-tube', {**tube, 'suppliedMass': .3})['type'], 'error')
                 self.assertEqual(request('recovered', 'inner-tube', tube)['snapshot']['updated'], [])
             finally:

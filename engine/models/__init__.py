@@ -11,6 +11,7 @@ class Model:
     sources: list[Source]
     nodes: list[Node]
     definition: str
+    dependencies: tuple[str, ...] = ()
 
 def discover_nodes(package):
     return [importlib.import_module(f'{package.__name__}.{m.name}').NODE

@@ -36,7 +36,7 @@ for line in sys.stdin:
         build = NativeKernel.read_build()
         if kernel is None or kernel.build['buildId'] != build['buildId']:
             kernel = NativeKernel(build)
-        runtime_hash = ''.join((Path(__file__).parent / name).read_text() for name in ('native.py', 'contracts.py', 'graph.py', 'models/__init__.py')) + Path(model.definition).read_text()
+        runtime_hash = ''.join((Path(__file__).parent / name).read_text() for name in ('native.py', 'contracts.py', 'graph.py', 'models/__init__.py')) + Path(model.definition).read_text() + ''.join(Path(p).read_text() for p in model.dependencies)
         versions = {n.id: hashlib.sha256((f'{n.version}:{n.schema_version}:' + build['modules'][n.implementation] + Path(sys.modules[n.compute.__module__].__file__).read_text() + runtime_hash).encode()).hexdigest() for n in graph.nodes}
         progress = lambda event: emit({'type': 'progress', 'requestId': request_id, **event})
         snapshot = graph.evaluate(request['inputs'], kernel, versions, progress)

@@ -8,9 +8,12 @@ class Port:
     unit: str
     frame: str | None = None
     positive: bool = False
+    signed: bool = False
+    integer: bool = False
+    choices: tuple | None = None
 
     def parse(self, value):
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or (value <= 0 if self.positive else value < 0):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or (value <= 0 if self.positive else not self.signed and value < 0) or (self.integer and int(value) != value) or (self.choices is not None and value not in self.choices):
             raise ValueError(f'{self.id}: geçersiz değer')
         return float(value)
 

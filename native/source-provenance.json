@@ -1,0 +1,11 @@
+{
+  "repository": "RoketSiM",
+  "revision": "5c100ca9cb851f660f6d1babc44088da8dadf08f",
+  "files": {
+    "src/cli/design_analysis.hpp": "bd33180df1ac1951f44433591839457bdb9b24d3efc4288d11b985c9b808b1de"
+  },
+  "models": {
+    "nose": "production noseRadius + integrateShell(128 frusta) + shoulder/cap merge",
+    "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch"
+  }
+}

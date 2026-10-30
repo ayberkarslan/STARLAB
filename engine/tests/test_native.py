@@ -53,6 +53,15 @@ class NativeTests(unittest.TestCase):
                     self.assertEqual(set(second['snapshot']['updated']),{'mass','axial','transverse'})
                     source.write_text(source.read_text()+'\n// fingerprint-only change\n');build();third=request('third')
                     self.assertEqual(third['snapshot']['updated'],['mass'])
+                    before=json.loads((root/'build/engine/build.json').read_text())
+                    header=root/'native/nose/profile.hpp'
+                    header.write_text(header.read_text()+'\n// header fingerprint change\n')
+                    build()
+                    after=json.loads((root/'build/engine/build.json').read_text())
+                    changed={p for p in before['modules'] if before['modules'][p]!=after['modules'][p]}
+                    self.assertEqual(changed,{f'native/nose/{p}.cpp' for p in ['volume','mass','centroid','axial','transverse']})
+                    self.assertEqual(request('unrelated-header')['snapshot']['updated'],[])
+
                 finally:
                     worker.stdin.close();worker.wait(timeout=5)
 
