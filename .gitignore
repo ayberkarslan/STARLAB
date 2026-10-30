@@ -5,3 +5,7 @@ dist/
 /build/
 __pycache__/
 *.pyc
+
+/packages/ui-kit/dist/
+/packages/ui-kit/catalog-dist/
+/packages/ui-kit/starter/dist/

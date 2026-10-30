@@ -13,7 +13,8 @@
     "scripts",
     "vite.config.ts",
     "tsconfig.build.json",
-    "OFL-Michroma.txt"
+    "OFL-Michroma.txt",
+    "tests"
   ],
   "exports": {
     ".": {
@@ -44,7 +45,8 @@
     "build": "node scripts/build.mjs",
     "dev": "vite --config catalog/vite.config.ts",
     "build:catalog": "vite build --config catalog/vite.config.ts",
-    "prepack": "npm run build && npm run build:catalog"
+    "prepack": "npm run build && npm run build:catalog",
+    "check": "npm run build && node scripts/check.mjs"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

@@ -98,3 +98,4 @@ export {hierarchyPositions,validateHierarchyMove,type HierarchyEntry,type Hierar
 export {default as StartupScreen} from './feedback/StartupScreen';
 export {waitForStartup} from './feedback/startupTiming';
 export {RangeField,Switch} from './fields/RangeField';
+export {IdlePresentation,type IdlePresentationProps} from './feedback/IdlePresentation';

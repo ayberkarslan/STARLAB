@@ -26,3 +26,4 @@ export {hierarchyPositions,validateHierarchyMove} from './patterns/hierarchy.ts'
 export {default as StartupScreen} from './feedback/StartupScreen.tsx';
 export {waitForStartup} from './feedback/startupTiming.ts';
 export {RangeField,Switch} from './fields/RangeField.tsx';
+export {IdlePresentation} from './feedback/IdlePresentation.tsx';
