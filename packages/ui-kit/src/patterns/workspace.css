@@ -37,7 +37,7 @@
 .engineering-tabs button:is([aria-pressed=true],:hover)::after{opacity:1}
 .engineering-plot{position:relative;min-height:0;min-width:0;flex:1;overflow:hidden}
 .engineering-plot svg{width:100%;height:100%;display:block;touch-action:none}
-.engineering-plot text{font-family:'YRT Michroma',sans-serif;fill:#fff;font-size:11px}
+.engineering-plot text{font-family:var(--sd-font);fill:#fff;font-size:11px}
 .plot-empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:12px}
 .plot-readout{position:absolute;right:20px;top:15px;background:#000;border:1px solid var(--line);border-radius:4px;padding:10px;font-size:11px;pointer-events:none;display:grid;gap:7px}
 .engineering-title-input{font-size:13px;border:0;background:#000;color:#fff;min-width:0;width:100%;padding:6px 0}
@@ -46,7 +46,7 @@
 .engineering-subpanel{display:flex;flex-direction:column;height:100%;min-height:0}
 .engineering-split .sd-button,.engineering-page .sd-button{font-size:11px}
 .engineering-dialog-form{display:grid;gap:18px;font-size:12px}
-.engineering-dialog-form textarea{background:#000;color:#fff;border:1px solid var(--line);font:12px 'YRT Michroma',sans-serif;width:100%;min-height:140px;padding:12px;resize:vertical}
+.engineering-dialog-form textarea{background:#000;color:#fff;border:1px solid var(--line);font:12px var(--sd-font);width:100%;min-height:140px;padding:12px;resize:vertical}
 .engineering-dialog-form label{display:grid;gap:9px}
 .engineering-dialog-form .sd-field__label{font-size:12px}
 .engineering-dialog-form .sd-field__input{font-size:12px}
