@@ -1,0 +1,3 @@
+from ..contracts import Node,Binding,LENGTH
+from . import DISTANCE,MOMENT,PRESSURE,RATE,REF_AREA,SLOPE,SPEED
+NODE=Node('dampingMoment','Yunuslama sönüm momenti',MOMENT,{'speed':Binding('speed',SPEED),'pressure':Binding('dynamicPressure',PRESSURE),'area':Binding('area',REF_AREA),'cna':Binding('cna',SLOPE),'lever':Binding('lever',DISTANCE),'diameter':Binding('diameter',LENGTH),'pitchRate':Binding('pitchRate',RATE)},lambda v,k:k.aero_damping_moment(v['speed'],v['pressure'],v['area'],v['cna'],v['lever'],v['diameter'],v['pitchRate']),implementation='native/aero/damping_moment.cpp',reference='RoketSiM src/cli/roketsim_cli.cpp::deriv · supplied coefficients, non-RASAero branch')

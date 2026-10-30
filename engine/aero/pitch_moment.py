@@ -1,0 +1,3 @@
+from ..contracts import Node,Binding
+from . import COEFFICIENT,DISTANCE,MOMENT,POSITION,PRESSURE,REF_AREA
+NODE=Node('pitchMoment','Aerodinamik yunuslama momenti',MOMENT,{'pressure':Binding('dynamicPressure',PRESSURE),'area':Binding('area',REF_AREA),'normal':Binding('normalCoefficient',COEFFICIENT),'lever':Binding('lever',DISTANCE),'bodyCn':Binding('bodyCn',COEFFICIENT),'bodyCp':Binding('bodyCp',POSITION),'cg':Binding('cg',POSITION)},lambda v,k:k.aero_pitch_moment(v['pressure'],v['area'],v['normal'],v['lever'],v['bodyCn'],v['bodyCp'],v['cg']),implementation='native/aero/pitch_moment.cpp',reference='RoketSiM src/cli/roketsim_cli.cpp::deriv · supplied coefficients, non-RASAero branch')

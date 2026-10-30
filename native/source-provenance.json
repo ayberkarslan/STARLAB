@@ -12,6 +12,7 @@
     "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch",
     "annular-cylinder": "production analyzeComponent(Centering Ring / Bulkhead), annular and solid cylinder mass properties",
     "rocket": "coaxial OriginAccumulator add/merge/finalize; dynamically linked part DAG",
-    "motor": "production CLI lerp + remainingPropellantKg, split into curve integration and mass nodes"
+    "motor": "production CLI lerp + remainingPropellantKg, split into curve integration and mass nodes",
+    "aero-forces": "production CLI deriv non-RASAero scalar force/moment blocks; supplied whole-vehicle coefficients, pressure/normal/body lift/stall/damping; design_analysis stability_margin_cal"
   }
 }

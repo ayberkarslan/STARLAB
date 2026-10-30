@@ -7,12 +7,13 @@ from pathlib import Path
 from .models import discover_models
 from .graph import Graph
 from .native import NativeKernel
-from .assembly import prepare
+from .scenarios import discover_scenarios
 
 for stream in (sys.stdin, sys.stdout, sys.stderr):
     stream.reconfigure(encoding='utf-8')
 
 models = discover_models()
+scenarios = discover_scenarios()
 graphs = {id: Graph(model.sources, model.nodes) for id, model in models.items()}
 kernel = None
 
@@ -29,11 +30,11 @@ for line in sys.stdin:
         if request.get('protocolVersion') != 1 or not isinstance(request_id, str) or len(request_id) > 100 or not isinstance(request.get('inputs'), dict):
             raise ValueError('Invalid calculation request')
         model_id = request.get('model', 'tube')
-        if model_id != 'rocket' and model_id not in models:
+        if model_id not in scenarios and model_id not in models:
             raise ValueError('Unsupported calculation model')
-        if model_id == 'rocket':
-            model,graph,inputs=prepare(request.get('assembly'),models,graphs.get('rocket'))
-            graphs['rocket']=graph
+        if model_id in scenarios:
+            model,graph,inputs=scenarios[model_id](request,models,graphs.get(model_id))
+            graphs[model_id]=graph
         else:
             model, graph = models[model_id], graphs[model_id]
             inputs=request['inputs']
