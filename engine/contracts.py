@@ -37,7 +37,7 @@ class Source:
 @dataclass(frozen=True)
 class Node(Source):
     inputs: dict[str, Binding]
-    compute: Callable[[dict[str, float], Any], float]
+    compute: Callable[[dict[str, Any], Any], Any]
     version: str = '1.0.0'
     schema_version: int = 1
     implementation: str = ''

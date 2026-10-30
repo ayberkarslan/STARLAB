@@ -3,12 +3,15 @@
   "revision": "5c100ca9cb851f660f6d1babc44088da8dadf08f",
   "files": {
     "src/cli/design_analysis.hpp": "bd33180df1ac1951f44433591839457bdb9b24d3efc4288d11b985c9b808b1de",
-    "src/cli/runtime_mass_properties.hpp": "6a33f68b5221818ec82a48ebef57398b168153bf2d1000b1ff632df15ca3102b"
+    "src/cli/runtime_mass_properties.hpp": "6a33f68b5221818ec82a48ebef57398b168153bf2d1000b1ff632df15ca3102b",
+    "src/cli/roketsim_cli.cpp": "511374d1b1d5840b008ace804de3d62b98ba3bcbd9757d77d921da3f6ed88e6e",
+    "src/propulsion/MotorModel.cpp": "a550acd7ad59b74f774148b7d16825be1e23fb3c82c4a345e5e8eeece84b1533"
   },
   "models": {
     "nose": "production noseRadius + integrateShell(128 frusta) + shoulder/cap merge",
     "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch",
     "annular-cylinder": "production analyzeComponent(Centering Ring / Bulkhead), annular and solid cylinder mass properties",
-    "rocket": "coaxial OriginAccumulator add/merge/finalize; dynamically linked part DAG"
+    "rocket": "coaxial OriginAccumulator add/merge/finalize; dynamically linked part DAG",
+    "motor": "production CLI lerp + remainingPropellantKg, split into curve integration and mass nodes"
   }
 }

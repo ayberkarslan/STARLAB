@@ -10,7 +10,7 @@ const compiler=process.env.STARLAB_CXX||'c++',flags=['-std=c++17','-O2',process.
 const version=spawnSync(compiler,['--version'],{encoding:'utf8'});if(version.status!==0)throw Error('C++ derleyicisi bulunamadı. STARLAB_CXX ile derleyici yolunu belirt.');
 const abi=hash(JSON.stringify({flags,compiler:version.stdout,platform:process.platform,arch:process.arch})+readFileSync(root+'native/export.hpp','utf8'));
 const exports={};
-for(const path of files){for(const match of readFileSync(root+path,'utf8').matchAll(/STARLAB_EXPORT\s+double\s+(\w+)\s*\(([^)]*)\)/g)){const args=match[2].trim()?match[2].split(',').map(p=>p.trim()):[];if(Object.hasOwn(exports,match[1])||args.some(p=>!/^double(?:\s+\w+)?$/.test(p)))throw Error('Unsupported or duplicate native signature: '+match[1]);exports[match[1]]={arguments:args.map(()=> 'double'),returns:'double'};}}
+for(const path of files){for(const match of readFileSync(root+path,'utf8').matchAll(/STARLAB_EXPORT\s+double\s+(\w+)\s*\(([^)]*)\)/g)){const args=match[2].trim()?match[2].split(',').map(p=>p.trim()):[];if(Object.hasOwn(exports,match[1])||args.some(p=>!/^double(?:\s+\w+)?$/.test(p)&&!/^const\s+double\s*\*\s*\w+$/.test(p)))throw Error('Unsupported or duplicate native signature: '+match[1]);exports[match[1]]={arguments:args.map(p=>p.includes('*')?'double*':'double'),returns:'double'};}}
 // Fingerprint transitive local headers per module, so a shared formula edit
 // invalidates its own consumers without invalidating unrelated families.
 function dependencies(path,seen=new Set()){

@@ -20,7 +20,9 @@ def prepare(parts,models,previous=None):
         id=part.get('id');model_id=part.get('model')
         if not isinstance(id,str) or not id or len(id)>512 or id in seen or model_id not in models:
             raise ValueError('Geçersiz veya yinelenen yapı bileşeni.')
-        seen.add(id);m=models[model_id];prefix='p'+sha256(id.encode()).hexdigest()[:24]+'_'
+        seen.add(id);m=models[model_id]
+        if not {'mass','cg','axial','transverse'}.issubset({n.id for n in m.nodes}):raise ValueError('Bu model yapı katkısı olarak bağlanamaz.')
+        prefix='p'+sha256(id.encode()).hexdigest()[:24]+'_'
         inputs=part.get('inputs')
         if not isinstance(inputs,dict) or set(inputs)-{s.id for s in m.sources}:raise ValueError('Bileşen girdileri geçersiz.')
         for s in m.sources:

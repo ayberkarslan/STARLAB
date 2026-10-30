@@ -22,7 +22,7 @@ def emit(message):
 for line in sys.stdin:
     request_id = None
     try:
-        if len(line) > 65536:
+        if len(line) > 1_000_000:
             raise ValueError('Request too large')
         request = json.loads(line)
         request_id = request['requestId']
