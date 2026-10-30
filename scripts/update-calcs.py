@@ -9,7 +9,7 @@ from engine.graph import Graph
 def relative(path):return Path(path).resolve().relative_to(ROOT).as_posix()
 def link(path):return f'[{path}]({path})'
 SCOPE={
- 'motor':'Üretim CLI motor hesabı: eğri 2–10000 zaman/itki çifti (düz liste), zamanlar artan ve değerler negatif olmayan sonlu sayılar. lerp uçlarda ilk/son itkiye sabitlenir; araya nokta eklenmez. Yerel zaman s, kütle kg. Yakıt tüketimi toplam impulsa oranlıdır; toplam impuls paydasındaki 1e-12 sınırı kaynak gibi korunur. Girilen bağımsız kütle profili, motor CG/ataleti ve ateşleme gecikmesi henüz bağlanmadı.',
+ 'motor':'Üretim CLI motor hesabı: eğri 2–10000 zaman/itki çifti (düz liste), zamanlar artan ve değerler negatif olmayan sonlu sayılar. lerp uçlarda ilk/son itkiye sabitlenir; araya nokta eklenmez. Yerel zaman s, kütle kg. Yakıt tüketimi toplam impulsa oranlıdır; toplam impuls paydasındaki 1e-12 sınırı kaynak gibi korunur. Bu bağımsız model motor yerel zamanını alır. Montaj/gecikme installed-motor modelindedir; bağımsız kütle profili henüz bağlı değil.',
  'tube':'Homojen, tek gövde tüpü. Et kalınlığı yarıçaptan küçük; sıfır et kalınlığı sıfır hacim verir. Alt parçalar ve kütle/CG override değerleri dahil değil.',
  'inner-tube':'Homojen iç tüp. İç yarıçap pozitif ve dış yarıçaptan küçük. Alt parçalar ve override değerleri dahil değil.',
  'mass-component':'Kullanıcı kütlesi pozitif bir homojen dolu silindir olarak modellenir. Yoğunluktan kütle türetilmez; CG L/2, ataletler dolu silindir kabulüdür.',
@@ -26,12 +26,20 @@ FORMULAS={
  'trapezoidal-fins':{'area':'Tek kanadın açık alanı A = (c_root+c_tip) span/2','sectionFactor':'Kesit kodu → kaynak üretim hacim katsayısı','volume':'V = N (A+h_tab L_tab) t k_section','mass':'m = ρV','cg':'x_CG = [c_root²+c_root c_tip+c_tip²+sweep(c_root+2c_tip)]/[3(c_root+c_tip)]; payda ≤1e−12 ise 0','length':'L_effective = max(c_root,sweep+c_tip)','radial':'r_station = R_parent + span/2','axial':'Ixx = m r_station²','transverse':'Iyy = Izz = m(L_effective²+r_station²)/12'},
  'nose':{'volume':'128 kesik koninin dış−iç hacimlerinin toplamı + omuz halka hacmi + varsa kapak hacmi. radialWall = t hypot(Δr,Δx)/Δx; integral gövdesi shell.hpp içinde.','mass':'Her kesitte dm = ρ dV; kesit kütlelerinin, omuzun ve kapağın toplamı.','cg':'Geometrik ilk moment / hacim; omuz/kapak eklenirken ağırlıklı birleşim. Yoğunluk homojen olduğundan bu node ρ=1 kullanır. Sıfır kütlede kaynak gibi 0.','axial':'Kesitlerde ½ dm(r_outer²+r_inner²) toplamı; omuz ve kapak kendi CG ataletleriyle eklenir.','transverse':'Kesitlerde dm[¼(r_outer²+r_inner²)+x²] toplanır, toplam CG’ye kaydırılır. Omuz/kapak paralel eksen terimleriyle birleştirilir.'},
 }
+SCOPE['installed-motor']='Üretim CLI atanan motor modeli: t_local=t−ateşleme gecikmesi. Ateşleme öncesi itki 0, yakıt tamdır. CG uzunluğun yarısıdır (kaynağın geometrik fallback değeri). Enine atalet kuru motor ve kalan yakıtın ayrı katkılarından gelir. Üretim runtime modelinde motor eksenel atalet katkısı 0’dır; bu kaynak sınırlaması korunur. Motor yuvasının tüp kütlesi ayrıca hesaplanır. Yalnız launch gecikmesi, eş eksenli yerleşim; kullanıcı yuva başından motor başlangıcını mm olarak belirtir. Bağımsız kütle profili ve ayrılma desteklenmez.'
+FORMULAS['installed-motor']={**FORMULAS['motor'],
+ 'localTime':'t_local = t_simulation − delay; ateşleme öncesi negatif olabilir',
+ 'thrust':'t_local < 0 ise 0; aksi halde kaynak üretim lerp',
+ 'cg':'CG_local = L/2; kaynak üretim geometrik fallback',
+ 'inertiaCoefficient':'k = [m_wet (3R²+L²)/12] / m_wet; kaynak işlem sırası korunur',
+ 'axial':'0; kaynak evaluateMassProperties motor katkısı eksenel atalet taşımıyor',
+ 'transverse':'I_transverse = m_dry k + m_remaining k; kaynak kuru/yakıt katkıları'}
 lines=['# CALCS — hesaplama dizini','',
  'Bu dosya yerel çalışma indeksidir. `python3 scripts/update-calcs.py` ile modül kayıtlarından yenilenir; `--check` güncelliği kontrol eder.',
  'Yeni model/node eklendiğinde aynı geliştirme adımında güncellenir. Yeni fiziksel yorum için bu üreticideki SCOPE/FORMULAS kaydını da doldur.',
  '', '## Durum','',
  'Aşağıdaki hesaplar ayrı Python sürecinde çalışan native C++ yapı hesaplarıdır. Parça modelleri toplam yapı DAG’sine de bağlanır; toplam kütle/CG/atalet hesaplanır. Uçuş sonucu henüz yoktur.',
- 'Motor itki/impuls/kütle nodeları bağımsız motor modelinde çalışır (Motorlar → Hesap); roket uçuş zincirine henüz bağlanmadı. Aero, atmosfer/rüzgâr, ray hareketi, integrasyon ve kurtarma bağlantısı bekliyor.',
+ 'Motor itki/impuls/kütle nodeları bağımsız motor modelinde (Motorlar → Hesap) ve konum/gecikme ile toplam roket kütle/CG/atalet ağında (Analiz → Kütle) çalışır; yörünge çözücüsü henüz bağlı değil. Aero, atmosfer/rüzgâr, ray hareketi, integrasyon ve kurtarma bağlantısı bekliyor.',
  'UI ölçüleri mm/g; adaptör SI m/kg değerlerine çevirir. CG bileşenin yerel başlangıcından +X yönünde; ataletler yerel CG etrafındadır. Gövde/iç tüp/kütle kaynak sınıflarındaki +Z ekseni STARLAB +X olarak eşlenir.',
  '', '## Ortak çalışma yolu','',
  '- UI → '+link('src/engine/structuralInputs.ts')+' (yalnız veri/birim uyarlaması).',
@@ -62,7 +70,7 @@ for id,model in sorted(models.items()):
     if id=='nose':lines+=['Ortak sayısal yardımcılar: '+', '.join(link('native/nose/'+p+'.hpp') for p in ['profile','shell','shoulder','properties'])+'.','']
 lines += ['## Dinamik roket yapı ağı — `rocket`','',
  'Dosya: '+link('engine/assembly.py')+'. Mevcut parça modellerinden otomatik kurulur; parça ID’si hash’iyle kalıcı prefix kullanılır. Aynı parça listesinde yalnız değişen kaynakların bağlı nodeları çalışır; ekleme/silmede geçerli cache korunur.',
- 'İlk kapsam: tek kademe, eş eksenli yapı, en fazla 64 fiziksel parça. Gövde, iç tüp, kütle bileşeni, burun, trapez kanat, halka ve bölme. Desteklenmeyen/eksik parçalar, kütle/CG override, radyal/tekrarlı montaj hesap başlamadan bildirilir. Gizlice atlanan parça yoktur.',
+ 'İlk kapsam: tek kademe, eş eksenli yapı, en fazla 64 fiziksel parça. Gövde, iç tüp, kütle bileşeni, burun, trapez kanat, halka, bölme, motor yuvası ve atanan motor (her biri ayrı fiziksel katkı). Desteklenmeyen/eksik parçalar, kütle/CG override, radyal/tekrarlı montaj hesap başlamadan bildirilir. Gizlice atlanan parça yoktur.',
  'UI veri projeksiyonu: '+link('src/engine/rocketInputs.ts')+'; sonuç: '+link('src/components/engineering/RocketMass.tsx')+' (Analiz → Kütle). Konum resolveParts üzerinden SI’ya çevrilir; fizik UI’da hesaplanmaz.',
  'Aşağıdaki tarifler parça başına ve birleştirme adımı başına çoğaltılır; parçaların asıl nodeları yukarıdaki tablolardan gelir.', '']
 for id,formula,unit,file in [
