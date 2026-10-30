@@ -9,7 +9,9 @@
     "test": "vitest run",
     "build:kernels": "node scripts/build-kernels.mjs",
     "build:engine": "node scripts/build-native.mjs",
-    "test:engine": "python3 -m unittest discover -s engine/tests -v"
+    "test:engine": "python3 -m unittest discover -s engine/tests -v",
+    "pretest:engine": "npm run build:engine",
+    "check:engine": "tsc -p tsconfig.server.json --noEmit"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",

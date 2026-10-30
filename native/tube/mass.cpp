@@ -1,2 +1,3 @@
-// RoketSiM BodyTube::rawMassProperties, mass = material density * volume.
-extern "C" double tube_mass(double volume, double density) { return density * volume; }
+#include "../export.hpp"
+// Homogeneous material mass (kg): bulk density × material volume.
+STARLAB_EXPORT double tube_mass(double volume, double density) { return density * volume; }

@@ -4,7 +4,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {EngineService} from './engine';
 import type {EngineRequest} from '../src/engine/protocol';
-const root=fileURLToPath(new URL('../',import.meta.url)),execute=promisify(execFile);
+const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),execute=promisify(execFile);
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
  const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve();
  server.middlewares.use('/api/calculations/tube',async(req,res)=>{
@@ -20,7 +20,7 @@ export default function enginePlugin():Plugin{return {name:'starlab-native-engin
    if(!res.destroyed)res.end(JSON.stringify(result)+'\n');
   }catch(error){if(!res.destroyed)res.end(JSON.stringify({type:'error',error:error instanceof Error?error.message:'Hesap tamamlanamadı.'})+'\n')}
  });
- const changed=(path:string)=>{const normalized=path.replaceAll('\\','/');if(!normalized.startsWith(root+'engine/')&&!normalized.startsWith(root+'native/'))return;clearTimeout(timer);timer=setTimeout(()=>{builds=builds.then(async()=>{try{if(normalized.startsWith(root+'native/'))await execute(process.execPath,['scripts/build-native.mjs'],{cwd:root});service.restart();server.ws.send({type:'custom',event:'starlab:engine-restarted',data:{}})}catch(error){server.config.logger.error(String(error));server.ws.send({type:'custom',event:'starlab:engine-error',data:{message:String(error)}})}})},200)};
+ const changed=(path:string)=>{const normalized=path.replaceAll('\\','/');if(!/\.(py|cpp|hpp)$/.test(normalized))return;if(!normalized.startsWith(root+'engine/')&&!normalized.startsWith(root+'native/'))return;clearTimeout(timer);timer=setTimeout(()=>{builds=builds.then(async()=>{try{if(normalized.startsWith(root+'native/'))await execute(process.execPath,['scripts/build-native.mjs'],{cwd:root});service.restart();server.ws.send({type:'custom',event:'starlab:engine-restarted',data:{}})}catch(error){server.config.logger.error(String(error));server.ws.send({type:'custom',event:'starlab:engine-error',data:{message:String(error)}})}})},200)};
  server.watcher.add([root+'engine',root+'native']);server.watcher.on('change',changed);
  server.httpServer?.once('close',()=>{clearTimeout(timer);server.watcher.off('change',changed);service.close()});
 }}}

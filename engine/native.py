@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-BUILD = ROOT / 'dist' / 'engine' / 'build.json'
+BUILD = ROOT / 'build' / 'engine' / 'build.json'
 ARITIES = {'tube_volume': 3, 'tube_mass': 2, 'tube_cg': 1, 'tube_axial': 3, 'tube_transverse': 4}
 
 class NativeKernel:

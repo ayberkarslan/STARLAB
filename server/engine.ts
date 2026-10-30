@@ -1,3 +1,4 @@
+import {availableParallelism,setPriority,constants} from 'node:os';
 import {spawn,type ChildProcessWithoutNullStreams} from 'node:child_process';
 import {createInterface} from 'node:readline';
 import {fileURLToPath} from 'node:url';
@@ -12,7 +13,7 @@ class Session {
  constructor(private command:string,private args:string[],private cwd:string,private timeout:number){}
  stop(error=new Error('Hesap iptal edildi.')){const child=this.child;this.child=undefined;const job=this.pending;this.pending=undefined;job?.cleanup();job?.reject(error);child?.kill('SIGKILL')}
  private start(){
-  const child=spawn(this.command,this.args,{cwd:this.cwd,stdio:['pipe','pipe','pipe'],windowsHide:true});this.child=child;
+  const child=spawn(this.command,this.args,{cwd:this.cwd,stdio:['pipe','pipe','pipe'],windowsHide:true});this.child=child;child.once('spawn',()=>{try{if(child.pid)setPriority(child.pid,constants.priority.PRIORITY_BELOW_NORMAL)}catch{}});
   let diagnostic='';child.stderr.on('data',data=>{diagnostic=(diagnostic+data.toString()).slice(-4096)});
   const lines=createInterface({input:child.stdout});lines.on('line',line=>{
    if(this.child!==child)return;
@@ -44,7 +45,7 @@ export class EngineService {
  evaluate(request:EngineRequest,progress:(event:EngineProgress)=>void=()=>{},signal?:AbortSignal){
   if(request.protocolVersion!==1||!/^[a-zA-Z0-9:_-]{1,128}$/.test(request.sessionId)||!/^[a-zA-Z0-9_-]{1,100}$/.test(request.requestId)||!request.inputs||typeof request.inputs!=='object'||Object.keys(request.inputs).some(k=>!['length','radius','wall','density'].includes(k))||Object.values(request.inputs).some(v=>v!==undefined&&(typeof v!=='number'||!Number.isFinite(v))))return Promise.reject(Error('Hesap isteği geçersiz.'));
   let session=this.sessions.get(request.sessionId);
-  if(!session){if(this.sessions.size>=(this.options.maxSessions??8)){const idle=[...this.sessions.entries()].filter(([,s])=>!s.pending).sort((a,b)=>a[1].lastUsed-b[1].lastUsed)[0];if(!idle)return Promise.reject(Error('Hesap işçileri meşgul.'));idle[1].stop();this.sessions.delete(idle[0])}
+  if(!session){if(this.sessions.size>=(this.options.maxSessions??Math.max(1,Math.min(4,availableParallelism()-1)))){const idle=[...this.sessions.entries()].filter(([,s])=>!s.pending).sort((a,b)=>a[1].lastUsed-b[1].lastUsed)[0];if(!idle)return Promise.reject(Error('Hesap işçileri meşgul.'));idle[1].stop();this.sessions.delete(idle[0])}
    session=new Session(this.options.command??process.env.STARLAB_PYTHON??(process.platform==='win32'?'python':'python3'),this.options.args??['-u','-m','engine.worker'],this.options.cwd??ROOT,this.options.timeout??30000);this.sessions.set(request.sessionId,session);
   }
   return session.evaluate(request,progress,signal);
