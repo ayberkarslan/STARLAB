@@ -2,11 +2,13 @@
   "repository": "RoketSiM",
   "revision": "5c100ca9cb851f660f6d1babc44088da8dadf08f",
   "files": {
-    "src/cli/design_analysis.hpp": "bd33180df1ac1951f44433591839457bdb9b24d3efc4288d11b985c9b808b1de"
+    "src/cli/design_analysis.hpp": "bd33180df1ac1951f44433591839457bdb9b24d3efc4288d11b985c9b808b1de",
+    "src/cli/runtime_mass_properties.hpp": "6a33f68b5221818ec82a48ebef57398b168153bf2d1000b1ff632df15ca3102b"
   },
   "models": {
     "nose": "production noseRadius + integrateShell(128 frusta) + shoulder/cap merge",
     "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch",
-    "annular-cylinder": "production analyzeComponent(Centering Ring / Bulkhead), annular and solid cylinder mass properties"
+    "annular-cylinder": "production analyzeComponent(Centering Ring / Bulkhead), annular and solid cylinder mass properties",
+    "rocket": "coaxial OriginAccumulator add/merge/finalize; dynamically linked part DAG"
   }
 }

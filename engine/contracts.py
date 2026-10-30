@@ -42,6 +42,7 @@ class Node(Source):
     schema_version: int = 1
     implementation: str = ''
     reference: str = ''
+    dependencies: tuple[str, ...] = ()
 
     def describe(self):
         return {**super().describe(), 'inputs': {k: {'id': v.source, 'output': v.contract.describe()} for k, v in self.inputs.items()}, 'version': self.version, 'schemaVersion': self.schema_version, 'implementation': self.implementation, 'provenance': self.reference}
