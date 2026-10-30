@@ -28,7 +28,7 @@ lines=['# CALCS — hesaplama dizini','',
  'Bu dosya yerel çalışma indeksidir. `python3 scripts/update-calcs.py` ile modül kayıtlarından yenilenir; `--check` güncelliği kontrol eder.',
  'Yeni model/node eklendiğinde aynı geliştirme adımında güncellenir. Yeni fiziksel yorum için bu üreticideki SCOPE/FORMULAS kaydını da doldur.',
  '', '## Durum','',
- 'Aşağıdaki hesaplar ayrı Python sürecinde çalışan native C++ yapı hesaplarıdır. Bunlar parça sonuçlarıdır; henüz toplam roket kütlesi/CG/ataleti veya uçuş sonucu değildir.',
+ 'Aşağıdaki hesaplar ayrı Python sürecinde çalışan native C++ yapı hesaplarıdır. Parça modelleri toplam yapı DAG’sine de bağlanır; toplam kütle/CG/atalet hesaplanır. Uçuş sonucu henüz yoktur.',
  'Motor itki/kütle, aero, atmosfer/rüzgâr, ray hareketi, zaman integrasyonu ve kurtarma hesapları henüz bu üretim zincirine bağlı değil.',
  'UI ölçüleri mm/g; adaptör SI m/kg değerlerine çevirir. CG bileşenin yerel başlangıcından +X yönünde; ataletler yerel CG etrafındadır. Gövde/iç tüp/kütle kaynak sınıflarındaki +Z ekseni STARLAB +X olarak eşlenir.',
  '', '## Ortak çalışma yolu','',
@@ -58,12 +58,31 @@ for id,model in sorted(models.items()):
           f'- Python node: {link(python)}.',f'- C++ hesap: {link(n.implementation)}.',
           f'- Kaynak: {n.reference}.',f'- Sürüm: `{n.version}`; sözleşme: `{n.schema_version}`.','']
     if id=='nose':lines+=['Ortak sayısal yardımcılar: '+', '.join(link('native/nose/'+p+'.hpp') for p in ['profile','shell','shoulder','properties'])+'.','']
+lines += ['## Dinamik roket yapı ağı — `rocket`','',
+ 'Dosya: '+link('engine/assembly.py')+'. Mevcut parça modellerinden otomatik kurulur; parça ID’si hash’iyle kalıcı prefix kullanılır. Aynı parça listesinde yalnız değişen kaynakların bağlı nodeları çalışır; ekleme/silmede geçerli cache korunur.',
+ 'İlk kapsam: tek kademe, eş eksenli yapı, en fazla 64 fiziksel parça. Gövde, iç tüp, kütle bileşeni, burun, trapez kanat, halka ve bölme. Desteklenmeyen/eksik parçalar, kütle/CG override, radyal/tekrarlı montaj hesap başlamadan bildirilir. Gizlice atlanan parça yoktur.',
+ 'UI veri projeksiyonu: '+link('src/engine/rocketInputs.ts')+'; sonuç: '+link('src/components/engineering/RocketMass.tsx')+' (Analiz → Kütle). Konum resolveParts üzerinden SI’ya çevrilir; fizik UI’da hesaplanmaz.',
+ 'Aşağıdaki tarifler parça başına ve birleştirme adımı başına çoğaltılır; parçaların asıl nodeları yukarıdaki tablolardan gelir.', '']
+for id,formula,unit,file in [
+ ('p<hash>_globalCg','Global CG = bileşen konumu + yerel CG','m','sum'),
+ ('p<hash>_moment','İlk moment = m x; OriginAccumulator::add','kg·m','moment'),
+ ('p<hash>_origin','Enine atalet ortak başlangıca taşınır: I_origin = I_cg + m x²','kg·m²','origin'),
+ ('p<hash>_axialOrigin','Eş eksenli X kaydırmasında Ixx değişmez','kg·m²','sum'),
+ ('p<hash>_sum_mass / sum_moment / sum_axial / sum_origin','İlgili katkıların sıralı toplamı; OriginAccumulator::merge','ilgili port','sum'),
+ ('total_mass','Tüm fiziksel parçaların kütle toplamı','kg','sum'),
+ ('total_cg','CG_x = ilk moment / toplam kütle; kaynak finalize gibi sıfır kütlede 0','m','centroid'),
+ ('total_axial','Tüm Ixx katkıları; eş eksenli yapı','kg·m²','sum'),
+ ('total_transverse','Iyy = Izz = max(0, toplam I_origin − toplam kütle CG_x²)','kg·m²','transverse')]:
+ lines += [f'#### `{id}`','',f'- Hesap: {formula}. Çıktı: {unit}.',
+ '- Python node fabrikası: '+link('engine/assembly.py')+'.',
+ '- C++: '+link('native/assembly/'+file+'.cpp')+'.',
+ '- Değiştirilmeden alınan kaynak yardımcı: '+link('native/assembly/runtime_mass_properties.hpp')+'.', '']
 lines+=['## Doğrulama ve sınırlar','',
  'Yeni üretim yolu kaynak kaydı: '+link('native/source-provenance.json')+'.',
  'Karşılaştırma: `python3 scripts/check-legacy-design.py /home/ayberk/Projects/B3/roketsimdeneme1` — kaynak üretim fonksiyonları bağımsız derlenir, modüler native sonuçlarla karşılaştırılır; göreli tolerans 2e−13, mutlak taban 1e−14.',
  'Gövde: `node scripts/check-legacy-parity.mjs …`; iç tüp/kütle: `node scripts/check-legacy-structure.mjs …`.',
  'DAG/FFI/regresyon testleri: `npm run test:engine`; arayüz veri sınırları: `npm test`.',
- 'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} model, {count} hesap node’u.','']
+ 'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} parça modeli, {count} kayıtlı parça node’u + 1 dinamik roket modeli (node sayısı parça sayısına göre değişir).','']
 text='\n'.join(lines);target=ROOT/'CALCS'
 if '--check' in sys.argv:
     if not target.exists() or target.read_text()!=text:raise SystemExit('CALCS güncel değil: python3 scripts/update-calcs.py')
