@@ -1,0 +1,3 @@
+from ..contracts import Node,Binding
+from . import ALTITUDE,ATMOSPHERE_MODEL,HEIGHT,PRESSURE,TEMPERATURE
+NODE=Node('pressure','Atmosfer basıncı',PRESSURE,{'model':Binding('atmosphereModel',ATMOSPHERE_MODEL),'height':Binding('height',HEIGHT),'altitude':Binding('absoluteAltitude',ALTITUDE),'surfaceTemperature':Binding('surfaceTemperature',TEMPERATURE),'surfacePressure':Binding('surfacePressure',PRESSURE),'temperature':Binding('temperature',TEMPERATURE)},lambda v,k:k.environment_pressure(v['model'],v['height'],v['altitude'],v['surfaceTemperature'],v['surfacePressure'],v['temperature']),implementation='native/environment/pressure.cpp',reference='RoketSiM src/env/Atmosphere.cpp')
