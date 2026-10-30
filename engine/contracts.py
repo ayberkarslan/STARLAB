@@ -51,4 +51,4 @@ MASS = Port('mass', 'kg')
 CG = Port('local-axial-cg', 'm', 'component-leading-origin')
 INERTIA = Port('centroidal-inertia', 'kg·m²', 'component-local-cg')
 SOURCES = [Source('length', 'Uzunluk', LENGTH), Source('radius', 'Dış yarıçap', LENGTH), Source('wall', 'Et kalınlığı', WALL), Source('density', 'Yoğunluk', DENSITY)]
-REFERENCE = 'OpenRocket f9aa33cb: '
+REFERENCE = 'RoketSiM src/components/BodyTube.cpp: '

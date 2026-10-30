@@ -33,7 +33,8 @@ for line in sys.stdin:
         build = NativeKernel.read_build()
         if kernel is None or kernel.build['buildId'] != build['buildId']:
             kernel = NativeKernel(build)
-        versions = {n.id: hashlib.sha256((f'{n.version}:{n.schema_version}:' + build['modules'][n.implementation] + Path(sys.modules[n.compute.__module__].__file__).read_text()).encode()).hexdigest() for n in nodes}
+        runtime_hash = ''.join((Path(__file__).parent / name).read_text() for name in ('native.py', 'contracts.py', 'graph.py'))
+        versions = {n.id: hashlib.sha256((f'{n.version}:{n.schema_version}:' + build['modules'][n.implementation] + Path(sys.modules[n.compute.__module__].__file__).read_text() + runtime_hash).encode()).hexdigest() for n in nodes}
         progress = lambda event: emit({'type': 'progress', 'requestId': request_id, **event})
         snapshot = graph.evaluate(request['inputs'], kernel, versions, progress)
         manifest = {'sources': [s.describe() for s in graph.sources], 'nodes': [{**n.describe(), 'fingerprint': versions[n.id]} for n in graph.nodes]}

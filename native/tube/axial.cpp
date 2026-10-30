@@ -1,4 +1,5 @@
 #include "../export.hpp"
+// Source: RoketSiM src/components/BodyTube.cpp::rawMassProperties.
 // Uniform tube axial inertia (kg m²), about its own CG; STARLAB +X.
 STARLAB_EXPORT double tube_axial(double mass, double radius, double thickness) {
     const double inner = radius - thickness;

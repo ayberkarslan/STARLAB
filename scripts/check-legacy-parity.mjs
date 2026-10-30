@@ -36,7 +36,15 @@ try{
  for(let i=0;i<100;i++){const diameter=.01+random()*.5;cases.push([diameter,diameter*(.0001+random()*.49),.01+random()*5,100+random()*8000])}
  const run=spawnSync(exe,[],{input:cases.map(c=>c.join(' ')).join('\n')+'\n',encoding:'utf8'});if(run.status!==0)throw Error(run.stderr||String(run.error));
  const expected=run.stdout.trim().split('\n').map(line=>line.split(' ').map(Number));assert.equal(expected.length,cases.length);
- const wasm=await WebAssembly.instantiate(readFileSync(new URL('../public/engines/tube-v1.wasm',import.meta.url))),k=wasm.instance.exports;
- cases.forEach(([diameter,wall,length,density],i)=>{const radius=diameter*.5,v=k.tube_volume(radius,wall,length),mass=k.tube_mass(v,density);const actual=[v,mass,k.tube_cg(length),k.tube_axial(mass,radius,wall),k.tube_transverse(mass,radius,wall,length)];actual.forEach((n,j)=>assert.ok(Math.abs(n-expected[i][j])<=Math.max(1e-14,Math.abs(expected[i][j])*2e-13),`case ${i}, output ${j}: ${n} != ${expected[i][j]}`))});
- console.log(`PASS: ${cases.length} cases, ${cases.length*5} outputs, original C++ BodyTube methods vs bundled WebAssembly (relative tolerance 2e-13).`);
+ const python=`import sys,json
+from engine.native import NativeKernel
+k=NativeKernel(NativeKernel.read_build())
+rows=[]
+for d,t,l,rho in json.load(sys.stdin):
+ r=d*.5;v=k.tube_volume(r,t,l);m=k.tube_mass(v,rho);rows.append([v,m,k.tube_cg(l),k.tube_axial(m,r,t),k.tube_transverse(m,r,t,l)])
+print(json.dumps(rows,allow_nan=False))`;
+ const output=spawnSync(process.env.STARLAB_PYTHON||(process.platform==='win32'?'python':'python3'),['-c',python],{input:JSON.stringify(cases),encoding:'utf8'});if(output.status!==0)throw Error(output.stderr||String(output.error));
+ const rows=JSON.parse(output.stdout);assert.equal(rows.length,cases.length);
+ rows.forEach((actual,i)=>actual.forEach((n,j)=>assert.ok(Math.abs(n-expected[i][j])<=Math.max(1e-14,Math.abs(expected[i][j])*2e-13),`case ${i}, output ${j}: ${n} != ${expected[i][j]}`)));
+ console.log(`PASS: ${cases.length} cases, ${cases.length*5} outputs, original RoketSiM C++ BodyTube methods vs native C++ library (relative tolerance 2e-13).`);
 }finally{rmSync(dir,{recursive:true,force:true})}

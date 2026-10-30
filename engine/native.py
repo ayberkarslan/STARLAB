@@ -4,7 +4,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BUILD = ROOT / 'build' / 'engine' / 'build.json'
-ARITIES = {'tube_volume': 3, 'tube_mass': 2, 'tube_cg': 1, 'tube_axial': 3, 'tube_transverse': 4}
 
 class NativeKernel:
     def __init__(self, build):
@@ -13,9 +12,11 @@ class NativeKernel:
         if library.parent != BUILD.parent.resolve():
             raise ValueError('Invalid native library path')
         self.library = ctypes.CDLL(str(library))
-        for name, arity in ARITIES.items():
+        for name, signature in build['exports'].items():
+            if signature['returns'] != 'double' or any(t != 'double' for t in signature['arguments']):
+                raise ValueError('Unsupported native signature')
             fn = getattr(self.library, name)
-            fn.argtypes = [ctypes.c_double] * arity
+            fn.argtypes = [ctypes.c_double] * len(signature['arguments'])
             fn.restype = ctypes.c_double
             setattr(self, name, fn)
 
