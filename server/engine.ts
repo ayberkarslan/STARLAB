@@ -17,7 +17,7 @@ class Session {
   let diagnostic='';child.stderr.on('data',data=>{diagnostic=(diagnostic+data.toString()).slice(-4096)});
   const lines=createInterface({input:child.stdout});lines.on('line',line=>{
    if(this.child!==child)return;
-   try{if(line.length>1_000_000)throw Error('Hesap motoru yanıtı çok büyük.');const event=JSON.parse(line),job=this.pending;if(!job||event.requestId!==job.id)return;
+   try{if(line.length>8_000_000)throw Error('Hesap motoru yanıtı çok büyük.');const event=JSON.parse(line),job=this.pending;if(!job||event.requestId!==job.id)return;
     if(event.type==='progress'){job.progress(event);return}
     if(event.type==='error'){this.pending=undefined;job.cleanup();job.reject(Error(event.error));return}
     validateEngineResponse(event,job.id);this.pending=undefined;job.cleanup();job.resolve(event);
@@ -43,6 +43,7 @@ export class EngineService {
  private sweep:ReturnType<typeof setInterval>;
  constructor(private options:{command?:string;args?:string[];cwd?:string;timeout?:number;maxSessions?:number;ttl?:number}={}){this.sweep=setInterval(()=>{for(const [id,session]of this.sessions)if(!session.pending&&Date.now()-session.lastUsed>(this.options.ttl??120000)){session.stop();this.sessions.delete(id)}},30000);this.sweep.unref()}
  evaluate(request:EngineRequest,progress:(event:EngineProgress)=>void=()=>{},signal?:AbortSignal){
+  if(request.model==='rocket'&&(!Array.isArray(request.assembly)||request.assembly.length<1||request.assembly.length>64))return Promise.reject(Error('Yapı hesabı 1–64 fiziksel bileşen destekliyor.'));
   // Transport accepts scalar ports; model-specific contracts belong to the worker registry.
   if(request.protocolVersion!==1||!/^[a-zA-Z0-9:_-]{1,128}$/.test(request.sessionId)||!/^[a-zA-Z0-9_-]{1,100}$/.test(request.requestId)||(request.model!==undefined&&(typeof request.model!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(request.model)))||!request.inputs||typeof request.inputs!=='object'||Array.isArray(request.inputs)||Object.keys(request.inputs).length>32||Object.keys(request.inputs).some(k=>!/^[a-zA-Z][a-zA-Z0-9]{0,63}$/.test(k))||Object.values(request.inputs).some(v=>v!==undefined&&(typeof v!=='number'||!Number.isFinite(v))))return Promise.reject(Error('Hesap isteği geçersiz.'));
   let session=this.sessions.get(request.sessionId);

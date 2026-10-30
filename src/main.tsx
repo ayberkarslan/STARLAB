@@ -1,3 +1,4 @@
+import {calculationExample} from './domain/calculationExample';
 import IdleShowroom from './components/IdleShowroom';
 import {isStructural} from './domain/componentCatalog';
 import React,{useState,useRef,useEffect,useMemo,lazy,Suspense} from 'react';
@@ -107,7 +108,7 @@ function App(){
   window.addEventListener('keydown',shortcut);return()=>window.removeEventListener('keydown',shortcut);
  },[project,undo,redo,page,selected,part,selection,canDelete,focus,adding,deleting,help]);
  const menuItems:Record<string,{label:string;action:()=>void;shortcut?:string;disabled?:boolean}[]>={
- 'Dosya':[{label:'Yeni proje…',shortcut:'Ctrl N',action:beginNewProject},{label:'Proje aç…',shortcut:'Ctrl O',action:()=>file.current?.click()},{label:'.star olarak dışa aktar…',shortcut:'Ctrl S',action:exportProject},{label:'Örnek roket aç',action:()=>replaceDocument(initialProject())},{label:'Önceki projeyi aç',disabled:!previousProject,action:()=>{if(previousProject)replaceDocument(previousProject)}}],
+ 'Dosya':[{label:'Yeni proje…',shortcut:'Ctrl N',action:beginNewProject},{label:'Proje aç…',shortcut:'Ctrl O',action:()=>file.current?.click()},{label:'.star olarak dışa aktar…',shortcut:'Ctrl S',action:exportProject},{label:'Örnek roket aç',action:()=>replaceDocument(initialProject())},{label:'Yapı hesabı örneği aç',action:()=>replaceDocument(calculationExample())},{label:'Önceki projeyi aç',disabled:!previousProject,action:()=>{if(previousProject)replaceDocument(previousProject)}}],
  'Düzenle':[{label:'Geri al',shortcut:'Ctrl Z',disabled:!canUndo,action:undo},{label:'İleri al',shortcut:'Ctrl Shift Z',disabled:!canRedo,action:redo},{label:'Bileşen ekle…',action:()=>{openPage(0);setAdding(true)}},{label:'Seçili bileşeni sil…',shortcut:'Del',disabled:!canDelete,action:()=>{if(canDelete)setDeleting(true)}}],
  'Görünüm':[{label:'Showroom',disabled:!project.parts.some(p=>!isStructural(p.kind)),action:()=>window.dispatchEvent(new Event('starlab:showroom'))},{label:showTree?'Bileşen ağacını gizle':'Bileşen ağacını göster',action:()=>setShowTree(v=>!v)},{label:'Seçilene odaklan',action:focusSelected},{label:'Tüm roketi göster',action:()=>navigateTo(rootId)}],
  'Araçlar':[{label:'Hesap girdilerini dışa aktar…',action:()=>{try{download(`${starFilename(project.name)}.inputs.json`,JSON.stringify(createProjectInputs(project),null,2),'application/json')}catch(error){setNotice(error instanceof Error?error.message:'Girdiler hazırlanamadı.')}}}],
