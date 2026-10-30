@@ -15,7 +15,8 @@
     "build:ui": "npm run build --prefix packages/ui-kit",
     "dev:ui": "npm run dev --prefix packages/ui-kit",
     "prebuild": "npm run build:ui",
-    "postinstall": "npm run build:ui"
+    "postinstall": "npm run build:ui",
+    "calcs": "python3 scripts/update-calcs.py"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
