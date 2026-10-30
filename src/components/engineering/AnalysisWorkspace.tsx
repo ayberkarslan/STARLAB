@@ -5,7 +5,7 @@ import AeroInputs from './AeroInputs';
 import {isStructural} from '../../domain/componentCatalog';
 import {useState} from 'react';
 import {IconButton,SelectMenu} from '@stardrop/ui';
-import {Activity,ArrowRightLeft,Box,Download,Flame,Scale,Wind,ListChecks,Workflow} from 'lucide-react';
+import {Activity,ArrowRightLeft,Box,Download,Flame,Scale,Wind,ListChecks,Workflow} from '@stardrop/ui/icons';
 import type {Part,Project} from '../../domain/project';
 import {partInput} from '../../engine/projectInputs';
 import {allMotors,simulationSignature,type FlightWorkspace} from '../../domain/flight';

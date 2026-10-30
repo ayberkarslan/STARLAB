@@ -1,7 +1,7 @@
 import EnvironmentFields from './EnvironmentFields';
 import {useRef,useState,useEffect} from 'react';
 import {Button,IconButton,SelectMenu} from '@stardrop/ui';
-import {Check,Copy,Download,FileOutput,Play,Plus,Trash2,Upload,X,AlertCircle} from 'lucide-react';
+import {Check,Copy,Download,FileOutput,Play,Plus,Trash2,Upload,X,AlertCircle} from '@stardrop/ui/icons';
 import type {Project} from '../../domain/project';
 import {allMotors,configurationIssues,defaultEnvironment,parseResultCsv,simulationSignature,validateSamples,type Environment,type FlightWorkspace,type SimulationCase} from '../../domain/flight';
 import {getFlightSolver,createFlightRequest} from '../../engine/flightSolver';

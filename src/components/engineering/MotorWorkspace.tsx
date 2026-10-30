@@ -3,7 +3,7 @@ import NumericSeriesEditor from './NumericSeriesEditor';
 import {motorMassColumns} from '../../domain/motorMass';
 import {useRef,useState} from 'react';
 import {Button,IconButton,SelectMenu} from '@stardrop/ui';
-import {Check,Copy,Download,Flame,Layers,Plus,Search,SlidersHorizontal,Trash2,Upload,X} from 'lucide-react';
+import {Check,Copy,Download,Flame,Layers,Plus,Search,SlidersHorizontal,Trash2,Upload,X} from '@stardrop/ui/icons';
 import type {Project} from '../../domain/project';
 import {allMotors,type FlightWorkspace,type FlightConfiguration,type IgnitionEvent} from '../../domain/flight';
 import {motorFits,motorStats,parseEng,exportEng,validateMotor,type Motor} from '../../domain/motors';

@@ -1,7 +1,7 @@
 import {isStructural,isShell,isFin} from '../domain/componentCatalog';
 import {useEffect,useState} from 'react';
 import {IconButton,SelectMenu,TextField,TextArea} from '@stardrop/ui';
-import {Box,Focus,Plus,Trash2} from 'lucide-react';
+import {Box,Focus,Plus,Trash2} from '@stardrop/ui/icons';
 import {catalog,type Part} from '../domain/project';
 import type {PartInputs} from '../domain/partInputs';
 import {NumberInput} from './NumberInput';

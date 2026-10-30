@@ -25,3 +25,4 @@ export {CanvasViewport,NodeCard,NodeGraph,TreeView,HierarchyFlow} from './patter
 export {hierarchyPositions,validateHierarchyMove} from './patterns/hierarchy.ts';
 export {default as StartupScreen} from './feedback/StartupScreen.tsx';
 export {waitForStartup} from './feedback/startupTiming.ts';
+export {RangeField,Switch} from './fields/RangeField.tsx';

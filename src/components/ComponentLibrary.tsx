@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
-import {Dialog,Button,SelectMenu,TextField} from '@stardrop/ui';
-import {Plus} from 'lucide-react';
+import {Dialog,Button,SelectMenu,TextField,TabBar,CatalogLayout,CatalogCard} from '@stardrop/ui';
+import {Plus} from '@stardrop/ui/icons';
 import {componentPresets,catalog,isFin,isStructural,type Kind} from '../domain/componentCatalog';
 import {componentTargets} from '../domain/createComponent';
 import type {Project} from '../domain/project';
@@ -16,9 +16,11 @@ export default function ComponentLibrary({open,onClose,project,parentId,onAdd}:{
  useEffect(()=>{const preferred=focusPath(project,parentId).reverse().find(p=>targets.some(t=>t.value===p.id));setTarget(preferred?.id??targets[0]?.value??'')},[active?.id,parentId,project]);
  return <Dialog open={open} onClose={onClose} title="Bileşen ekle" className="component-library">
  <TextField aria-label="Kütüphanede ara" placeholder="Bileşen ara" value={query} onChange={event=>setQuery(event.target.value)}/>
- <div className="library-tabs" role="group" aria-label="Bileşen kategorisi">{categories.map(c=><button key={c} aria-pressed={category===c} onClick={()=>setCategory(c)}>{c}</button>)}</div>
- <div className="library-layout"><div className="library-cards" role="group" aria-label="Bileşen kataloğu">{visible.map(p=><button key={p.id} className="library-card" aria-pressed={active?.id===p.id} onClick={()=>setChosen(p.id)}><ComponentGlyph kind={p.kind} profile={p.geometry?.noseProfile}/><span>{p.label}</span></button>)}{!visible.length&&<p>Eşleşme yok.</p>}</div>
- <div className="library-preview">{active&&<><ComponentGlyph kind={active.kind} profile={active.geometry?.noseProfile}/><strong>{active.label}</strong><SelectMenu label="Eklenecek yer" value={target} options={targets.length?targets:[{value:'',label:'Önce uygun bir bileşen ekle'}]} disabled={!targets.length} onChange={setTarget}/><Button disabled={!target||!targets.some(t=>t.value===target)} onClick={()=>onAdd(target,active.id)}><Plus size={16}/>Ekle</Button></>}</div></div>
+ <TabBar label="Bileşen kategorisi" items={categories.map(c=>({value:c,label:c}))} value={category} onChange={setCategory}/>
+
+ <CatalogLayout preview={<div className="library-preview">{active&&<><ComponentGlyph kind={active.kind} profile={active.geometry?.noseProfile}/><strong>{active.label}</strong><SelectMenu label="Eklenecek yer" value={target} options={targets.length?targets:[{value:'',label:'Önce uygun bir bileşen ekle'}]} disabled={!targets.length} onChange={setTarget}/><Button disabled={!target||!targets.some(t=>t.value===target)} onClick={()=>onAdd(target,active.id)}><Plus size={16}/>Ekle</Button></>}</div>}>
+ {visible.map(p=><CatalogCard key={p.id} selected={active?.id===p.id} onClick={()=>setChosen(p.id)} preview={<ComponentGlyph kind={p.kind} profile={p.geometry?.noseProfile}/>}>{p.label}</CatalogCard>)}{!visible.length&&<p>Eşleşme yok.</p>}
+ </CatalogLayout>
  </Dialog>;
 }
 function ComponentGlyph({kind,profile}:{kind:Kind;profile?:Parameters<typeof noseProfile>[2]}){

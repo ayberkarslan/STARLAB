@@ -1,4 +1,4 @@
-import {ArrowUpRight,Check,ChevronRight} from 'lucide-react';
+import {ArrowUpRight,Check,ChevronRight} from '@stardrop/ui/icons';
 import {IconButton} from '@stardrop/ui';
 import type {Project} from '../../domain/project';
 import type {FlightWorkspace} from '../../domain/flight';

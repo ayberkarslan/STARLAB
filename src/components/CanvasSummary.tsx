@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import {ChevronDown,ChevronUp} from 'lucide-react';
+import {ChevronDown,ChevronUp} from '@stardrop/ui/icons';
 import type {Project,Part} from '../domain/project';
 import {resolveParts,boundsOf} from '../domain/geometry';
 import {isStructural} from '../domain/componentCatalog';

@@ -2,14 +2,14 @@ import {isStructural} from '../domain/componentCatalog';
 import {useEffect,useMemo,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {IconButton} from '@stardrop/ui';
 import ResizableSplit from './ResizableSplit';
-import {Box,ChevronDown,ChevronRight,Focus,GripVertical,Layers,Minus,Plus,Rocket,SlidersHorizontal,Maximize} from 'lucide-react';
+import {Box,ChevronDown,ChevronRight,Focus,GripVertical,Layers,Minus,Plus,Rocket,SlidersHorizontal,Maximize} from '@stardrop/ui/icons';
 import {catalog,children,type Part,type Project} from '../domain/project';
 import {hierarchyLayout} from '../domain/hierarchyLayout';
 import {focusPath} from '../domain/navigation';
 import type {MoveTarget} from '../domain/move';
 import useHierarchyDrag from './useHierarchyDrag';
 import './hierarchy.css';
-import {ArrowUp,Search,ChevronsDownUp,LogIn} from 'lucide-react';
+import {ArrowUp,Search,ChevronsDownUp,LogIn} from '@stardrop/ui/icons';
 import {scopedProject} from '../domain/selection';
 
 interface Props {inspector:ReactNode;summary:string;project:Project;selected:string;selectedIds?:string[];focus:string;onNavigate:(id:string)=>void;onSelect:(id:string,additive?:boolean)=>void;onEdit:(id:string)=>void;onAdd:()=>void;onFocus:()=>void;onMove:(source:string,target:MoveTarget)=>void}

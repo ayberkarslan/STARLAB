@@ -97,3 +97,4 @@ export {CanvasViewport,NodeCard,NodeGraph,TreeView,HierarchyFlow,type GraphItem,
 export {hierarchyPositions,validateHierarchyMove,type HierarchyEntry,type HierarchyMove,type MovePlacement} from './patterns/hierarchy';
 export {default as StartupScreen} from './feedback/StartupScreen';
 export {waitForStartup} from './feedback/startupTiming';
+export {RangeField,Switch} from './fields/RangeField';

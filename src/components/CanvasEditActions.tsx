@@ -1,5 +1,5 @@
 import {IconButton} from '@stardrop/ui';
-import {Undo2,Redo2,Trash2} from 'lucide-react';
+import {Undo2,Redo2,Trash2} from '@stardrop/ui/icons';
 
 interface Props {canUndo:boolean;canRedo:boolean;canDelete:boolean;onUndo:()=>void;onRedo:()=>void;onDelete:()=>void}
 export default function CanvasEditActions({canUndo,canRedo,canDelete,onUndo,onRedo,onDelete}:Props){

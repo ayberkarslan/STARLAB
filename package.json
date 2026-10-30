@@ -11,7 +11,11 @@
     "build:engine": "node scripts/build-native.mjs",
     "test:engine": "python3 -m unittest discover -s engine/tests -v",
     "pretest:engine": "npm run build:engine",
-    "check:engine": "tsc -p tsconfig.server.json --noEmit"
+    "check:engine": "tsc -p tsconfig.server.json --noEmit",
+    "build:ui": "npm run build --prefix packages/ui-kit",
+    "dev:ui": "npm run dev --prefix packages/ui-kit",
+    "prebuild": "npm run build:ui",
+    "postinstall": "npm run build:ui"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",

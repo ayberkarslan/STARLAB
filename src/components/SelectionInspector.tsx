@@ -1,7 +1,7 @@
 import {isStructural,isShell,isFin,finCrossSections,type FinCrossSection} from '../domain/componentCatalog';
 import {useState} from 'react';
-import {IconButton,SelectMenu,TextField} from '@stardrop/ui';
-import {Focus,Trash2,X,Layers,FolderPlus} from 'lucide-react';
+import {IconButton,SelectMenu,TextField,SelectionChips} from '@stardrop/ui';
+import {Focus,Trash2,X,Layers,FolderPlus} from '@stardrop/ui/icons';
 import {catalog,type Part} from '../domain/project';
 import type {PartInputs} from '../domain/partInputs';
 import {NumberInput} from './NumberInput';
@@ -24,7 +24,8 @@ export default function SelectionInspector({parts,onChange,onSelect,onRemove,onF
  const material=common(p=>p.material==='Tanımlanmadı'?'':p.material),scope=common(p=>p.inputs?.massScope??'component');
  return <aside className="part-inspector selection-inspector" aria-label="Ortak bileşen özellikleri">
  <div className="inspector-toolbar"><span><Layers size={14}/> {parts.length} bileşen</span><div>{onGroup&&<IconButton size="sm" variant="ghost" label="Alt sistem oluştur" onClick={onGroup}><FolderPlus size={15}/></IconButton>}<IconButton size="sm" variant="ghost" label="Seçime odaklan" onClick={onFocus}><Focus size={15}/></IconButton><IconButton size="sm" variant="ghost" label="Seçili bileşenleri sil" disabled={parts.some(p=>p.kind==='rocket')} onClick={onDelete}><Trash2 size={15}/></IconButton></div></div>
- <div className="selection-chips" aria-label="Seçili bileşenler">{parts.map(p=><span key={p.id}><button title={`${p.name} · ${catalog[p.kind].label}`} onClick={()=>onSelect(p.id)}>{p.name}</button><button aria-label={`${p.name} seçimden çıkar`} onClick={()=>onRemove(p.id)}><X size={12}/></button></span>)}</div>
+ <SelectionChips label="Seçili bileşenler" items={parts.map(p=>({id:p.id,label:p.name}))} onSelect={onSelect} onRemove={onRemove}/>
+
  <div className="inspector-tabs" role="group" aria-label="Ortak özellik grubu">{[{id:'geometry',label:'Geometri'},{id:'mass',label:'Kütle'},{id:'aero',label:'Aero'}].map(t=><button key={t.id} aria-pressed={tab===t.id} onClick={()=>setTab(t.id)}>{t.label}</button>)}</div>
  <div className="inspector-fields" key={`${parts.map(p=>p.id).join(':')}:${tab}`}>
  {tab==='geometry'&&!allPhysical&&parts.some(p=>p.kind==='rocket')&&<p className="inspector-reference">Ortak geometri alanı yok.</p>}
