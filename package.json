@@ -7,7 +7,9 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "build:kernels": "node scripts/build-kernels.mjs"
+    "build:kernels": "node scripts/build-kernels.mjs",
+    "build:engine": "node scripts/build-native.mjs",
+    "test:engine": "python3 -m unittest discover -s engine/tests -v"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",

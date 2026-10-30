@@ -1,3 +1,4 @@
+import enginePlugin from './server/plugin';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({ plugins: [react()], resolve:{dedupe:['react','react-dom']} });
+export default defineConfig({ plugins: [react(),enginePlugin()], resolve:{dedupe:['react','react-dom']} });
