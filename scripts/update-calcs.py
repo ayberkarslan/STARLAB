@@ -127,11 +127,11 @@ for id,formula,unit,file in [
 lines+=['## Bağlı aero ağı — `rocket-aero`','', 'Senaryo: '+link('engine/scenarios/rocket_aero.py')+'; genel tipli model bağlayıcı: '+link('engine/coupling.py')+'. aero-forces.cg kaynağı yerine rocket.total_cg çıkışı bağlanır. Aero girdisi değişince statik yapı çalışmaz; motor yakıtı CG’yi değiştirince yalnız moment/marj kolu etkilenir. Her hesap kendi Python/C++ dosyasındadır.','', '## Doğrulama ve sınırlar','',
  'Yeni üretim yolu kaynak kaydı: '+link('native/source-provenance.json')+'.',
  'Karşılaştırma: `python3 scripts/check-legacy-design.py /home/ayberk/Projects/B3/roketsimdeneme1` — kaynak üretim fonksiyonları bağımsız derlenir, modüler native sonuçlarla karşılaştırılır; göreli tolerans 2e−13, mutlak taban 1e−14.',
- 'Çevre: `python3 scripts/check-legacy-environment.py …` — 282 durum /4230 çıktı; eski Atmosphere.cpp, WindModel.cpp, PinkNoise.cpp bağımsız derlenir.','Aero: `python3 scripts/check-legacy-aero.py …` — 1000 durum / 12000 çıktı.','Motor: `python3 scripts/check-legacy-motor.py …`; atanan motor: `python3 scripts/check-legacy-installed-motor.py …` (300 durum / 1200 çıktı); yapı birleştirme: `python3 scripts/check-legacy-assembly.py …`.',
+ 'Çevre: `python3 scripts/check-legacy-environment.py …` — 302 durum /4530 çıktı; eski Atmosphere.cpp, WindModel.cpp, PinkNoise.cpp bağımsız derlenir.','Aero: `python3 scripts/check-legacy-aero.py …` — 1000 durum / 12000 çıktı.','Motor: `python3 scripts/check-legacy-motor.py …`; atanan motor: `python3 scripts/check-legacy-installed-motor.py …` (300 durum / 1200 çıktı); yapı birleştirme: `python3 scripts/check-legacy-assembly.py …`.',
  'Gövde: `node scripts/check-legacy-parity.mjs …`; iç tüp/kütle: `node scripts/check-legacy-structure.mjs …`.',
  'DAG/FFI/regresyon testleri: `npm run test:engine`; arayüz veri sınırları: `npm test`.',
  'UI katalog özetinde src/domain/motors.ts::motorStats hâlâ var; bu, native motor modeli veya uçuş çözücüsü değildir. Uçuşun fizik hesabı bu UI yardımcı fonksiyonuna bağlanmayacak.',
- 'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} parça modeli, {count} kayıtlı parça node’u + 1 dinamik roket modeli (node sayısı parça sayısına göre değişir).','']
+ 'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} hesap modeli, {count} kayıtlı hesap node’u + 1 dinamik roket modeli (node sayısı parça sayısına göre değişir).','']
 text='\n'.join(lines);target=ROOT/'CALCS'
 if '--check' in sys.argv:
     if not target.exists() or target.read_text()!=text:raise SystemExit('CALCS güncel değil: python3 scripts/update-calcs.py')

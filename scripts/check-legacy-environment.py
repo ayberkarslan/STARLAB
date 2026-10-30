@@ -39,6 +39,11 @@ for mode in [0,1]:
 for _ in range(200):
  cases.append([rng.choice([0,1]),rng.uniform(0,80000),rng.uniform(-500,1000),rng.uniform(250,320),rng.uniform(70000,120000),rng.choice([0,1,2]),rng.uniform(0,50),rng.uniform(-720,720),rng.uniform(-20,20),rng.uniform(0,360),rng.uniform(2,100),1,rng.uniform(0,1),.03,rng.uniform(-100,100),rng.uniform(-500,1000),rng.uniform(.05,10)])
 for speed in [0,.01,.1,.100001]:cases.append([0,0,0,288.15,101325,0,0,0,0,0,10,1,.14,.03,0,speed,1])
+# Exact geopotential layer boundaries, approached from both sides.
+for H in [11000,20000,32000,47000,51000,71000]:
+ geometric=6356766.0*H/(6356766.0-H)
+ for delta in [-1e-6,0,1e-6]:cases.append([1,geometric+delta,0,288.15,101325,0,0,0,0,0,10,1,.14,.03,0,100,1])
+for mode in [0,1]:cases.append([mode,0,-500,288.15,101325,0,0,0,0,0,10,1,.14,.03,0,100,1])
 with tempfile.TemporaryDirectory(prefix='starlab-env-') as directory:
  p=Path(directory);(p/'reference.cpp').write_text(program)
  subprocess.run(['c++','-std=c++17','-O2','-ffp-contract=off','-I',str(legacy/'include'),str(p/'reference.cpp'),*[str(legacy/name) for name in ['src/env/Atmosphere.cpp','src/env/WindModel.cpp','src/env/PinkNoise.cpp']],'-o',str(p/'reference')],check=True)
