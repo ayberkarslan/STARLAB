@@ -36,7 +36,7 @@ const nativeSolver:FlightSolver={async solve(request,signal){
  const issues=flightSolverIssues(request);if(issues.length)throw Error(issues.join('\n'));
  const a=request.aerodynamics,e=request.environment,m=request.motors[0];
  if(a.dragCoefficient===null||a.referenceArea===null)throw Error('Uçuş aero girdileri kayıp.');
- const engineRequest:EngineRequest={protocolVersion:1,requestId:crypto.randomUUID(),sessionId:'flight-solver',model:'flight',assembly:request.assembly,inputs:{curve:m.curve.flatMap(p=>[p.t,p.thrust]),propellant:m.propellantMass,cd:a.dragCoefficient,area:a.referenceArea,atmosphereModel:e.atmosphereModel==='surface'?0:1,launchAltitude:e.altitude,surfaceTemperature:e.temperature+273.15,surfacePressure:e.pressure,windSpeed:e.windSpeed,windDirection:e.windDirection,heading:e.railHeading,railAngle:e.railAngle,dt:e.timeStep,maxTime:e.maxTime}};
+ const engineRequest:EngineRequest={protocolVersion:1,requestId:crypto.randomUUID(),sessionId:'flight-solver',model:'flight',assembly:request.assembly,inputs:{curve:m.curve.flatMap(p=>[p.t,p.thrust]),propellant:m.propellantMass,cd:a.dragCoefficient,area:a.referenceArea,atmosphereModel:e.atmosphereModel==='surface'?0:1,launchAltitude:e.altitude,surfaceTemperature:e.temperature+273.15,surfacePressure:e.pressure,windSpeed:e.windSpeed,windDirection:e.windDirection,heading:e.railHeading,railAngle:e.railAngle,railLength:e.railLength,dt:e.timeStep,maxTime:e.maxTime}};
  const response=await evaluateStructure(engineRequest,signal),value=response.snapshot.results.flight_series?.state;
  if(!value)throw Error('Uçuş serisi üretilemedi.');
  if(value.status!=='ready')throw Error('error' in value?value.error:'Uçuş serisi üretilemedi.');

@@ -21,6 +21,6 @@
     "motor": "production CLI lerp + remainingPropellantKg, split into curve integration and mass nodes",
     "aero-forces": "production CLI deriv non-RASAero scalar force/moment blocks; supplied whole-vehicle coefficients, pressure/normal/body lift/stall/damping; design_analysis stability_margin_cal",
     "environment": "production Atmosphere surface + US1976 layers; WindModel deterministic mean/shear/projection with turbulence disabled; CLI air-relative speed/Mach/Re/q/gravity",
-    "flight-axial": "production CLI thrust interpolation, impulse-based propellant depletion, atmosphere, gravity, axial drag, pad support and RK4; reduced-order fixed-axis single-stage scope"
+    "flight-axial": "production CLI thrust interpolation, impulse-based propellant depletion, atmosphere, gravity, axial drag, launch-rail constraint and RK4; reduced-order 2D point-mass single-stage scope"
   }
 }
