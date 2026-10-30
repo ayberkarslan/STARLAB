@@ -9,6 +9,7 @@ from engine.graph import Graph
 def relative(path):return Path(path).resolve().relative_to(ROOT).as_posix()
 def link(path):return f'[{path}]({path})'
 SCOPE={
+ 'motor':'Üretim CLI motor hesabı: eğri 2–10000 zaman/itki çifti (düz liste), zamanlar artan ve değerler negatif olmayan sonlu sayılar. lerp uçlarda ilk/son itkiye sabitlenir; araya nokta eklenmez. Yerel zaman s, kütle kg. Yakıt tüketimi toplam impulsa oranlıdır; toplam impuls paydasındaki 1e-12 sınırı kaynak gibi korunur. Girilen bağımsız kütle profili, motor CG/ataleti ve ateşleme gecikmesi henüz bağlanmadı.',
  'tube':'Homojen, tek gövde tüpü. Et kalınlığı yarıçaptan küçük; sıfır et kalınlığı sıfır hacim verir. Alt parçalar ve kütle/CG override değerleri dahil değil.',
  'inner-tube':'Homojen iç tüp. İç yarıçap pozitif ve dış yarıçaptan küçük. Alt parçalar ve override değerleri dahil değil.',
  'mass-component':'Kullanıcı kütlesi pozitif bir homojen dolu silindir olarak modellenir. Yoğunluktan kütle türetilmez; CG L/2, ataletler dolu silindir kabulüdür.',
@@ -17,6 +18,7 @@ SCOPE={
  'annular-cylinder':'Merkezleme halkası veya bölme: homojen halka silindiri; bölmede iç yarıçap 0. İç/dış yarıçap eşitse sıfır hacim/kütle geçerlidir. Eksenel kalınlık kullanıcı ölçüsüdür.',
 }
 FORMULAS={
+ 'motor':{'thrust':'F(t) = üretim lerp; komşu örnekler arasında doğrusal, eğri uçlarında sabit','impulse':'J(t) = zaman aralığına kırpılmış trapez impuls toplamı; üretim remainingPropellantKg döngüsü','totalImpulse':'J_total = tüm eğri segmentlerinin trapez impuls toplamı','dry':'m_dry = m_wet − m_propellant; yakıt toplam kütleyi aşarsa hata','remaining':'t ≤ 0 ise max(0,m_wet−m_dry); aksi halde bu başlangıç yakıtı × clamp(1−J(t)/max(J_total,1e−12),0,1)','mass':'m_motor(t) = m_dry + m_remaining(t)'},
  'tube':{'volume':'V = π [R² − (R−t)²] L','mass':'m = ρV','cg':'x_CG = L/2','axial':'Ixx = m [R²+(R−t)²]/2','transverse':'Iyy = Izz = m [3(R²+(R−t)²)+L²]/12'},
  'inner-tube':{'volume':'V = π (R²−r²)L','mass':'m = ρV','cg':'x_CG = L/2','axial':'Ixx = m(R²+r²)/2','transverse':'Iyy = Izz = m[3(R²+r²)+L²]/12'},
  'mass-component':{'mass':'m = kullanıcının girdiği pozitif kütle','cg':'x_CG = L/2','axial':'Ixx = mR²/2','transverse':'Iyy = Izz = m(3R²+L²)/12'},
@@ -29,7 +31,7 @@ lines=['# CALCS — hesaplama dizini','',
  'Yeni model/node eklendiğinde aynı geliştirme adımında güncellenir. Yeni fiziksel yorum için bu üreticideki SCOPE/FORMULAS kaydını da doldur.',
  '', '## Durum','',
  'Aşağıdaki hesaplar ayrı Python sürecinde çalışan native C++ yapı hesaplarıdır. Parça modelleri toplam yapı DAG’sine de bağlanır; toplam kütle/CG/atalet hesaplanır. Uçuş sonucu henüz yoktur.',
- 'Motor itki/kütle, aero, atmosfer/rüzgâr, ray hareketi, zaman integrasyonu ve kurtarma hesapları henüz bu üretim zincirine bağlı değil.',
+ 'Motor itki/impuls/kütle nodeları bağımsız motor modelinde çalışır (Motorlar → Hesap); roket uçuş zincirine henüz bağlanmadı. Aero, atmosfer/rüzgâr, ray hareketi, integrasyon ve kurtarma bağlantısı bekliyor.',
  'UI ölçüleri mm/g; adaptör SI m/kg değerlerine çevirir. CG bileşenin yerel başlangıcından +X yönünde; ataletler yerel CG etrafındadır. Gövde/iç tüp/kütle kaynak sınıflarındaki +Z ekseni STARLAB +X olarak eşlenir.',
  '', '## Ortak çalışma yolu','',
  '- UI → '+link('src/engine/structuralInputs.ts')+' (yalnız veri/birim uyarlaması).',
@@ -80,8 +82,10 @@ for id,formula,unit,file in [
 lines+=['## Doğrulama ve sınırlar','',
  'Yeni üretim yolu kaynak kaydı: '+link('native/source-provenance.json')+'.',
  'Karşılaştırma: `python3 scripts/check-legacy-design.py /home/ayberk/Projects/B3/roketsimdeneme1` — kaynak üretim fonksiyonları bağımsız derlenir, modüler native sonuçlarla karşılaştırılır; göreli tolerans 2e−13, mutlak taban 1e−14.',
+ 'Motor: `python3 scripts/check-legacy-motor.py …`; yapı birleştirme: `python3 scripts/check-legacy-assembly.py …`.',
  'Gövde: `node scripts/check-legacy-parity.mjs …`; iç tüp/kütle: `node scripts/check-legacy-structure.mjs …`.',
  'DAG/FFI/regresyon testleri: `npm run test:engine`; arayüz veri sınırları: `npm test`.',
+ 'UI katalog özetinde src/domain/motors.ts::motorStats hâlâ var; bu, native motor modeli veya uçuş çözücüsü değildir. Uçuşun fizik hesabı bu UI yardımcı fonksiyonuna bağlanmayacak.',
  'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} parça modeli, {count} kayıtlı parça node’u + 1 dinamik roket modeli (node sayısı parça sayısına göre değişir).','']
 text='\n'.join(lines);target=ROOT/'CALCS'
 if '--check' in sys.argv:
