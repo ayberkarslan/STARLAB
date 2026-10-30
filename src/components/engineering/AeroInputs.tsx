@@ -10,6 +10,16 @@ export default function AeroInputs({value={},onChange}:{value?:AerodynamicInputs
    {field('referenceArea','Referans alanı','m²',Number.MIN_VALUE)}
    {field('referenceLength','Referans uzunluğu','mm',Number.MIN_VALUE)}
   </div>
+  <details className="engineering-details" open><summary>Roket katsayıları</summary><div className="engineering-field-grid">
+   {field('normalForceSlope','CNa · tüm roket','1/rad',0,Infinity,true)}
+   {field('dragCoefficient','Eksenel Cd · tüm roket','—')}
+   {field('centerOfPressure','CP · roket başlangıcından','mm',0,Infinity,true)}
+  </div></details>
+  <details className="engineering-details"><summary>Gövde kaldırması ve yunuslama</summary><div className="engineering-field-grid">
+   {field('bodyPlanformArea','Gövde planform alanı','m²')}
+   {field('bodyPlanformMoment','Planform ilk momenti','m³',0,Infinity,true)}
+   {field('pitchRate','Yunuslama hızı','°/s',0,Infinity,true)}
+  </div></details>
   <details className="engineering-details" open><summary>Akış koşulu</summary><div className="engineering-field-grid">
    {field('mach','Mach','—')}{field('angleOfAttack','Hücum açısı','°',-180,180,true)}
    <label className="engineering-choice"><span>Motor</span><SelectMenu label="Aero motor durumu" value={value.motorOn===undefined?'unknown':value.motorOn?'on':'off'} options={[{value:'unknown',label:'Belirtilmedi'},{value:'on',label:'Yanıyor'},{value:'off',label:'Sönük'}]} onChange={v=>onChange({...value,motorOn:v==='unknown'?undefined:v==='on'})}/></label>
