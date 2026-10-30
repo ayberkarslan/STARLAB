@@ -6,6 +6,7 @@
   },
   "models": {
     "nose": "production noseRadius + integrateShell(128 frusta) + shoulder/cap merge",
-    "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch"
+    "trapezoidal-fins": "production analyzeComponent(Fins), trapezoidal branch",
+    "annular-cylinder": "production analyzeComponent(Centering Ring / Bulkhead), annular and solid cylinder mass properties"
   }
 }

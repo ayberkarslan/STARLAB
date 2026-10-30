@@ -1,4 +1,4 @@
-import {SelectMenu,TextArea} from '@stardrop/ui';
+import {SelectMenu,TextArea,Checkbox} from '@stardrop/ui';
 import {useState,useEffect} from 'react';
 import {isFin,finCrossSections,noseProfiles,noseParameterDefaults,type ComponentGeometry,type FinCrossSection,type NoseProfile} from '../domain/componentCatalog';
 import type {Part} from '../domain/project';
@@ -9,6 +9,7 @@ export default function GeometryFields({part,onChange}:{part:Part;onChange:(patc
  return <>
  {part.kind==='nose'&&<label className="inspector-material"><span>Burun profili</span><SelectMenu label="Burun profili" value={geometry.noseProfile??'legacy'} options={[{value:'legacy',label:'Mevcut profil'},...noseProfiles]} onChange={value=>set({noseProfile:value==='legacy'?undefined:value as NoseProfile,noseParameter:noseParameterDefaults[value as NoseProfile]})}/></label>}
  {part.kind==='nose'&&<label className="inspector-material"><span>Burun yapısı</span><SelectMenu label="Burun yapısı" value={geometry.filled===undefined?'unknown':geometry.filled?'solid':'shell'} options={[{value:'unknown',label:'Belirtilmedi'},{value:'shell',label:'İçi boş'},{value:'solid',label:'Dolu'}]} onChange={value=>set({filled:value==='unknown'?undefined:value==='solid'})}/></label>}
+ {part.kind==='nose'&&<Checkbox label="Omuz kapağı" checked={geometry.shoulderCapped??false} onChange={e=>set({shoulderCapped:e.target.checked})}/>}
  {isFin(part.kind)&&<label className="inspector-material"><span>Kanat kesiti</span><SelectMenu label="Kanat kesiti" value={geometry.finCrossSection??'unknown'} options={[{value:'unknown',label:'Belirtilmedi'},...finCrossSections]} onChange={value=>set({finCrossSection:value==='unknown'?undefined:value as FinCrossSection})}/></label>}
  <div className="inspector-numbers">
  {part.kind==='nose'&&<>{geometry.noseProfile&&['secantOgive','parabolic','power','haack'].includes(geometry.noseProfile)&&field('noseParameter','Profil parametresi','—',false,geometry.noseProfile==='power'?.01:0,geometry.noseProfile==='haack'?1/3:1)}{field('shoulderLength','Omuz uzunluğu')}{field('shoulderDiameter','Omuz çapı')}{field('shoulderThickness','Omuz et kalınlığı')}</>}

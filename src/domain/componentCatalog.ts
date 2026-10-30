@@ -3,7 +3,7 @@ export type ComponentCategory='Yapı'|'Aerodinamik'|'İç yapı'|'İtki'|'Kurtar
 export type NoseProfile='conical'|'tangentOgive'|'secantOgive'|'elliptical'|'parabolic'|'power'|'haack'|'vonKarman';
 export type FinCrossSection='square'|'rounded'|'airfoil'|'diamond'|'biconvex'|'hex';
 export const finCrossSections:{value:FinCrossSection;label:string}[]=[{value:'square',label:'Düz'},{value:'rounded',label:'Yuvarlatılmış'},{value:'airfoil',label:'Kanat profili'},{value:'diamond',label:'Elmas'},{value:'biconvex',label:'Çift dışbükey'},{value:'hex',label:'Altıgen'}];
-export interface ComponentGeometry {filled?:boolean;finCrossSection?:FinCrossSection;tabHeight?:number;tabLength?:number;noseProfile?:NoseProfile;noseParameter?:number;innerDiameter?:number;aftDiameter?:number;shoulderLength?:number;shoulderDiameter?:number;shoulderThickness?:number;finCount?:number;tipChord?:number;span?:number;sweep?:number;cantAngle?:number;rotation?:number;canopyDiameter?:number;cordLength?:number;lineCount?:number;lineLength?:number;instanceCount?:number;instanceSeparation?:number;radialOffset?:number;points?:[number,number][]}
+export interface ComponentGeometry {filled?:boolean;shoulderCapped?:boolean;finCrossSection?:FinCrossSection;tabHeight?:number;tabLength?:number;noseProfile?:NoseProfile;noseParameter?:number;innerDiameter?:number;aftDiameter?:number;shoulderLength?:number;shoulderDiameter?:number;shoulderThickness?:number;finCount?:number;tipChord?:number;span?:number;sweep?:number;cantAngle?:number;rotation?:number;canopyDiameter?:number;cordLength?:number;lineCount?:number;lineLength?:number;instanceCount?:number;instanceSeparation?:number;radialOffset?:number;points?:[number,number][]}
 export function scaleAxialGeometry(geometry:ComponentGeometry|undefined,factor:number){
  if(!geometry||factor===1)return geometry;const next={...geometry};for(const key of ['tipChord','sweep','shoulderLength','instanceSeparation','tabLength'] as const)if(next[key]!==undefined)next[key]=Math.round(next[key]!*factor*1000000)/1000000;return next;
 }
@@ -48,7 +48,7 @@ export function validateGeometry(value:unknown){
  const geometry=value as ComponentGeometry;
  for(const [key,n]of Object.entries(geometry)){
   if(n===undefined)continue;
-  if(key==='filled'){if(typeof n!=='boolean')throw Error('Doluluk seçimi geçersiz.');continue;}
+  if(key==='filled'||key==='shoulderCapped'){if(typeof n!=='boolean')throw Error('Doluluk seçimi geçersiz.');continue;}
   if(key==='finCrossSection'){if(!finCrossSections.some(p=>p.value===n))throw Error('Kanat kesiti geçersiz.');continue;}
   if(key==='noseProfile'){if(!noseProfiles.some(p=>p.value===n))throw Error('Burun profili geçersiz.');continue;}
   if(key==='points'){if(!Array.isArray(n)||n.length<3||n.length>500||!n.every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)))throw Error('Kanat noktaları geçersiz.');continue;}
