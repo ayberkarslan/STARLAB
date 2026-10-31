@@ -1,6 +1,6 @@
 import type {Part,Project} from '../domain/project';
 import {tubeInputs} from './tubeInputs';
-export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','ring','bulkhead','transition'].includes(part.kind);
+export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','ring','bulkhead','transition','sleeve','lug','engineBlock','parachute','cord'].includes(part.kind);
 const noseProfiles:Record<string,number>={conical:0,tangentOgive:1,elliptical:2,parabolic:3,power:4,haack:5,vonKarman:5};
 const sections:Record<string,number>={square:0,rounded:1,airfoil:2,diamond:3,biconvex:4};
 /** UI data → SI ports only. Formulae and execution remain in the independent engine. */
@@ -8,10 +8,11 @@ export function structuralInputs(part:Part,project?:Project):{model:string;input
  const g=part.geometry??{},i=part.inputs??{};
  if(part.kind==='body')return {model:'tube',inputs:tubeInputs(part)};
  if(part.kind==='mass')return {model:'mass-component',inputs:{length:part.length/1000,radius:part.diameter/2000,suppliedMass:i.massProvided===false?undefined:i.massProvided||part.mass>0?part.mass/1000:undefined}};
- if(part.kind==='innerTube'||part.kind==='ring'||part.kind==='bulkhead'){
+ if(['innerTube','sleeve','lug','engineBlock'].includes(part.kind)||part.kind==='ring'||part.kind==='bulkhead'){
   const diameter=g.innerDiameter,wall=i.wallThickness;
-  const issue=part.kind==='innerTube'&&diameter!==undefined&&wall!==undefined&&Math.abs(diameter-(part.diameter-2*wall))>1e-6?'İç çap ve et kalınlığı birbiriyle uyuşmuyor.':undefined;
-  return {model:part.kind==='innerTube'?'inner-tube':'annular-cylinder',inputs:{length:part.length/1000,radius:part.diameter/2000,innerRadius:part.kind==='bulkhead'?0:diameter!==undefined?diameter/2000:part.kind==='innerTube'&&wall!==undefined?(part.diameter/2-wall)/1000:undefined,density:i.density},issue};
+  const tubeLike=['innerTube','sleeve','lug','engineBlock'].includes(part.kind),derived=wall!==undefined?(part.diameter/2-wall)/1000:undefined;
+  const issue=tubeLike&&diameter!==undefined&&wall!==undefined&&Math.abs(diameter-(part.diameter-2*wall))>1e-6?'İç çap ve et kalınlığı birbiriyle uyuşmuyor.':undefined;
+  return {model:tubeLike?'inner-tube':'annular-cylinder',inputs:{length:part.length/1000,radius:part.diameter/2000,innerRadius:part.kind==='bulkhead'?0:diameter!==undefined?diameter/2000:derived,density:i.density},issue};
  }
  if(part.kind==='nose'){
   const profile=g.noseProfile?noseProfiles[g.noseProfile]:undefined,shoulder=(g.shoulderLength??0)>0;
@@ -28,6 +29,14 @@ export function structuralInputs(part:Part,project?:Project):{model:string;input
   const aft=g.aftDiameter,wall=i.wallThickness;
   const issue=aft===undefined?'Arka çap gerekli.':wall===undefined?'Et kalınlığı gerekli.':wall>=Math.min(part.diameter,aft)/2?'Et kalınlığı iki uç yarıçapından da küçük olmalı.':undefined;
   return {model:'transition',inputs:{length:part.length/1000,foreRadius:part.diameter/2000,aftRadius:aft===undefined?undefined:aft/2000,wall:wall===undefined?undefined:wall/1000,density:i.density},issue};
+ }
+ if(part.kind==='parachute'){
+  const supplied=i.massProvided===true||i.massProvided!==false&&part.mass>0?part.mass/1000:undefined;
+  return {model:'packed-recovery',inputs:{length:part.length/1000,suppliedMass:supplied},issue:supplied===undefined?'Paketlenmiş kütleyi gir.':undefined};
+ }
+ if(part.kind==='cord'){
+  const cordLength=g.cordLength,linear=i.linearDensity,mass=cordLength===undefined||linear===undefined?undefined:cordLength/1000*linear;
+  return {model:'packed-recovery',inputs:{length:part.length/1000,suppliedMass:mass},issue:cordLength===undefined?'Kordon uzunluğunu gir.':linear===undefined?'Doğrusal yoğunluğu gir.':undefined};
  }
  throw Error('Bu bileşenin yapısal hesap modeli henüz bağlı değil.');
 }

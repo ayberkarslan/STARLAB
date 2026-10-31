@@ -16,7 +16,7 @@ export function rocketInputs(project:Project,flight?:FlightWorkspace,configurati
  for(const p of project.parts){
   if(p.kind==='pod'||p.kind==='parallelStage'||(p.geometry?.radialOffset??0)!==0||(p.geometry?.instanceCount??1)!==1)issues.push(`${p.name}: radyal veya tekrarlı yapı henüz bağlı değil.`);
   const supplied=p.inputs?.massProvided===true||p.inputs?.massProvided!==false&&p.mass>0;
-  if((p.kind!=='mass'&&supplied)||p.inputs?.centerOfMass!==undefined)issues.push(`${p.name}: kütle/CG düzeltmesi henüz bağlı değil.`);
+  if((!['mass','parachute'].includes(p.kind)&&supplied)||p.inputs?.centerOfMass!==undefined)issues.push(`${p.name}: kütle/CG düzeltmesi henüz bağlı değil.`);
  }
  const physical=resolveParts(project).filter(p=>!isStructural(p.part.kind));
  if(!physical.length)issues.push('Fiziksel bileşen ekle.');

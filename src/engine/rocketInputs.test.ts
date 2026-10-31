@@ -41,3 +41,12 @@ it('preserves motor placement in star files and rejects invalid persisted offset
  const {project,assignment}=installed();expect(parseStar(serializeStar(project)).flight!.configurations[0].mounts.mount).toEqual(assignment);
  assignment.offset=-1;expect(()=>parseStar(serializeStar(project))).toThrow();
 });
+it('projects simple internal, guide and packed recovery components without skipping them',()=>{
+ const project=emptyProject();project.parts.push(part('stage','rocket','stage',0),part('body','stage','body',1000));
+ project.parts.push({...part('sleeve','body','sleeve',50),diameter:62,geometry:{innerDiameter:60},inputs:{wallThickness:1,density:1200}});
+ project.parts.push({...part('lug','body','lug',50),diameter:16,geometry:{innerDiameter:12},inputs:{wallThickness:2,density:1200}});
+ project.parts.push({...part('block','body','engineBlock',5),diameter:30,geometry:{innerDiameter:20},inputs:{wallThickness:5,density:1200}});
+ project.parts.push({...part('chute','body','parachute',80),mass:150,inputs:{massProvided:true}});
+ project.parts.push({...part('cord','body','cord',100),geometry:{cordLength:3000},inputs:{linearDensity:.02}});
+ const request=rocketInputs(project);expect(request.issues).toEqual([]);expect(request.assembly.map(p=>p.model)).toEqual(['tube','inner-tube','inner-tube','inner-tube','packed-recovery','packed-recovery']);expect(request.assembly.at(-1)?.inputs.suppliedMass).toBe(.06);
+});

@@ -4,6 +4,10 @@ from engine.graph import Graph
 from engine.native import NativeKernel
 
 class ModelTests(unittest.TestCase):
+    def test_packed_recovery_preserves_legacy_zero_inertia(self):
+        model=discover_models()['packed-recovery'];result=Graph(model.sources,model.nodes).evaluate({'length':.1,'suppliedMass':.15},NativeKernel(NativeKernel.read_build()),{})
+        value=lambda id:result['results'][id]['state']['value']
+        self.assertEqual(value('mass'),.15);self.assertEqual(value('cg'),.05);self.assertEqual(value('axial'),0);self.assertEqual(value('transverse'),0)
     def setUp(self):
         self.models = discover_models()
         self.kernel = NativeKernel(NativeKernel.read_build())
