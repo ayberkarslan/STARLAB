@@ -58,15 +58,15 @@ State advance(double t,const State& s,double dt,const Context& c){
 
 // Reduced-order single-stage flight from RoketSiM's production thrust, mass,
 // atmosphere, gravity, drag, pad support and RK4 equations. Output rows are
-// time, AGL altitude, path speed and path acceleration.
+// time, AGL altitude, path speed, path acceleration, downrange, vx, vz and rail state.
 STARLAB_EXPORT double flight_axial_solve(const double* curve,double pairs,double wetMass,double propellantMass,double cd,double area,double atmosphereModel,double launchAltitude,double surfaceTemperature,double surfacePressure,double windSpeed,double windDirection,double heading,double railAngle,double railLength,double dt,double maxTime,double* output,double capacity){
- if(pairs<2||wetMass<=0||propellantMass<0||propellantMass>wetMass||cd<0||area<=0||railLength<=0||dt<=0||maxTime<=0||maxTime/dt>2000000.0||capacity<8)return 0.0;
+ if(pairs<2||wetMass<=0||propellantMass<0||propellantMass>wetMass||cd<0||area<=0||railLength<=0||dt<=0||maxTime<=0||maxTime/dt>2000000.0||capacity<16)return 0.0;
  const double pi=3.14159265358979323846;
  const double windAlong=environment_wind_along(environment_wind_east(windSpeed,windDirection),environment_wind_north(windSpeed,windDirection),heading);
  const Context c{curve,pairs,wetMass,propellantMass,cd,area,atmosphereModel,launchAltitude,surfaceTemperature,surfacePressure,windAlong,railAngle*pi/180.0,railLength,motor_total_impulse(curve,pairs)};
- const int maxRows=static_cast<int>(capacity)/4,totalSteps=static_cast<int>(std::ceil(maxTime/dt)),stride=std::max(1,static_cast<int>(std::ceil((totalSteps+1.0)/maxRows)));
+ const int maxRows=static_cast<int>(capacity)/8,totalSteps=static_cast<int>(std::ceil(maxTime/dt)),stride=std::max(1,static_cast<int>(std::ceil((totalSteps+1.0)/maxRows)));
  State state{};double t=0.0;int rows=0;bool lifted=false;
- auto emit=[&](){if(rows>=maxRows)return;const auto d=derivative(t,state,c);output[4*rows]=t;output[4*rows+1]=state.z;output[4*rows+2]=std::hypot(state.vx,state.vz);output[4*rows+3]=std::hypot(d.vx,d.vz);++rows;};
+ auto emit=[&](){if(rows>=maxRows)return;const auto d=derivative(t,state,c);const int i=8*rows;output[i]=t;output[i+1]=state.z;output[i+2]=std::hypot(state.vx,state.vz);output[i+3]=std::hypot(d.vx,d.vz);output[i+4]=state.x;output[i+5]=state.vx;output[i+6]=state.vz;output[i+7]=state.railCleared;++rows;};
  emit();
  for(int step=1;step<=totalSteps&&rows<maxRows;++step){const double h=std::min(dt,maxTime-t);state=advance(t,state,h,c);t+=h;lifted=lifted||state.z>1e-6;if(lifted&&state.z<=0.0){state.z=state.vx=state.vz=0.0;}if(step%stride==0||t>=maxTime||(lifted&&state.z<=0.0)){emit();if(lifted&&state.z<=0.0)break;}if(h<=0.0)break;}
  return static_cast<double>(rows);

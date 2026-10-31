@@ -41,7 +41,7 @@ const nativeSolver:FlightSolver={async solve(request,signal){
  if(!value)throw Error('Uçuş serisi üretilemedi.');
  if(value.status!=='ready')throw Error('error' in value?value.error:'Uçuş serisi üretilemedi.');
  if(!Array.isArray(value.value))throw Error('Uçuş serisi üretilemedi.');
- const samples:FlightSample[]=[];for(let i=0;i<value.value.length;i+=4)samples.push({t:value.value[i],altitude:value.value[i+1],velocity:value.value[i+2],acceleration:value.value[i+3]});
+ const samples:FlightSample[]=[];for(let i=0;i<value.value.length;i+=8)samples.push({t:value.value[i],altitude:value.value[i+1],velocity:value.value[i+2],acceleration:value.value[i+3],downrange:value.value[i+4],horizontalVelocity:value.value[i+5],verticalVelocity:value.value[i+6],railCleared:value.value[i+7]>.5});
  return {signature:request.signature,samples};
 }};
 registerFlightSolver(nativeSolver);
