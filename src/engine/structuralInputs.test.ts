@@ -20,8 +20,8 @@ describe('structural SI boundary',()=>{
   expect(structuralInputs({...mass,mass:0,inputs:{massProvided:true}}).inputs.suppliedMass).toBe(0);
  });
  it('never maps an unsupported component to a cylinder model',()=>{
-  expect(hasStructuralModel({...part,kind:'freeformFins'})).toBe(false);
-  expect(()=>structuralInputs({...part,kind:'freeformFins'})).toThrow('henüz bağlı değil');
+  expect(hasStructuralModel({...part,kind:'tubeFins'})).toBe(false);
+  expect(()=>structuralInputs({...part,kind:'tubeFins'})).toThrow('henüz bağlı değil');
  });
 });
 
