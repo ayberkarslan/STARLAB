@@ -10,7 +10,7 @@ const radians=(degrees:number)=>degrees*Math.PI/180;
 /** Project data to the legacy static-design ports. No stability arithmetic runs here. */
 export function designInputs(project:Project,flight:FlightWorkspace){
  const configurationId=flight.activeConfigurationId??flight.configurations[0]?.id;
- const structure=rocketInputs(project,flight,configurationId,0),issues=[...structure.issues],aeroAssembly:AssemblyPart[]=[];
+ const structure=rocketInputs(project,flight,configurationId,0,{allowMultipleStages:true,ignoreSeparations:true}),issues=[...structure.issues],aeroAssembly:AssemblyPart[]=[];
  const explicit=project.aerodynamics?.referenceDiameter;
  const exposed=project.parts.filter(p=>['nose','body','transition'].includes(p.kind));
  const referenceDiameter=(explicit??Math.max(60,...exposed.flatMap(p=>[p.diameter,p.geometry?.aftDiameter??0])))/1000;

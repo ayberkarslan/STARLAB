@@ -23,3 +23,9 @@ it('binds transition structure and Barrowman aero from the same geometry',()=>{
  const request=designInputs(project,flight);
  expect(request.issues).toEqual([]);expect(request.assembly.at(-1)?.model).toBe('transition');expect(request.aeroAssembly.at(-1)).toMatchObject({model:'transition-static-aero',inputs:{foreRadius:.03,aftRadius:.02}});
 });
+
+it('aggregates attached stages at the active configuration launch state',()=>{
+ const project=calculationExample(),flight=initialFlight();project.parts.push({id:'booster',parentId:'rocket',kind:'stage',name:'Booster',length:0,diameter:60,offset:0,mass:0,material:'Test'},{id:'booster-body',parentId:'booster',kind:'body',name:'Alt gövde',length:500,diameter:60,offset:0,mass:0,material:'Test',inputs:{wallThickness:2,density:1200}});
+ flight.configurations[0].separations.booster={event:'burnout',delay:0};const request=designInputs(project,flight);
+ expect(request.issues).toEqual([]);expect(request.assembly.some(p=>p.id==='part:booster-body')).toBe(true);
+});
