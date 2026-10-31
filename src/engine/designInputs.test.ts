@@ -17,3 +17,9 @@ it('maps component CP and CNa overrides without replacing computed mass',()=>{
  expect(input).toMatchObject({cnaOverrideEnabled:1,cnaOverride:3.5,cpOverrideEnabled:1,cpOverride:.12});
  expect(request.assembly[0].model).toBe('nose');
 });
+
+it('binds transition structure and Barrowman aero from the same geometry',()=>{
+ const project=calculationExample(),flight=initialFlight();project.parts.push({id:'transition',parentId:'stage',kind:'transition',name:'Geçiş',length:100,diameter:60,offset:0,mass:0,material:'Test',inputs:{wallThickness:2,density:1200},geometry:{aftDiameter:40}});
+ const request=designInputs(project,flight);
+ expect(request.issues).toEqual([]);expect(request.assembly.at(-1)?.model).toBe('transition');expect(request.aeroAssembly.at(-1)).toMatchObject({model:'transition-static-aero',inputs:{foreRadius:.03,aftRadius:.02}});
+});

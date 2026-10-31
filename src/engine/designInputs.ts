@@ -28,7 +28,11 @@ export function designInputs(project:Project,flight:FlightWorkspace){
    const span=(part.diameter-parent.diameter)/2000;
    if(span<=0||g.tipChord===undefined||g.sweep===undefined||g.finCount===undefined){issues.push(`${part.name}: statik aero geometrisi eksik.`);continue}
    aeroAssembly.push({id:`aero:${part.id}`,model:'fins-static-aero',position:position[0]/1000,inputs:{root:part.length/1000,tip:g.tipChord/1000,span,sweep:g.sweep/1000,count:g.finCount,bodyRadius:parent.diameter/2000,referenceArea,mach,alpha,...common}});
-  }else if(['transition','freeformFins','tubeFins'].includes(part.kind))issues.push(`${part.name}: statik aero modeli henüz bağlı değil.`);
+  }else if(part.kind==='transition'){
+   const aft=part.geometry?.aftDiameter;
+   if(aft===undefined){issues.push(`${part.name}: statik aero için arka çap gerekli.`);continue}
+   aeroAssembly.push({id:`aero:${part.id}`,model:'transition-static-aero',position:position[0]/1000,inputs:{length:part.length/1000,foreRadius:part.diameter/2000,aftRadius:aft/2000,referenceRadius,...common}});
+  }else if(['freeformFins','tubeFins'].includes(part.kind))issues.push(`${part.name}: statik aero modeli henüz bağlı değil.`);
  }
  if(!aeroAssembly.length)issues.push('CP için burun veya trapez kanat ekle.');
  return {assembly:structure.assembly,aeroAssembly,inputs:{referenceDiameter},issues,configurationId};

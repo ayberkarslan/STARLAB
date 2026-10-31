@@ -49,3 +49,10 @@ class DesignTests(unittest.TestCase):
         self.assertEqual(result['results']['mass']['state']['value'],0)
         invalid=self.evaluate(g,{**v,'innerRadius':.04})
         self.assertEqual(invalid['results']['mass']['state']['status'],'blocked')
+    def test_transition_shell_mass_and_centroid(self):
+        values={'length':.2,'foreRadius':.04,'aftRadius':.03,'wall':.002,'density':1200}
+        result=self.evaluate(self.graph('transition'),values)
+        self.assertTrue(all(row['state']['status']=='ready' for row in result['results'].values()))
+        self.assertGreater(result['results']['mass']['state']['value'],0)
+        self.assertGreater(result['results']['cg']['state']['value'],0)
+        self.assertLess(result['results']['cg']['state']['value'],.2)
