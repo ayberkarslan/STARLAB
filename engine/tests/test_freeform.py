@@ -4,6 +4,21 @@ from engine.graph import Graph
 from engine.native import NativeKernel
 
 class FreeformTests(unittest.TestCase):
+    def test_static_cna_cp_and_independent_overrides(self):
+        model=discover_models()['freeform-static-aero']
+        graph=Graph(model.sources,model.nodes)
+        kernel=NativeKernel(NativeKernel.read_build())
+        versions={node.id:'test' for node in graph.nodes}
+        inputs={'points':[0,0,.2,0,.18,.1,.04,.1],'count':3,'bodyRadius':.03,'referenceArea':.0028,
+                'mach':.3,'alpha':0,'cnaOverrideEnabled':0,'cnaOverride':0,
+                'cpOverrideEnabled':0,'cpOverride':0}
+        result=graph.evaluate(inputs,kernel,versions)
+        self.assertGreater(result['results']['cna']['state']['value'],0)
+        self.assertGreater(result['results']['cp']['state']['value'],0)
+        changed=graph.evaluate({**inputs,'cnaOverrideEnabled':1,'cnaOverride':4},kernel,versions)
+        self.assertEqual(changed['results']['cna']['state']['value'],4)
+        self.assertEqual(changed['results']['cp']['action'],'cached')
+
     def test_planform_area_and_polygon_orientation(self):
         model=discover_models()['freeform-planform']
         kernel=NativeKernel(NativeKernel.read_build())
