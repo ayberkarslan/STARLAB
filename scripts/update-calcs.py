@@ -9,6 +9,7 @@ from engine.graph import Graph
 def relative(path):return Path(path).resolve().relative_to(ROOT).as_posix()
 def link(path):return f'[{path}]({path})'
 SCOPE={
+ 'freeform-planform':'Eski FinPlanform.hpp poligon alanı. Girdi 3–500 adet (x,y) noktasının metre cinsinden düz dizisidir. Ardışık yinelenen noktalar temizlenir; yön ters olsa da pozitif alan döner. Bu yalnız geometri alanı nodedur; henüz serbest kanat kütle veya CNa/CP toplamına bağlı değildir.',
  'motor':'Üretim CLI motor hesabı: eğri 2–10000 zaman/itki çifti (düz liste), zamanlar artan ve değerler negatif olmayan sonlu sayılar. lerp uçlarda ilk/son itkiye sabitlenir; araya nokta eklenmez. Yerel zaman s, kütle kg. Yakıt tüketimi toplam impulsa oranlıdır; toplam impuls paydasındaki 1e-12 sınırı kaynak gibi korunur. Bu bağımsız model motor yerel zamanını alır. Montaj/gecikme installed-motor modelindedir; bağımsız kütle profili henüz bağlı değil.',
  'tube':'Homojen, tek gövde tüpü. Et kalınlığı yarıçaptan küçük; sıfır et kalınlığı sıfır hacim verir. Alt parçalar ve kütle/CG override değerleri dahil değil.',
  'inner-tube':'Homojen iç tüp. İç yarıçap pozitif ve dış yarıçaptan küçük. Alt parçalar ve override değerleri dahil değil.',
@@ -25,6 +26,7 @@ SCOPE={
  'rail-button':'Eski üretim analizindeki ray düğmesi fizik modeli. Taban ve flanş dış çapla, orta standoff iç çapla, opsiyonel vida başı 2/3 silindir hacmiyle hesaplanır. Birden çok düğme eksen boyunca aralıklıysa toplam CG ve enine atalet paralel eksen katkısıyla gruplanır.',
 }
 FORMULAS={
+ 'freeform-planform':{'area':'FinPlanform::calculate: shoelace alanı A = 1/2 |Σ(x_i y_{i+1}−x_{i+1} y_i)|; kaynak temizleme ve geçerlilik eşiği aynen kullanılır.'},
  'motor':{'thrust':'F(t) = üretim lerp; komşu örnekler arasında doğrusal, eğri uçlarında sabit','impulse':'J(t) = zaman aralığına kırpılmış trapez impuls toplamı; üretim remainingPropellantKg döngüsü','totalImpulse':'J_total = tüm eğri segmentlerinin trapez impuls toplamı','dry':'m_dry = m_wet − m_propellant; yakıt toplam kütleyi aşarsa hata','remaining':'t ≤ 0 ise max(0,m_wet−m_dry); aksi halde bu başlangıç yakıtı × clamp(1−J(t)/max(J_total,1e−12),0,1)','mass':'m_motor(t) = m_dry + m_remaining(t)'},
  'tube':{'volume':'V = π [R² − (R−t)²] L','mass':'m = ρV','cg':'x_CG = L/2','axial':'Ixx = m [R²+(R−t)²]/2','transverse':'Iyy = Izz = m [3(R²+(R−t)²)+L²]/12'},
  'inner-tube':{'volume':'V = π (R²−r²)L','mass':'m = ρV','cg':'x_CG = L/2','axial':'Ixx = m(R²+r²)/2','transverse':'Iyy = Izz = m[3(R²+r²)+L²]/12'},
