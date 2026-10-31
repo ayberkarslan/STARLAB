@@ -3,7 +3,7 @@ export interface PortDescription {id:string;unit:string;frame?:string|null;kind?
 export interface SourceDescription {id:string;label:string;output:PortDescription}
 export interface NodeDescription extends SourceDescription {inputs:Record<string,{id:string;output:PortDescription}>;version:string;schemaVersion:number;implementation:string;provenance:string;fingerprint:string}
 export interface AssemblyPart {id:string;model:string;position:number;inputs:Record<string,number|number[]|undefined>}
-export interface EngineRequest {protocolVersion:1;requestId:string;sessionId:string;model?:string;inputs:Record<string,number|number[]|undefined>;assembly?:AssemblyPart[]}
+export interface EngineRequest {protocolVersion:1;requestId:string;sessionId:string;model?:string;inputs:Record<string,number|number[]|undefined>;assembly?:AssemblyPart[];aeroAssembly?:AssemblyPart[]}
 export interface EngineProgress {type:'progress';requestId:string;nodeId:string;phase:string}
 export interface EngineResponse {type:'result';protocolVersion:1;requestId:string;processId:number;buildId:string;model?:string;manifest:{sources:SourceDescription[];nodes:NodeDescription[]};snapshot:GraphSnapshot}
 export function validateEngineResponse(value:unknown,requestId:string):asserts value is EngineResponse {
