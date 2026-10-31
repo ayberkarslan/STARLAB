@@ -6,7 +6,13 @@ it('projects world positions, includes every physical component once, and blocks
  const project=emptyProject();project.parts.push(part('stage','rocket','stage',0),part('body','stage','body',1000),{...part('load','body','mass',200),offset:700,mass:300,inputs:{massProvided:true}});
  const request=rocketInputs(project);expect(request.issues).toEqual([]);expect(request.assembly).toHaveLength(2);expect(request.assembly[1].position).toBe(.7);
  project.parts.push(part('chute','body','parachute',100));expect(rocketInputs(project).issues.join()).toContain('chute');
- project.parts.pop();project.parts[2].inputs!.centerOfMass=100;expect(rocketInputs(project).issues.join()).toContain('düzeltmesi');
+ project.parts.pop();project.parts[2].inputs!.centerOfMass=100;expect(rocketInputs(project).issues).toEqual([]);expect(rocketInputs(project).assembly[0].overrides?.cg).toBe(.1);
+});
+
+it('projects component mass and cg overrides but rejects subtree scope',()=>{
+ const project=emptyProject();project.parts.push(part('stage','rocket','stage',0),{...part('body','stage','body',1000),mass:500,inputs:{wallThickness:2,density:2700,massProvided:true,centerOfMass:400}});
+ const request=rocketInputs(project);expect(request.issues).toEqual([]);expect(request.assembly[0].overrides).toEqual({mass:.5,cg:.4});
+ project.parts[2].inputs!.massScope='subtree';expect(rocketInputs(project).issues.join()).toContain('alt bileşenleri');
 });
 
 import {initialFlight} from '../domain/flight';

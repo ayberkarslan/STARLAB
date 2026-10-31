@@ -121,7 +121,8 @@ for id,model in sorted(models.items()):
     if id=='nose':lines+=['Ortak sayısal yardımcılar: '+', '.join(link('native/nose/'+p+'.hpp') for p in ['profile','shell','shoulder','properties'])+'.','']
 lines += ['## Dinamik roket yapı ağı — `rocket`','',
  'Dosya: '+link('engine/assembly.py')+'. Mevcut parça modellerinden otomatik kurulur; parça ID’si hash’iyle kalıcı prefix kullanılır. Aynı parça listesinde yalnız değişen kaynakların bağlı nodeları çalışır; ekleme/silmede geçerli cache korunur.',
- 'İlk kapsam: tek kademe, eş eksenli yapı, en fazla 64 fiziksel parça. Gövde, iç tüp, kütle bileşeni, burun, trapez kanat, halka, bölme, motor yuvası ve atanan motor (her biri ayrı fiziksel katkı). Desteklenmeyen/eksik parçalar, kütle/CG override, radyal/tekrarlı montaj hesap başlamadan bildirilir. Gizlice atlanan parça yoktur.',
+ 'İlk kapsam: tek kademe, eş eksenli yapı, en fazla 64 fiziksel parça. Desteklenen her fiziksel bileşen ayrı katkıdır. Desteklenmeyen/eksik parçalar ve destek dışı radyal/tekrarlı montaj hesap başlamadan bildirilir; gizlice atlanan parça yoktur.',
+ 'Bileşen kütle ve yerel CG override değerleri ham parça hesabından sonra toplamaya uygulanır; kaynak üretim yolu gibi geometrik ataletler ham modelden kalır. Alt ağaç kapsamlı override henüz desteklenmez.',
  'UI veri projeksiyonu: '+link('src/engine/rocketInputs.ts')+'; sonuç: '+link('src/components/engineering/RocketMass.tsx')+' (Analiz → Kütle). Konum resolveParts üzerinden SI’ya çevrilir; fizik UI’da hesaplanmaz.',
  'Aşağıdaki tarifler parça başına ve birleştirme adımı başına çoğaltılır; parçaların asıl nodeları yukarıdaki tablolardan gelir.', '']
 for id,formula,unit,file in [

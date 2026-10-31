@@ -33,3 +33,10 @@ class AssemblyTests(unittest.TestCase):
     blocked=request('missing',missing);self.assertEqual(blocked['snapshot']['results']['total_mass']['state']['status'],'blocked');self.assertNotIn('value',blocked['snapshot']['results']['total_mass']['state'])
     self.assertEqual(request('duplicate',[PARTS[0],PARTS[0]])['type'],'error')
    finally:worker.stdin.close();worker.wait(timeout=5)
+ def test_component_mass_and_cg_overrides_replace_only_aggregation_values(self):
+  overridden=json.loads(json.dumps(PARTS));overridden[0]['overrides']={'mass':2.0,'cg':.1}
+  model,g,inputs=prepare(overridden,discover_models());result=g.evaluate(inputs,NativeKernel(NativeKernel.read_build()),{})
+  state=lambda id:result['results'][id]['state']['value'];expected=(2*.4+.3*.9)/2.3
+  self.assertAlmostEqual(state('total_mass'),2.3);self.assertAlmostEqual(state('total_cg'),expected)
+  body_prefix=next(s.id.removesuffix('massOverride') for s in model.sources if s.id.endswith('massOverride'))
+  self.assertNotEqual(state(body_prefix+'mass'),2.0)

@@ -29,14 +29,21 @@ def prepare(parts,models,previous=None):
             sources.append(replace(s,id=prefix+s.id));values[prefix+s.id]=inputs.get(s.id)
         for n in m.nodes:
             nodes.append(replace(n,id=prefix+n.id,inputs={k:replace(b,source=prefix+b.source) for k,b in n.inputs.items()},dependencies=(*n.dependencies,m.definition,*m.dependencies)))
+        overrides=part.get('overrides',{})
+        if not isinstance(overrides,dict) or set(overrides)-{'mass','cg'}:raise ValueError('Bileşen override değerleri geçersiz.')
+        mass_ref,cg_ref=prefix+'mass',prefix+'cg'
+        if 'mass' in overrides:
+            sources.append(Source(prefix+'massOverride','Kütle override',MASS));values[prefix+'massOverride']=overrides['mass'];mass_ref=prefix+'massOverride'
+        if 'cg' in overrides:
+            cg_port=next(n.output for n in m.nodes if n.id=='cg')
+            sources.append(Source(prefix+'cgOverride','CG override',cg_port));values[prefix+'cgOverride']=overrides['cg'];cg_ref=prefix+'cgOverride'
         sources.append(Source(prefix+'position','Bileşen konumu',POSITION));values[prefix+'position']=part.get('position')
         cg_port=next(n.output for n in m.nodes if n.id=='cg')
-        add_node(prefix+'globalCg','Global CG',POSITION,{'a':(prefix+'position',POSITION),'b':(prefix+'cg',cg_port)},lambda v,k:k.assembly_sum(v['a'],v['b']),'sum','add (position + local CG)')
-        add_node(prefix+'moment','İlk moment',MOMENT,{'mass':(prefix+'mass',MASS),'x':(prefix+'globalCg',POSITION)},lambda v,k:k.assembly_moment(v['mass'],v['x']),'moment','add · mx')
-        add_node(prefix+'origin','Başlangıç etrafında atalet',ORIGIN_INERTIA,{'mass':(prefix+'mass',MASS),'x':(prefix+'globalCg',POSITION),'inertia':(prefix+'transverse',INERTIA)},lambda v,k:k.assembly_origin(v['mass'],v['x'],v['inertia']),'origin','add · iyy')
+        add_node(prefix+'globalCg','Global CG',POSITION,{'a':(prefix+'position',POSITION),'b':(cg_ref,cg_port)},lambda v,k:k.assembly_sum(v['a'],v['b']),'sum','add (position + local CG)')
+        add_node(prefix+'moment','İlk moment',MOMENT,{'mass':(mass_ref,MASS),'x':(prefix+'globalCg',POSITION)},lambda v,k:k.assembly_moment(v['mass'],v['x']),'moment','add · mx')
+        add_node(prefix+'origin','Başlangıç etrafında atalet',ORIGIN_INERTIA,{'mass':(mass_ref,MASS),'x':(prefix+'globalCg',POSITION),'inertia':(prefix+'transverse',INERTIA)},lambda v,k:k.assembly_origin(v['mass'],v['x'],v['inertia']),'origin','add · iyy')
         add_node(prefix+'axialOrigin','Eksenel atalet',ORIGIN_INERTIA,{'value':(prefix+'axial',INERTIA)},lambda v,_:v['value'],'sum','add · ixx (coaxial)')
-        for name,output,ref in [('mass',MASS,'mass'),('moment',MOMENT,'moment'),('axial',ORIGIN_INERTIA,'axialOrigin'),('origin',ORIGIN_INERTIA,'origin')]:
-            current=prefix+ref
+        for name,output,current in [('mass',MASS,mass_ref),('moment',MOMENT,prefix+'moment'),('axial',ORIGIN_INERTIA,prefix+'axialOrigin'),('origin',ORIGIN_INERTIA,prefix+'origin')]:
             if name in accum:
                 target=prefix+'sum_'+name
                 add_node(target,'Toplam '+name,output,{'a':(accum[name],output),'b':(current,output)},lambda v,k:k.assembly_sum(v['a'],v['b']),'sum','merge')

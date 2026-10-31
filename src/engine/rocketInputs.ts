@@ -16,7 +16,7 @@ export function rocketInputs(project:Project,flight?:FlightWorkspace,configurati
  for(const p of project.parts){
   if(p.kind==='pod'||p.kind==='parallelStage'||(p.geometry?.radialOffset??0)!==0||((p.geometry?.instanceCount??1)!==1&&p.kind!=='railButton'))issues.push(`${p.name}: radyal veya tekrarlı yapı henüz bağlı değil.`);
   const supplied=p.inputs?.massProvided===true||p.inputs?.massProvided!==false&&p.mass>0;
-  if((!['mass','parachute'].includes(p.kind)&&supplied)||p.inputs?.centerOfMass!==undefined)issues.push(`${p.name}: kütle/CG düzeltmesi henüz bağlı değil.`);
+  if(p.inputs?.massScope==='subtree'&&(supplied||p.inputs?.centerOfMass!==undefined))issues.push(`${p.name}: alt bileşenleri kapsayan kütle/CG override henüz bağlı değil.`);
  }
  const physical=resolveParts(project).filter(p=>!isStructural(p.part.kind));
  if(!physical.length)issues.push('Fiziksel bileşen ekle.');
@@ -28,7 +28,9 @@ export function rocketInputs(project:Project,flight?:FlightWorkspace,configurati
   if(request.issue)issues.push(`${part.name}: ${request.issue}`);
   const missing=Object.entries(request.inputs).filter(([,v])=>v===undefined||!Number.isFinite(v)).map(([k])=>k);
   if(missing.length)issues.push(`${part.name}: eksik girdiler (${missing.join(', ')}).`);
-  assembly.push({id:`part:${part.id}`,model:request.model,position:position[0]/1000,inputs:request.inputs});
+  const supplied=part.inputs?.massProvided===true||part.inputs?.massProvided!==false&&part.mass>0;
+  const overrides={...(supplied&&!['mass','parachute'].includes(part.kind)?{mass:part.mass/1000}:{}),...(part.inputs?.centerOfMass!==undefined?{cg:part.inputs.centerOfMass/1000}:{})};
+  assembly.push({id:`part:${part.id}`,model:request.model,position:position[0]/1000,inputs:request.inputs,...(Object.keys(overrides).length?{overrides}:{})});
   if(part.kind!=='motor')continue;
   const assignment=config?.mounts[part.id],motor=flight&&allMotors(flight).find(m=>m.id===assignment?.motorId);
   if(!assignment||!motor){issues.push(`${part.name}: motor seçilmedi.`);continue}
