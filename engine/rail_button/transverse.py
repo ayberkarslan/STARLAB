@@ -1,0 +1,3 @@
+from ..contracts import Node,Binding,MASS,LENGTH,WALL,INERTIA
+from . import COUNT
+NODE=Node('transverse','Enine atalet',INERTIA,{'mass':Binding('mass',MASS),'height':Binding('height',LENGTH),'outerRadius':Binding('outerRadius',LENGTH),'innerRadius':Binding('innerRadius',WALL),'count':Binding('count',COUNT),'separation':Binding('separation',WALL)},lambda v,k:k.rail_button_transverse(v['mass'],v['height'],v['outerRadius'],v['innerRadius'],v['count'],v['separation']),implementation='native/rail_button/transverse.cpp',reference='RoketSiM src/cli/design_analysis.hpp::analyzeComponent(Rail Button) + generic axial instance spread')

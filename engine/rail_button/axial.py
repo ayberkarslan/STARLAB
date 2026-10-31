@@ -1,0 +1,2 @@
+from ..contracts import Node,Binding,MASS,LENGTH,WALL,INERTIA
+NODE=Node('axial','Eksenel atalet',INERTIA,{'mass':Binding('mass',MASS),'outerRadius':Binding('outerRadius',LENGTH),'innerRadius':Binding('innerRadius',WALL)},lambda v,k:k.rail_button_axial(v['mass'],v['outerRadius'],v['innerRadius']),implementation='native/rail_button/axial.cpp',reference='RoketSiM src/cli/design_analysis.hpp::analyzeComponent(Rail Button) · iAxial')

@@ -48,5 +48,6 @@ it('projects simple internal, guide and packed recovery components without skipp
  project.parts.push({...part('block','body','engineBlock',5),diameter:30,geometry:{innerDiameter:20},inputs:{wallThickness:5,density:1200}});
  project.parts.push({...part('chute','body','parachute',80),mass:150,inputs:{massProvided:true}});
  project.parts.push({...part('cord','body','cord',100),geometry:{cordLength:3000},inputs:{linearDensity:.02}});
- const request=rocketInputs(project);expect(request.issues).toEqual([]);expect(request.assembly.map(p=>p.model)).toEqual(['tube','inner-tube','inner-tube','inner-tube','packed-recovery','packed-recovery']);expect(request.assembly.at(-1)?.inputs.suppliedMass).toBe(.06);
+ project.parts.push({...part('button','body','railButton',15.5),diameter:16,geometry:{innerDiameter:12,instanceCount:2,instanceSeparation:400,baseHeight:2,flangeHeight:2},inputs:{density:1200}});
+ const request=rocketInputs(project);expect(request.issues).toEqual([]);expect(request.assembly.map(p=>p.model)).toEqual(['tube','inner-tube','inner-tube','inner-tube','packed-recovery','packed-recovery','rail-button']);expect(request.assembly.at(-2)?.inputs.suppliedMass).toBe(.06);expect(request.assembly.at(-1)?.inputs.count).toBe(2);
 });

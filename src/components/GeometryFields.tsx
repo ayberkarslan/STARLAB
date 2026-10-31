@@ -20,6 +20,7 @@ export default function GeometryFields({part,onChange}:{part:Part;onChange:(patc
  {part.kind==='parachute'&&<>{field('canopyDiameter','Açık paraşüt çapı')}{field('lineCount','Askı ipi sayısı','adet')}{field('lineLength','Askı ipi uzunluğu')}</>}
  {part.kind==='cord'&&field('cordLength','Açık ip uzunluğu')}
  {['pod','parallelStage','railButton'].includes(part.kind)&&<>{field('instanceCount','Tekrar sayısı','adet',false,1,64)}{field('instanceSeparation','Tekrar aralığı')}</>}
+ {part.kind==='railButton'&&<>{field('baseHeight','Taban yüksekliği')}{field('flangeHeight','Flanş yüksekliği')}{field('screwHeight','Vida başı yüksekliği')}</>}
  {['pod','parallelStage'].includes(part.kind)&&<>{field('radialOffset','Radyal konum','mm',true)}{field('rotation','Açısal konum','°',true)}</>}
  </div>{part.kind==='freeformFins'&&<Points value={geometry.points} onChange={points=>set({points})}/>}
  </>;

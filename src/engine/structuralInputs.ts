@@ -1,6 +1,6 @@
 import type {Part,Project} from '../domain/project';
 import {tubeInputs} from './tubeInputs';
-export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','ring','bulkhead','transition','sleeve','lug','engineBlock','parachute','cord'].includes(part.kind);
+export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','ring','bulkhead','transition','sleeve','lug','engineBlock','parachute','cord','railButton'].includes(part.kind);
 const noseProfiles:Record<string,number>={conical:0,tangentOgive:1,elliptical:2,parabolic:3,power:4,haack:5,vonKarman:5};
 const sections:Record<string,number>={square:0,rounded:1,airfoil:2,diamond:3,biconvex:4};
 /** UI data → SI ports only. Formulae and execution remain in the independent engine. */
@@ -37,6 +37,10 @@ export function structuralInputs(part:Part,project?:Project):{model:string;input
  if(part.kind==='cord'){
   const cordLength=g.cordLength,linear=i.linearDensity,mass=cordLength===undefined||linear===undefined?undefined:cordLength/1000*linear;
   return {model:'packed-recovery',inputs:{length:part.length/1000,suppliedMass:mass},issue:cordLength===undefined?'Kordon uzunluğunu gir.':linear===undefined?'Doğrusal yoğunluğu gir.':undefined};
+ }
+ if(part.kind==='railButton'){
+  const inner=g.innerDiameter;
+  return {model:'rail-button',inputs:{height:part.length/1000,outerRadius:part.diameter/2000,innerRadius:inner===undefined?undefined:inner/2000,baseHeight:(g.baseHeight??0)/1000,flangeHeight:(g.flangeHeight??0)/1000,screwHeight:(g.screwHeight??0)/1000,count:g.instanceCount??1,separation:(g.instanceSeparation??0)/1000,density:i.density},issue:inner===undefined?'İç çap gerekli.':undefined};
  }
  throw Error('Bu bileşenin yapısal hesap modeli henüz bağlı değil.');
 }

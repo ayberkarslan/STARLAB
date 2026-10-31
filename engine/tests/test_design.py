@@ -56,3 +56,8 @@ class DesignTests(unittest.TestCase):
         self.assertGreater(result['results']['mass']['state']['value'],0)
         self.assertGreater(result['results']['cg']['state']['value'],0)
         self.assertLess(result['results']['cg']['state']['value'],.2)
+    def test_rail_button_instance_spread_moves_cg_and_inertia(self):
+        model=discover_models()['rail-button'];g=Graph(model.sources,model.nodes);base={'height':.0155,'outerRadius':.008,'innerRadius':.006,'baseHeight':.002,'flangeHeight':.002,'screwHeight':0,'count':1,'separation':.4,'density':1200}
+        one=self.evaluate(g,base);two=self.evaluate(g,{**base,'count':2})
+        value=lambda result,id:result['results'][id]['state']['value']
+        self.assertAlmostEqual(value(two,'mass'),2*value(one,'mass'));self.assertAlmostEqual(value(two,'cg'),.20775);self.assertGreater(value(two,'transverse'),2*value(one,'transverse'))

@@ -22,6 +22,7 @@ SCOPE={
  'transition':'Eski Transition sınıfının kesik koni kabuk modeli. Ön/arka yarıçap, uzunluk ve sabit radyal et kalınlığıyla dış hacimden iç hacim çıkarılır. CG analitik kesik koni farkıdır; ataletler kaynak gibi 2000 orta nokta dilimiyle hesaplanır.',
  'transition-static-aero':'Eski Barrowman geçiş hesabı. CNa ön/arka taban alanı farkından, yerel CP klasik konik geçiş ifadesinden gelir. Kullanıcı override değeri etkinse hesaplanan değerin yerini alır.',
  'packed-recovery':'Eski üretim tasarım analizindeki paketlenmiş paraşüt/şok kordonu kütle katkısı. Kütle açık girdidir, yerel CG paket boyunun yarısıdır; kaynak bu bileşenlere atalet atamadığı için eksenel ve enine atalet sıfırdır. Paraşüt kütlesi kullanıcıdan, kordon kütlesi doğrusal yoğunluk × gerçek kordon uzunluğundan gelir.',
+ 'rail-button':'Eski üretim analizindeki ray düğmesi fizik modeli. Taban ve flanş dış çapla, orta standoff iç çapla, opsiyonel vida başı 2/3 silindir hacmiyle hesaplanır. Birden çok düğme eksen boyunca aralıklıysa toplam CG ve enine atalet paralel eksen katkısıyla gruplanır.',
 }
 FORMULAS={
  'motor':{'thrust':'F(t) = üretim lerp; komşu örnekler arasında doğrusal, eğri uçlarında sabit','impulse':'J(t) = zaman aralığına kırpılmış trapez impuls toplamı; üretim remainingPropellantKg döngüsü','totalImpulse':'J_total = tüm eğri segmentlerinin trapez impuls toplamı','dry':'m_dry = m_wet − m_propellant; yakıt toplam kütleyi aşarsa hata','remaining':'t ≤ 0 ise max(0,m_wet−m_dry); aksi halde bu başlangıç yakıtı × clamp(1−J(t)/max(J_total,1e−12),0,1)','mass':'m_motor(t) = m_dry + m_remaining(t)'},
@@ -37,6 +38,7 @@ FORMULAS={
  'transition':{'volume':'V = πL(Rf²+RfRa+Ra²)/3 − πL(rf²+rfra+ra²)/3','mass':'m = ρV','cg':'Dış ve iç kesik konilerin analitik hacim-ağırlıklı CG farkı','axial':'Ixx = ∫ ½ρπ(ro⁴−ri⁴) dx; 2000 orta nokta','transverse':'Iyy=Izz=∫ρπ(ro²−ri²)[¼(ro²+ri²)+(x−CG)²]dx; 2000 orta nokta'},
  'transition-static-aero':{'cna':'override açıksa girilen değer; değilse 2(Ra²−Rf²)/Rref²','cp':'override açıksa girilen değer; değilse L(Rf+2Ra)/[3(Rf+Ra)]'},
  'packed-recovery':{'mass':'m = girilen paket kütlesi; kordon için adaptörde λ L_cord','cg':'x_CG = paketlenmiş boy / 2','axial':'Ixx = 0; eski üretim analizinde atalet atanmaz','transverse':'Iyy = Izz = 0; eski üretim analizinde atalet atanmaz'},
+ 'rail-button':{'volume':'Nπ[R²(h_base+h_flange)+r² max(h−h_base−h_flange,0)+(2/3)R²h_screw]','mass':'m = ρV','cg':'x_CG = h/2 + (N−1) separation/2','axial':'Ixx = ½m(R²+r²)','transverse':'Iyy=Izz=m[3(R²+r²)+h²]/12 + Σ(m/N)(x_i−x_group)²'},
 }
 SCOPE['installed-motor']='Üretim CLI atanan motor modeli: t_local=t−ateşleme gecikmesi. Ateşleme öncesi itki 0, yakıt tamdır. CG uzunluğun yarısıdır (kaynağın geometrik fallback değeri). Enine atalet kuru motor ve kalan yakıtın ayrı katkılarından gelir. Üretim runtime modelinde motor eksenel atalet katkısı 0’dır; bu kaynak sınırlaması korunur. Motor yuvasının tüp kütlesi ayrıca hesaplanır. Yalnız launch gecikmesi, eş eksenli yerleşim; kullanıcı yuva başından motor başlangıcını mm olarak belirtir. Bağımsız kütle profili ve ayrılma desteklenmez.'
 FORMULAS['installed-motor']={**FORMULAS['motor'],
