@@ -87,7 +87,7 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .handle-hit{fill:transparent;stroke:none}.handle-mark{fill:#000;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none}
 .geometry-handle:is(:hover,:focus-visible) .handle-mark{fill:#fff;stroke:#000;stroke-width:2}
 .geometry-readout{fill:#fff;stroke:#000;stroke-width:4;paint-order:stroke;vector-effect:non-scaling-stroke;pointer-events:none}
-.stability-markers{pointer-events:none}.stability-marker line{stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}.stability-marker text{font-family:Michroma,sans-serif;fill:#000;stroke:#fff;stroke-width:5;paint-order:stroke;dominant-baseline:middle}.marker-cg circle{fill:#fff;stroke:#000;stroke-width:1;vector-effect:non-scaling-stroke}.marker-cp line{stroke-dasharray:5 4}.marker-cp path{fill:#000;stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}.marker-cp text{fill:#fff;stroke:#000}
+.stability-markers{pointer-events:none}.stability-marker text{font-family:Michroma,sans-serif;fill:#fff;stroke:#000;stroke-width:4;paint-order:stroke;dominant-baseline:middle}.stability-marker circle{vector-effect:non-scaling-stroke}.marker-cg circle{fill:#fff;stroke:#000;stroke-width:1.5}.marker-cp circle{fill:#000;stroke:#fff;stroke-width:1.5}
 .geometry-snap-guide{pointer-events:none;fill:none;stroke:#fff;stroke-width:1;stroke-dasharray:3 5;vector-effect:non-scaling-stroke}
 .geometry-snap-guide line{vector-effect:non-scaling-stroke}
 .canvas-control-actions{display:flex;gap:6px}
