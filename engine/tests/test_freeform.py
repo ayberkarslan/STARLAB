@@ -2,6 +2,7 @@ import unittest
 from engine.models import discover_models
 from engine.graph import Graph
 from engine.native import NativeKernel
+from engine.scenarios import discover_scenarios
 
 class FreeformTests(unittest.TestCase):
     def test_static_cna_cp_and_independent_overrides(self):
@@ -51,5 +52,19 @@ class FreeformTests(unittest.TestCase):
         self.assertAlmostEqual(result['cg']['state']['value'],.1)
         self.assertAlmostEqual(result['mass']['state']['value'],.18)
         self.assertAlmostEqual(result['radial']['state']['value'],.08)
+
+    def test_freeform_flows_into_design_mass_cg_and_cp(self):
+        models=discover_models()
+        points=[0,0,.2,0,.2,.1,0,.1]
+        structure={'points':points,'count':3,'thickness':.003,'sectionCode':0,'density':1000,'bodyRadius':.03,'tabHeight':0,'tabLength':0}
+        aero={'points':points,'count':3,'bodyRadius':.03,'referenceArea':.0028,'mach':.3,'alpha':0,'cnaOverrideEnabled':0,'cnaOverride':0,'cpOverrideEnabled':0,'cpOverride':0}
+        request={'assembly':[{'id':'fin','model':'freeform-fins','position':.5,'inputs':structure}],
+                 'aeroAssembly':[{'id':'fin-aero','model':'freeform-static-aero','position':.5,'inputs':aero}],
+                 'inputs':{'referenceDiameter':.06}}
+        _,graph,values=discover_scenarios()['design'](request,models,None)
+        result=graph.evaluate(values,NativeKernel(NativeKernel.read_build()),{n.id:'test' for n in graph.nodes})['results']
+        self.assertAlmostEqual(result['total_mass']['state']['value'],.18)
+        self.assertAlmostEqual(result['total_cg']['state']['value'],.6)
+        self.assertEqual(result['total_cp']['state']['status'],'ready')
 
 if __name__=='__main__':unittest.main()

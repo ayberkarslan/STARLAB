@@ -38,6 +38,6 @@ export function designInputs(project:Project,flight:FlightWorkspace){
    aeroAssembly.push({id:`aero:${part.id}`,model:'freeform-static-aero',position:position[0]/1000,inputs:{points:g.points.flatMap(([x,y])=>[x/1000,y/1000]),count:g.finCount,bodyRadius:parent.diameter/2000,referenceArea,mach,alpha,...common}});
   }else if(part.kind==='tubeFins')issues.push(`${part.name}: statik aero modeli henüz bağlı değil.`);
  }
- if(!aeroAssembly.length)issues.push('CP için burun veya trapez kanat ekle.');
+ if(!aeroAssembly.length)issues.push('CP için burun veya kanat ekle.');
  return {assembly:structure.assembly,aeroAssembly,inputs:{referenceDiameter},issues,configurationId};
 }
