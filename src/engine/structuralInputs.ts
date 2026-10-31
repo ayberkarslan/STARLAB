@@ -1,10 +1,10 @@
 import type {Part,Project} from '../domain/project';
 import {tubeInputs} from './tubeInputs';
-export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','ring','bulkhead','transition','sleeve','lug','engineBlock','parachute','cord','railButton'].includes(part.kind);
+export const hasStructuralModel=(part:Part)=>['body','innerTube','mass','nose','fins','freeformFins','ring','bulkhead','transition','sleeve','lug','engineBlock','parachute','cord','railButton'].includes(part.kind);
 const noseProfiles:Record<string,number>={conical:0,tangentOgive:1,elliptical:2,parabolic:3,power:4,haack:5,vonKarman:5};
 const sections:Record<string,number>={square:0,rounded:1,airfoil:2,diamond:3,biconvex:4};
 /** UI data → SI ports only. Formulae and execution remain in the independent engine. */
-export function structuralInputs(part:Part,project?:Project):{model:string;inputs:Record<string,number|undefined>;issue?:string}{
+export function structuralInputs(part:Part,project?:Project):{model:string;inputs:Record<string,number|number[]|undefined>;issue?:string}{
  const g=part.geometry??{},i=part.inputs??{};
  if(part.kind==='body')return {model:'tube',inputs:tubeInputs(part)};
  if(part.kind==='mass')return {model:'mass-component',inputs:{length:part.length/1000,radius:part.diameter/2000,suppliedMass:i.massProvided===false?undefined:i.massProvided||part.mass>0?part.mass/1000:undefined}};
@@ -24,6 +24,11 @@ export function structuralInputs(part:Part,project?:Project):{model:string;input
   const parent=project?.parts.find(p=>p.id===part.parentId),span=parent?(part.diameter-parent.diameter)/2:undefined;
   const issue=!parent||parent.kind!=='body'?'Bu modelde kanadı bir gövde tüpüne bağla.':g.finCrossSection==='hex'?'Altıgen kanat kesiti bu üretim modelinde desteklenmiyor.':(g.cantAngle??0)!==0||(g.rotation??0)!==0?'Kant ve dönüş bu yapı modeline henüz bağlı değil.':g.span!==undefined&&span!==undefined&&Math.abs(g.span-span)>1e-6?'Açıklık ve kanat dış çapı birbiriyle uyuşmuyor.':undefined;
   return {model:'trapezoidal-fins',inputs:{root:part.length/1000,tip:g.tipChord===undefined?undefined:g.tipChord/1000,span:span===undefined?undefined:span/1000,sweep:g.sweep===undefined?undefined:g.sweep/1000,thickness:i.wallThickness===undefined?undefined:i.wallThickness/1000,count:g.finCount,sectionCode:g.finCrossSection?sections[g.finCrossSection]:undefined,density:i.density,bodyRadius:parent?parent.diameter/2000:undefined,tabHeight:(g.tabHeight??0)/1000,tabLength:(g.tabLength??0)/1000},issue};
+ }
+ if(part.kind==='freeformFins'){
+  const parent=project?.parts.find(p=>p.id===part.parentId),points=g.points;
+  const issue=!parent||parent.kind!=='body'?'Bu modelde kanadı bir gövde tüpüne bağla.':g.finCrossSection==='hex'?'Altıgen kanat kesiti bu üretim modelinde desteklenmiyor.':(g.cantAngle??0)!==0||(g.rotation??0)!==0?'Kant ve dönüş bu yapı modeline henüz bağlı değil.':!points||points.length<3?'En az üç poligon noktası gerekli.':undefined;
+  return {model:'freeform-fins',inputs:{points:points?.flatMap(([x,y])=>[x/1000,y/1000]),count:g.finCount,thickness:i.wallThickness===undefined?undefined:i.wallThickness/1000,sectionCode:g.finCrossSection?sections[g.finCrossSection]:undefined,density:i.density,bodyRadius:parent?parent.diameter/2000:undefined,tabHeight:(g.tabHeight??0)/1000,tabLength:(g.tabLength??0)/1000},issue};
  }
  if(part.kind==='transition'){
   const aft=g.aftDiameter,wall=i.wallThickness;

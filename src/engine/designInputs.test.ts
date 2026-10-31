@@ -29,3 +29,11 @@ it('aggregates attached stages at the active configuration launch state',()=>{
  flight.configurations[0].separations.booster={event:'burnout',delay:0};const request=designInputs(project,flight);
  expect(request.issues).toEqual([]);expect(request.assembly.some(p=>p.id==='part:booster-body')).toBe(true);
 });
+
+it('connects freeform polygon to structure and static aero without losing coordinates',()=>{
+ const project=calculationExample(),flight=initialFlight();project.parts.push({id:'freeform',parentId:'body',kind:'freeformFins',name:'Serbest kanat',length:200,diameter:260,offset:100,mass:0,material:'Test',inputs:{wallThickness:3,density:1200},geometry:{points:[[0,0],[200,0],[180,100],[20,100]],finCount:3,finCrossSection:'square'}});
+ const request=designInputs(project,flight);
+ expect(request.issues).toEqual([]);
+ expect(request.assembly.at(-1)).toMatchObject({model:'freeform-fins',inputs:{points:[0,0,.2,0,.18,.1,.02,.1]}});
+ expect(request.aeroAssembly.at(-1)).toMatchObject({model:'freeform-static-aero',inputs:{points:[0,0,.2,0,.18,.1,.02,.1]}});
+});

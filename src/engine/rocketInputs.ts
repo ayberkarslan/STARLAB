@@ -26,7 +26,7 @@ export function rocketInputs(project:Project,flight?:FlightWorkspace,configurati
   if(!hasStructuralModel(structuralPart)){issues.push(`${part.name}: yapı hesabı henüz bağlı değil.`);continue}
   const request=structuralInputs(structuralPart,project);
   if(request.issue)issues.push(`${part.name}: ${request.issue}`);
-  const missing=Object.entries(request.inputs).filter(([,v])=>v===undefined||!Number.isFinite(v)).map(([k])=>k);
+  const missing=Object.entries(request.inputs).filter(([,v])=>v===undefined||(Array.isArray(v)?v.some(n=>!Number.isFinite(n)):!Number.isFinite(v))).map(([k])=>k);
   if(missing.length)issues.push(`${part.name}: eksik girdiler (${missing.join(', ')}).`);
   const supplied=part.inputs?.massProvided===true||part.inputs?.massProvided!==false&&part.mass>0;
   const overrides={...(supplied&&!['mass','parachute'].includes(part.kind)?{mass:part.mass/1000}:{}),...(part.inputs?.centerOfMass!==undefined?{cg:part.inputs.centerOfMass/1000}:{})};
