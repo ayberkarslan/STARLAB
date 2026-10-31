@@ -8,7 +8,7 @@ import {NumberInput} from '../NumberInput';
 import {Choice} from './shared';
 import {Metric,fmt} from './shared';
 export default function RocketMass({project,flight}:{project:Project;flight?:FlightWorkspace}){
- const [configurationId,setConfigurationId]=useState(''),[time,setTime]=useState(0);
+ const [configurationId,setConfigurationId]=useState(flight?.activeConfigurationId??''),[time,setTime]=useState(0);
  const config=flight?.configurations.find(c=>c.id===configurationId)??flight?.configurations[0],hasMotor=project.parts.some(p=>p.kind==='motor');
  const projection=rocketInputs(project,flight,config?.id,time),key=JSON.stringify(projection),session=useRef(crypto.randomUUID());
  const [response,setResponse]=useState<{key:string;revision:number;result:EngineResponse}>(),[error,setError]=useState<{key:string;message:string}>(),[revision,setRevision]=useState(0),[engineFailure,setEngineFailure]=useState('');

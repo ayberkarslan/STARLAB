@@ -4,6 +4,7 @@ import {initialFlight,validateFlight,parseResultCsv,configurationIssues,simulati
 import {parseEng,exportEng,motorFits,motorStats,sampleMotors,catalogMotors} from './motors';
 import {createFlightRequest} from '../engine/flightSolver';
 describe('flight workspace',()=>{
+ it('keeps an optional active configuration valid',()=>{const f=initialFlight();expect(f.activeConfigurationId).toBe(f.configurations[0].id);f.activeConfigurationId='missing';expect(()=>validateFlight(f)).toThrow(/Aktif/)});
  it('keeps old projects valid and round trips flight data',()=>{const project=initialProject();expect(validate(project)).toEqual(project);project.flight=initialFlight();expect(validate(JSON.parse(JSON.stringify(project)))).toEqual(project)});
  it('rejects invalid references and environment',()=>{const f=initialFlight();f.cases[0].configurationId='missing';expect(()=>validateFlight(f)).toThrow();f.cases[0].configurationId=f.configurations[0].id;f.cases[0].environment.timeStep=0;expect(()=>validateFlight(f)).toThrow()});
  it('detects unassigned and oversized motors',()=>{const p=initialProject(),f=initialFlight(),c=f.configurations[0];expect(configurationIssues(p,f,c)).toHaveLength(2);c.mounts.umotor={motorId:'sample-98',event:'launch',delay:0};expect(configurationIssues(p,f,c).join(' ')).toContain('uymuyor');expect(motorFits(sampleMotors[0],p.parts.find(p=>p.id==='umotor')!)).toBe(true)});
