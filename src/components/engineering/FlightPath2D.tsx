@@ -20,7 +20,7 @@ export default function FlightPath2D({samples}:{samples:FlightSample[]}){
  useEffect(()=>{setFrame(0);setPlaying(!!geometry)},[geometry]);
  useEffect(()=>{if(!playing||!geometry)return;const duration=Math.min(12000,Math.max(4000,(samples.at(-1)?.t||0)*350));started.current=performance.now()-frame/last*duration;const tick=(now:number)=>{const next=Math.min(last,Math.floor((now-started.current)/duration*last));setFrame(next);if(next<last)request.current=requestAnimationFrame(tick);else setPlaying(false)};request.current=requestAnimationFrame(tick);return()=>cancelAnimationFrame(request.current)},[playing,geometry,last,samples]);
  if(!geometry)return <div className="engineering-empty">Bu sonuçta 2D konum verisi yok</div>;
- const point=geometry.points[Math.min(frame,last)],previous=geometry.points[Math.max(0,frame-1)],vx=point.sample.horizontalVelocity,vy=point.sample.verticalVelocity;
+ const point=geometry.points[Math.min(frame,last)],previous=geometry.points[Math.max(0,frame-1)],vx=point.sample.horizontalVelocity,vy=point.sample.verticalVelocity,railExit=geometry.points.find(item=>item.sample.railCleared);
  const angle=Number.isFinite(vx)&&Number.isFinite(vy)?-Math.atan2(vy!,vx!)*180/Math.PI:Math.atan2(point.y-previous.y,point.x-previous.x)*180/Math.PI;
  const progress=geometry.points.slice(0,frame+1).map((item,index)=>`${index?'L':'M'}${item.x.toFixed(2)} ${item.y.toFixed(2)}`).join(' ');
  function toggle(){if(frame>=last){setFrame(0);started.current=0;setPlaying(true)}else setPlaying(value=>!value)}
@@ -28,6 +28,7 @@ export default function FlightPath2D({samples}:{samples:FlightSample[]}){
   <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Yatay mesafe ve irtifaya göre 2D uçuş yörüngesi">
    <line className="flight-path-ground" x1="24" x2={WIDTH-24} y1={geometry.groundY} y2={geometry.groundY}/>
    <path className="flight-path-ghost" d={geometry.path}/><path className="flight-path-progress" d={progress}/>
+   {railExit&&<circle className="flight-path-rail-exit" cx={railExit.x} cy={railExit.y} r="4"/>}
    <g className="flight-path-rocket" transform={`translate(${point.x} ${point.y}) rotate(${angle})`}><path d="M 13 0 L -8 -6 L -4 0 L -8 6 Z"/></g>
    <text x="24" y="26">{Math.round(geometry.maxY)} m</text><text x={WIDTH-24} y={HEIGHT-14} textAnchor="end">{Math.round(point.sample.downrange!)} m</text>
   </svg>

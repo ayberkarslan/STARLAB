@@ -20,6 +20,7 @@
 .flight-path-ground{stroke:#ffffff55;stroke-width:1}
 .flight-path-ghost{fill:none;stroke:#ffffff22;stroke-width:1.5;stroke-dasharray:4 7}
 .flight-path-progress{fill:none;stroke:#fff;stroke-width:2}
+.flight-path-rail-exit{fill:#000;stroke:#fff;stroke-width:1.5}
 .flight-path-rocket path{fill:#000;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke}
 .flight-path-control{position:absolute;left:18px;bottom:14px;display:flex;align-items:center;gap:10px;background:#000;border:1px solid var(--line);padding:2px 8px 2px 2px}
 .flight-path-control output{min-width:58px;text-align:right;font-size:12px}

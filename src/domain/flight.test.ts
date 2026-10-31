@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {initialProject,validate} from './project';
-import {initialFlight,validateFlight,parseResultCsv,configurationIssues,simulationSignature,cleanFlight} from './flight';
+import {initialFlight,validateFlight,parseResultCsv,resultCsv,configurationIssues,simulationSignature,cleanFlight} from './flight';
 import {parseEng,exportEng,motorFits,motorStats,sampleMotors,catalogMotors} from './motors';
 import {createFlightRequest} from '../engine/flightSolver';
 describe('flight workspace',()=>{
@@ -11,6 +11,7 @@ describe('flight workspace',()=>{
  it('invalidates results on meaningful input changes',()=>{const p=initialProject(),f=initialFlight(),c=f.configurations[0],e=f.cases[0].environment;const signature=simulationSignature(p,c,e,f);expect(simulationSignature(p,c,{...e,windSpeed:5},f)).not.toBe(signature);p.parts[3].length+=20;expect(simulationSignature(p,c,e,f)).not.toBe(signature)});
  it('removes assignments when mounts are deleted',()=>{const p=initialProject(),f=initialFlight();f.configurations[0].mounts.umotor={motorId:'sample-54',event:'launch',delay:0};p.parts=p.parts.filter(p=>p.id!=='umotor');expect(cleanFlight(p,f).configurations[0].mounts).toEqual({})});
  it('parses external results and rejects invalid time series',()=>{expect(parseResultCsv('t,altitude,velocity,acceleration\n0,0,0,0\n1,10,20,5')).toHaveLength(2);expect(()=>parseResultCsv('t,altitude,velocity,acceleration\n1,0,0,0\n1,0,0,0')).toThrow()});
+ it('round trips solver telemetry csv',()=>{const samples=parseResultCsv('t,altitude,velocity,acceleration,downrange,horizontalVelocity,verticalVelocity,railCleared\n0,0,0,0,0,0,0,0\n1,10,20,5,4,3,19,1');expect(samples[1].railCleared).toBe(true);expect(parseResultCsv(resultCsv(samples))).toEqual(samples)});
 });
 describe('motor data',()=>{
  it('ships stable legacy ENG catalog motors',()=>{expect(catalogMotors.map(m=>[m.id,m.name,m.source])).toEqual([['catalog-estes-d12','D12','catalog'],['catalog-estes-e12','E12','catalog'],['catalog-aerotech-j270w','J270W','catalog']]);for(const motor of catalogMotors){expect(motor.curve[0]).toEqual({t:0,thrust:0});expect(motor.curve.at(-1)?.thrust).toBe(0);expect(motorStats(motor).impulse).toBeGreaterThan(0)}});
