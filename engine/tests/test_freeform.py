@@ -39,4 +39,17 @@ class FreeformTests(unittest.TestCase):
         result=graph.evaluate({'points':[0,0,1,0]},kernel,{'area':'test'})
         self.assertEqual(result['results']['area']['state']['status'],'blocked')
 
+    def test_production_structure_uses_polygon_area_and_centroid(self):
+        model=discover_models()['freeform-fins']
+        graph=Graph(model.sources,model.nodes)
+        kernel=NativeKernel(NativeKernel.read_build())
+        values={'points':[0,0,.2,0,.2,.1,0,.1],'count':3,'thickness':.003,'sectionCode':0,'density':1000,'bodyRadius':.03,'tabHeight':0,'tabLength':0}
+        result=graph.evaluate(values,kernel,{n.id:'test' for n in model.nodes})['results']
+        for key in ('area','cg','length','radial','volume','mass','axial','transverse'):
+            self.assertEqual(result[key]['state']['status'],'ready',key)
+        self.assertAlmostEqual(result['area']['state']['value'],.02)
+        self.assertAlmostEqual(result['cg']['state']['value'],.1)
+        self.assertAlmostEqual(result['mass']['state']['value'],.18)
+        self.assertAlmostEqual(result['radial']['state']['value'],.08)
+
 if __name__=='__main__':unittest.main()
