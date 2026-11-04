@@ -46,6 +46,7 @@ export function projectFreeFlight(project:Project,flight:FlightWorkspace,config:
  const contours=parts.filter(p=>p.kind!==4).sort((a,b)=>a.station-b.station);
  if(!contours.length)issues.push('Dış gövde geometrisi gerekli.');
  else{
+  if(contours[0].kind!==0)issues.push('Bu aero modeli için önde konik burun gerekli.');
   if(Math.abs(contours[0].station)>1e-7)issues.push('Dış geometri burun istasyonundan başlamalı.');
   for(let i=1;i<contours.length;i++)if(Math.abs(contours[i].station-(contours[i-1].station+contours[i-1].length))>1e-7||Math.abs(contours[i].foreRadius-contours[i-1].aftRadius)>1e-7)issues.push(`${contours[i].id}: dış konturda boşluk veya çap uyumsuzluğu var.`);
  }
