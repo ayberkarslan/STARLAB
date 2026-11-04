@@ -28,4 +28,16 @@ describe('supplied free flight model process',()=>{
   const raw=await runFreeFlight('6',input(2),new AbortController().signal);
   expect(parseFreeFlightHistory(raw.history,raw.components).samples.at(-1)?.east).not.toBe(0);
  });
+ it('matches the supplied C++ geometry fixture at the final step',async()=>{
+  const source=input().replace('0.15 0\n5\n','0.15 120\n5\n');
+  const raw=await runFreeFlight('6',source,new AbortController().signal);
+  const rows=raw.history.trim().split(/\r?\n/),header=rows[0].split(','),last=rows.at(-1)!.split(',');
+  const value=(name:string)=>Number(last[header.indexOf(name)]);
+  expect(rows).toHaveLength(20);
+  expect(value('n_m')).toBeCloseTo(6.1484276289014,10);
+  expect(value('down_m')).toBeCloseTo(-31.269841192171,10);
+  expect(value('Mach')).toBeCloseTo(.14272698757132,10);
+  expect(value('CP_m')).toBeCloseTo(.66519179971344,10);
+  expect(value('CD')).toBeCloseTo(.23460182781791,10);
+ });
 });
