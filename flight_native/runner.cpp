@@ -32,6 +32,7 @@ int main(int argc,char** argv){
  try{
   require(argc==2,"Usage: flight-runner 3|6");
   const std::string mode=argv[1];require(mode=="3"||mode=="6","Invalid DoF");
+  std::string protocol;read(protocol,"protocol");require(protocol=="STARLAB_FREE_FLIGHT_V1","Unsupported flight input protocol");
   Config cfg{};ProjectHost host;Phase phase{};phase.name="free-flight";
   double pitch=0,heading=0,motorAge=0;
   read(cfg.dt,"dt");read(cfg.site,"site");read(cfg.startUp,"start altitude");

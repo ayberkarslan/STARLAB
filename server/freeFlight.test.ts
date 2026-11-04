@@ -9,7 +9,7 @@ const parts=[
  'boattail 3 1.03 .12 .08 .05 0 0 0 0 0 0',
  'fins 4 .92 .16 .08 0 4 .09 .16 .07 .06 .002',
 ];
-function input(eastWind=0){return `0.02 980 15 50 20 0 1 ${eastWind} 0 0.35 0 0.15 10 10 -0.7 0.1 2 2 0.1 2 2 0.16 0.001 boattail\n2\n0 120\n0.15 0\n5\n${parts.join('\n')}\n`}
+function input(eastWind=0){return `STARLAB_FREE_FLIGHT_V1\n0.02 980 15 50 20 0 1 ${eastWind} 0 0.35 0 0.15 10 10 -0.7 0.1 2 2 0.1 2 2 0.16 0.001 boattail\n2\n0 120\n0.15 0\n5\n${parts.join('\n')}\n`}
 
 describe('supplied free flight model process',()=>{
  it('runs both DoF modes and preserves geometry telemetry',async()=>{

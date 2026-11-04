@@ -67,7 +67,7 @@ function inputText(projected:FreeFlightProjection,scenario:SimulationCase,motor:
  const main=[e.timeStep,e.altitude,q.startAltitude,q.startSpeed,e.railAngle,e.railHeading,windNorth,windEast,0,q.duration,q.motorAge,burn,
   mass0.mass,mass1.mass,-mass0.cg,mass0.ix,mass0.iy,mass0.iy,mass1.ix,mass1.iy,mass1.iy,projected.diameter,q.motorExitArea,projected.baseOwner];
  const lines=[main.join(' '),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
- return lines.join('\n')+'\n';
+ return 'STARLAB_FREE_FLIGHT_V1\n'+lines.join('\n')+'\n';
 }
 
 export async function solveFreeFlight(project:Project,flight:FlightWorkspace,scenario:SimulationCase,signal:AbortSignal){
