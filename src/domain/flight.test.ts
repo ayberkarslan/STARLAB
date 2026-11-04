@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import {initialProject,validate} from './project';
 import {initialFlight,validateFlight,parseResultCsv,resultCsv,configurationIssues,simulationSignature,cleanFlight} from './flight';
 import {parseEng,exportEng,motorFits,motorStats,sampleMotors,catalogMotors} from './motors';
-import {createFlightRequest} from '../engine/flightSolver';
+import {createFlightRequest,flightSolverIssues} from '../engine/flightSolver';
 describe('flight workspace',()=>{
  it('keeps an optional active configuration valid',()=>{const f=initialFlight();expect(f.activeConfigurationId).toBe(f.configurations[0].id);f.activeConfigurationId='missing';expect(()=>validateFlight(f)).toThrow(/Aktif/)});
  it('keeps old projects valid and round trips flight data',()=>{const project=initialProject();expect(validate(project)).toEqual(project);project.flight=initialFlight();expect(validate(JSON.parse(JSON.stringify(project)))).toEqual(project)});
@@ -21,4 +21,5 @@ describe('motor data',()=>{
  it('rejects malformed, negative and unfinished curves',()=>{for(const points of ['0 0\n0 -10','0 0\n1 20','1 0\n.5 0'])expect(()=>parseEng(`BAD 54 320 P .5 1 TEST\n${points}`)).toThrow()});
 });
 it('builds an isolated solver request with explicit event defaults',()=>{const p=initialProject(),f=initialFlight();f.configurations[0].mounts.umotor={motorId:'sample-54',event:'launch',delay:0,offset:0};const request=createFlightRequest(p,f,f.cases[0]);expect(request.motors).toHaveLength(1);expect(request.configuration.recovery.chute.event).toBe('apogee');expect(request.assembly.length).toBeGreaterThan(0);request.parts[0].name='Changed';expect(p.parts[0].name).not.toBe('Changed')});
+it('blocks two mounts even when both use the same motor type',()=>{const p=initialProject(),f=initialFlight();f.configurations[0].mounts.umotor={motorId:'sample-54',event:'launch',delay:0,offset:0};const request=createFlightRequest(p,f,f.cases[0]);request.configuration.mounts.second={...request.configuration.mounts.umotor};expect(request.motors).toHaveLength(1);expect(flightSolverIssues(request).join(' ')).toContain('bir motor ataması')});
 it('rejects assignments to a part that is not a motor mount',()=>{const p=initialProject();p.flight=initialFlight();p.flight.configurations[0].mounts.nose={motorId:'sample-54',event:'launch',delay:0};expect(()=>validate(p)).toThrow()});

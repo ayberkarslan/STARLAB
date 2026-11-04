@@ -21,7 +21,7 @@ export function createFlightRequest(project:Project,flight:FlightWorkspace,scena
 
 export function flightSolverIssues(request:FlightRequest){
  const issues=[...request.issues];
- if(request.motors.length!==1)issues.push('İlk uçuş çözücüsü tam olarak bir motor destekliyor.');
+ if(Object.keys(request.configuration.mounts).length!==1||request.motors.length!==1)issues.push('İlk uçuş çözücüsü tam olarak bir motor ataması destekliyor.');
  if(Object.values(request.configuration.separations).some(s=>s.event!=='never'))issues.push('İlk uçuş çözücüsünde kademe ayrılması kapalı olmalı.');
  if(Object.values(request.configuration.recovery).some(r=>r.event!=='never'))issues.push('Kurtarma modeli sonraki uçuş diliminde bağlanacak.');
  const a=request.aerodynamics,e=request.environment;
