@@ -153,6 +153,11 @@ lines+=['## Bağlı aero ağı — `rocket-aero`','', 'Senaryo: '+link('engine/s
  'DAG/FFI/regresyon testleri: `npm run test:engine`; arayüz veri sınırları: `npm test`.',
  'UI katalog özetinde src/domain/motors.ts::motorStats hâlâ var; bu, native motor modeli veya uçuş çözücüsü değildir. Uçuşun fizik hesabı bu UI yardımcı fonksiyonuna bağlanmayacak.',
  'Kaynak programdaki sayısal yaklaşım korunmuştur; bu liste bütün uçuş çözücüsünün doğrulandığı anlamına gelmez.', '',f'Toplam: {len(models)} hesap modeli, {count} kayıtlı hesap node’u + 1 dinamik roket modeli (node sayısı parça sayısına göre değişir).','']
+lines+=['## Ayrı süreç: ray sonrası 3/6DOF uçuş','',
+ 'Kaynak: kullanıcı tarafından sağlanan ENTEGRASYON v0.7 C++ paketi; alınan hesap dosyaları: '+link('flight_native/vendor/flight.hpp')+', '+link('flight_native/vendor/geometry.hpp')+', '+link('flight_native/vendor/flight_types.hpp')+'. Bu yol B3 kaynaklı `flight-axial` node’unu değiştirmez.',
+ 'Girdi projeksiyonu: '+link('src/engine/freeFlightInputs.ts')+'; yapı kütle/CG/atalet verisi `rocket` ağından okunur. C++ koşucu: '+link('flight_native/runner.cpp')+'; ayrı süreç köprüsü: '+link('server/freeFlight.ts')+'.',
+ 'Çıktı: zaman, N/E/D konumu, gövde hızı, Mach, Q, CP/CD/CL/Cm ve parça yükleri. Kaynak modeli: raydan çıkmış tek kademe, sabit faz CG, konik/boru/konik geçiş/trapez kanat, Mach ≤ 3 ve geliş açısı ≤ 10°. Ray, paraşüt, yere temas ve ayrılan booster burada hesaplanmaz.',
+ 'Doğrulama: `npx vitest run server/freeFlight.test.ts src/engine/freeFlightInputs.test.ts`; paket CMake testi ayrıca bağımsız çalıştırıldı. Bu modül zaman adımlı tek iş olarak çalışır, normal DAG içine adım başına node eklenmez.','']
 text='\n'.join(lines);target=ROOT/'CALCS'
 if '--check' in sys.argv:
     if not target.exists() or target.read_text()!=text:raise SystemExit('CALCS güncel değil: python3 scripts/update-calcs.py')
