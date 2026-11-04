@@ -28,6 +28,7 @@ export function flightSolverIssues(request:FlightRequest){
  if(Object.values(request.configuration.recovery).some(r=>r.event!=='never'))issues.push('Kurtarma modeli sonraki uçuş diliminde bağlanacak.');
  const a=request.aerodynamics,e=request.environment;
  if(a.dragCoefficient===null||a.referenceArea===null)issues.push('Uçuş için eksenel Cd ve referans alanı gerekli.');
+ if(a.coefficientTable?.length)issues.push('Mach katsayı tablosu uçuş çözücüsüne henüz bağlı değil.');
  if(e.atmosphereModel!=='surface'&&e.atmosphereModel!=='standard1976')issues.push('Yüzey veya 1976 standart atmosfer modelini seç.');
  if(e.windModel!==undefined&&e.windModel!=='constant')issues.push('İlk uçuş çözücüsü sabit rüzgâr destekliyor.');
  if(e.maxTime/e.timeStep>2_000_000)issues.push('Zaman adımı ve azami süre iki milyondan fazla integrasyon adımı üretiyor.');

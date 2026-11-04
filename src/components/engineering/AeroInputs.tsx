@@ -1,9 +1,17 @@
 import {SelectMenu} from '@stardrop/ui';
-import type {AerodynamicInputs} from '../../domain/aerodynamics';
+import {validateCoefficientTable,type AerodynamicInputs,type AeroCoefficientRow} from '../../domain/aerodynamics';
 import {NumberInput} from '../NumberInput';
+import NumericSeriesEditor from './NumericSeriesEditor';
+import type {NumericColumn} from '../../domain/numericSeries';
+
+const coefficientColumns:readonly NumericColumn[]=[
+ {key:'Mach',label:'Mach',unit:'1',min:0},{key:'Reynolds',label:'Reynolds',unit:'1',min:0},{key:'AoA_deg',label:'AoA',unit:'°',min:0},
+ {key:'CA_off',label:'CA off',unit:'1'},{key:'CA_on',label:'CA on',unit:'1'},
+ {key:'CN',label:'CN',unit:'1'},{key:'CP_m',label:'CP',unit:'m'},{key:'CN_alpha_per_rad',label:'CNa',unit:'1/rad'},
+];
 
 export default function AeroInputs({value={},onChange}:{value?:AerodynamicInputs;onChange:(value:AerodynamicInputs)=>void}){
- const field=(key:Exclude<keyof AerodynamicInputs,'motorOn'>,label:string,unit:string,min=0,max=Infinity,signed=false)=><NumberInput key={key} label={label} unit={unit} optional min={min} max={max} signed={signed} value={value[key]} onChange={n=>onChange({...value,[key]:n})}/>;
+ const field=(key:Exclude<keyof AerodynamicInputs,'motorOn'|'coefficientTable'>,label:string,unit:string,min=0,max=Infinity,signed=false)=><NumberInput key={key} label={label} unit={unit} optional min={min} max={max} signed={signed} value={value[key]} onChange={n=>onChange({...value,[key]:n})}/>;
  return <div className="engineering-body input-settings">
   <div className="engineering-field-grid">
    {field('referenceDiameter','Referans çapı','mm',Number.MIN_VALUE)}
@@ -29,5 +37,6 @@ export default function AeroInputs({value={},onChange}:{value?:AerodynamicInputs
    {field('density','Hava yoğunluğu','kg/m³',Number.MIN_VALUE)}{field('dynamicViscosity','Dinamik viskozite','Pa·s',Number.MIN_VALUE)}
    {field('dynamicPressure','Dinamik basınç','Pa')}{field('rollRate','Yuvarlanma hızı','°/s',0,Infinity,true)}
   </div></details>
+  <details className="engineering-details"><summary>Mach katsayı tablosu</summary><NumericSeriesEditor label="Aero katsayıları" columns={coefficientColumns} maxRows={10000} value={value.coefficientTable?.map(row=>({...row}))} onApply={rows=>{const table=rows as unknown as AeroCoefficientRow[];validateCoefficientTable(table);onChange({...value,coefficientTable:table})}}/></details>
  </div>;
 }
