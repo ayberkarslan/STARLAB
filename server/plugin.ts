@@ -4,11 +4,12 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {EngineService} from './engine';
 import type {EngineRequest} from '../src/engine/protocol';
-import {runFreeFlight} from './freeFlight';
+import {freeFlightBuild,runFreeFlight} from './freeFlight';
 const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),execute=promisify(execFile);
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
- const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false;
+ const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false,flightDirty=false;
  server.middlewares.use('/api/free-flight',async(req,res,next)=>{
+  if(req.url==='/version'&&req.method==='GET'){try{const buildId=(await freeFlightBuild()).split(/[\\/]/).at(-1);res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify({buildId}))}catch(error){res.statusCode=500;res.end(JSON.stringify({error:String(error)}))}return}
   if(req.url!=='/run'){next();return}
   if(req.method!=='POST'){res.statusCode=405;res.end();return}
   const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
@@ -38,10 +39,10 @@ export default function enginePlugin():Plugin{return {name:'starlab-native-engin
  });
  const changed=(path:string)=>{
   const normalized=path.replaceAll('\\','/');if(!/\.(py|cpp|hpp|h)$/.test(normalized))return;
-  const native=normalized.startsWith(root+'native/'),python=normalized.startsWith(root+'engine/');if(!native&&!python)return;
-  nativeDirty ||= native;workerDirty ||= python;clearTimeout(timer);
-  timer=setTimeout(()=>{const compile=nativeDirty,restart=workerDirty;nativeDirty=false;workerDirty=false;builds=builds.then(async()=>{try{if(compile)await execute(process.execPath,['scripts/build-native.mjs'],{cwd:root});if(restart)service.restart();server.ws.send({type:'custom',event:'starlab:engine-restarted',data:{workerRestarted:restart}})}catch(error){server.config.logger.error(String(error));server.ws.send({type:'custom',event:'starlab:engine-error',data:{message:String(error)}})}})},200);
+  const native=normalized.startsWith(root+'native/'),python=normalized.startsWith(root+'engine/'),flight=normalized.startsWith(root+'flight_native/');if(!native&&!python&&!flight)return;
+  nativeDirty ||= native;workerDirty ||= python;flightDirty ||= flight;clearTimeout(timer);
+  timer=setTimeout(()=>{const compile=nativeDirty,restart=workerDirty,freeFlight=flightDirty;nativeDirty=false;workerDirty=false;flightDirty=false;builds=builds.then(async()=>{try{if(compile)await execute(process.execPath,['scripts/build-native.mjs'],{cwd:root});if(freeFlight)await execute(process.execPath,['scripts/build-flight.mjs'],{cwd:root});if(restart)service.restart();server.ws.send({type:'custom',event:'starlab:engine-restarted',data:{workerRestarted:restart}});if(freeFlight)server.ws.send({type:'custom',event:'starlab:flight-restarted'})}catch(error){server.config.logger.error(String(error));server.ws.send({type:'custom',event:'starlab:engine-error',data:{message:String(error)}})}})},200);
  };
- server.watcher.add([root+'engine',root+'native']);for(const event of ['change','add','unlink'])server.watcher.on(event,changed);
+ server.watcher.add([root+'engine',root+'native',root+'flight_native']);for(const event of ['change','add','unlink'])server.watcher.on(event,changed);
  server.httpServer?.once('close',()=>{clearTimeout(timer);for(const event of ['change','add','unlink'])server.watcher.off(event,changed);service.close()});
 }}}

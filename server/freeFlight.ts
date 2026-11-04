@@ -7,12 +7,13 @@ import {basename} from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const execute=promisify(execFile);
 
+export async function freeFlightBuild(signal?:AbortSignal){const {stdout:path}=await execute(process.execPath,['scripts/build-flight.mjs'],{cwd:root,signal,timeout:60000,maxBuffer:100000});return path.trim()}
+
 export async function runFreeFlight(mode:'3'|'6',input:string,signal:AbortSignal){
  if(!/^[\w.+\-\s]+$/.test(input)||input.length>100000)throw Error('Serbest uçuş girdisi geçersiz.');
- const {stdout:path}=await execute(process.execPath,['scripts/build-flight.mjs'],{cwd:root,signal,timeout:60000,maxBuffer:100000});
- const buildId=basename(path.trim());
+ const path=await freeFlightBuild(signal),buildId=basename(path);
  return await new Promise<{history:string;components:string;buildId:string}>((resolve,reject)=>{
-  const child=spawn(path.trim(),[mode],{cwd:root,stdio:['pipe','pipe','pipe'],windowsHide:true});
+  const child=spawn(path,[mode],{cwd:root,stdio:['pipe','pipe','pipe'],windowsHide:true});
   let output='',diagnostic='',settled=false;
   let timer:ReturnType<typeof setTimeout>|undefined;
   const finish=(error?:Error)=>{if(settled)return;settled=true;clearTimeout(timer);signal.removeEventListener('abort',abort);if(error)reject(error);else{
