@@ -1,0 +1,7 @@
+{
+  "source": "/home/ayberk/Projects/B3/roketsimdeneme1",
+  "revision": "5c100ca9cb851f660f6d1babc44088da8dadf08f",
+  "cli_sha256": "511374d1b1d5840b008ace804de3d62b98ba3bcbd9757d77d921da3f6ed88e6e",
+  "copied": ["src", "include"],
+  "third_party": ["Eigen 3.4.0", "nlohmann/json 3.11.3"]
+}
