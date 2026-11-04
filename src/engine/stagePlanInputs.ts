@@ -19,9 +19,8 @@ export function stagePlanInputs(project:Project,configuration:FlightConfiguratio
    id:stage.id,
    component_ids:project.parts.filter(part=>!isStructural(part.kind)&&stageOf(part.id)===stage.id).map(part=>part.id),
    motor_instance_ids:project.parts.filter(part=>part.kind==='motor'&&stageOf(part.id)===stage.id&&configuration.mounts[part.id]).map(part=>part.id),
-   separation_type:event.event==='nextStageIgnition'?'next_stage_ignition':'own_motor_burnout',
+   separation_type:event.event==='never'?'never':event.event==='nextStageIgnition'?'next_stage_ignition':'own_motor_burnout',
    separation_delay_s:event.delay,
-   separation_enabled:event.event!=='never',
   };
  });
 }
@@ -40,4 +39,14 @@ export function ignitionPlanInputs(project:Project,configuration:FlightConfigura
    ignition_event:assignment.event==='previousBurnout'?'previous_motor_burnout':assignment.event==='separation'?'previous_stage_separation':'launch',
    ignition_delay_s:assignment.delay};
  });
+}
+
+export function stagePlanIssues(project:Project,configuration:FlightConfiguration){
+ const stages=stagePlanInputs(project,configuration),motors=ignitionPlanInputs(project,configuration),issues:string[]=[];
+ for(const [index,stage] of stages.entries()){
+  if(index===0&&motors.some(motor=>motor.stage_id===stage.id&&motor.ignition_event!=='launch'))issues.push(`${stage.id}: ilk kademe motoru kalkışta ateşlenmeli.`);
+  if(stage.separation_type==='next_stage_ignition'&&!stages[index+1]?.motor_instance_ids.length)issues.push(`${stage.id}: sonraki kademede ateşlenecek motor yok.`);
+  if(index===stages.length-1&&stage.separation_type!=='never')issues.push(`${stage.id}: son kademenin ayrılacağı üst kademe yok.`);
+ }
+ return issues;
 }

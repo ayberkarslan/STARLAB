@@ -6,6 +6,7 @@ import {Check,Copy,Download,FileOutput,Play,Plus,Trash2,Upload,X,AlertCircle} fr
 import type {Project} from '../../domain/project';
 import {allMotors,configurationIssues,defaultEnvironment,parseResultCsv,resultCsv,simulationSignature,validateSamples,type Environment,type FlightWorkspace,type SimulationCase} from '../../domain/flight';
 import {getFlightSolver,createFlightRequest,flightSolverIssues} from '../../engine/flightSolver';
+import {stagePlanIssues} from '../../engine/stagePlanInputs';
 import ResizableSplit from '../ResizableSplit';
 import Plot from './Plot';
 import FlightPath2D from './FlightPath2D';
@@ -19,7 +20,7 @@ export default function SimulationWorkspace({project,flight,onChange}:{project:P
  const input=useRef<HTMLInputElement>(null),abort=useRef<AbortController|null>(null);useEffect(()=>()=>abort.current?.abort(),[]);
  const selected=flight.cases.find(c=>c.id===selectedId)||flight.cases[0],config=flight.configurations.find(c=>c.id===selected?.configurationId)||flight.configurations[0];
  const simulation=selected||{id:'',name:'',configurationId:config.id,environment:{...defaultEnvironment}};
- const request=createFlightRequest(project,flight,simulation);const issues=[...new Set([...configurationIssues(project,flight,config),...flightSolverIssues(request)])];const signature=simulationSignature(project,config,simulation.environment,flight);const result=selected?.result;const stale=result&&result.signature!==signature;const solver=getFlightSolver();
+ const request=createFlightRequest(project,flight,simulation);const issues=[...new Set([...configurationIssues(project,flight,config),...stagePlanIssues(project,config),...request.recoveryPlan.issues,...flightSolverIssues(request)])];const signature=simulationSignature(project,config,simulation.environment,flight);const result=selected?.result;const stale=result&&result.signature!==signature;const solver=getFlightSolver();
  function update(patch:Partial<SimulationCase>){if(!selected)return;const latest=liveFlight.current;onChange({...latest,cases:latest.cases.map(c=>c.id===selected.id?{...c,...patch}:c)})}
  function environment(key:keyof Environment,value:number){update({environment:{...simulation.environment,[key]:value}})}
  function add(copy=false){const next:SimulationCase={id:crypto.randomUUID(),name:copy&&selected?`${selected.name} · Kopya`:`Simülasyon ${String(flight.cases.length+1).padStart(2,'0')}`,configurationId:config.id,environment:{...(copy&&selected?selected.environment:defaultEnvironment)}};onChange({...flight,cases:[...flight.cases,next]});setSelectedId(next.id)}
