@@ -13,6 +13,13 @@ describe('flight workspace',()=>{
  it('removes assignments when mounts are deleted',()=>{const p=initialProject(),f=initialFlight();f.configurations[0].mounts.umotor={motorId:'sample-54',event:'launch',delay:0};p.parts=p.parts.filter(p=>p.id!=='umotor');expect(cleanFlight(p,f).configurations[0].mounts).toEqual({})});
  it('parses external results and rejects invalid time series',()=>{expect(parseResultCsv('t,altitude,velocity,acceleration\n0,0,0,0\n1,10,20,5')).toHaveLength(2);expect(()=>parseResultCsv('t,altitude,velocity,acceleration\n1,0,0,0\n1,0,0,0')).toThrow()});
  it('round trips solver telemetry csv',()=>{const samples=parseResultCsv('t,altitude,velocity,acceleration,downrange,horizontalVelocity,verticalVelocity,railCleared\n0,0,0,0,0,0,0,0\n1,10,20,5,4,3,19,1');expect(samples[1].railCleared).toBe(true);expect(parseResultCsv(resultCsv(samples))).toEqual(samples)});
+ it('imports B3 flight telemetry by column name without changing physical units',()=>{
+  const csv='t,altitude_agl_m,downrange_m,ground_speed_ms,acceleration_magnitude_ms2,velocity_downrange_ms,velocity_vertical_ms,on_launch_rail,unused\n0,0,0,0,9.81,0,0,1,5\n1,10,3,20,5,3,19,0,6';
+  const samples=parseResultCsv(csv);
+  expect(samples[1]).toEqual({t:1,altitude:10,velocity:20,acceleration:5,downrange:3,horizontalVelocity:3,verticalVelocity:19,railCleared:true});
+  expect(parseResultCsv(resultCsv(samples))).toEqual(samples);
+  expect(()=>parseResultCsv(csv.replace('3,19,0,6','3,,0,6'))).toThrow(/eksik/);
+ });
 });
 describe('motor data',()=>{
  it('ships stable legacy ENG catalog motors',()=>{expect(catalogMotors.map(m=>[m.id,m.name,m.source])).toEqual([['catalog-estes-d12','D12','catalog'],['catalog-estes-e12','E12','catalog'],['catalog-aerotech-j270w','J270W','catalog']]);for(const motor of catalogMotors){expect(motor.curve[0]).toEqual({t:0,thrust:0});expect(motor.curve.at(-1)?.thrust).toBe(0);expect(motorStats(motor).impulse).toBeGreaterThan(0)}});
