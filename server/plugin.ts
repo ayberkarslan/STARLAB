@@ -9,10 +9,10 @@ const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),ex
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
  const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false,flightDirty=false;
  server.middlewares.use('/api/free-flight',async(req,res,next)=>{
+  const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
   if(req.url==='/version'&&req.method==='GET'){try{const buildId=(await freeFlightBuild()).split(/[\\/]/).at(-1);res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify({buildId}))}catch(error){res.statusCode=500;res.end(JSON.stringify({error:String(error)}))}return}
   if(req.url!=='/run'){next();return}
   if(req.method!=='POST'){res.statusCode=405;res.end();return}
-  const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
   if(!req.headers['content-type']?.startsWith('application/json')){res.statusCode=415;res.end();return}
   const controller=new AbortController();res.on('close',()=>{if(!res.writableEnded)controller.abort()});let data='';
   try{
