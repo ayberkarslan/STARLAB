@@ -53,7 +53,8 @@ export function freeFlightIssues(project:Project,flight:FlightWorkspace,scenario
   const e=scenario.environment,windEast=-e.windSpeed*Math.sin(e.windDirection*Math.PI/180);
   if(Math.abs(windEast)>1e-9||Math.abs(e.railHeading)>1e-9)issues.push('3DOF kuzey–irtifa düzleminde çalışır; doğu rüzgârı ve farklı yön için 6DOF seç.');
  }
- if((scenario.freeFlight?.duration??0)/scenario.environment.timeStep>19500)issues.push('Bu modda en fazla 20.000 örnek saklanabilir; zaman adımını büyüt veya süreyi kısalt.');
+ const steps=(scenario.freeFlight?.duration??0)/scenario.environment.timeStep;
+ if(steps>19500||steps*(geometry.parts.length+1)>25000)issues.push('Bu koşul çok fazla uçuş veya bileşen örneği üretiyor; zaman adımını büyüt ya da süreyi kısalt.');
  const motor=allMotors(flight).find(item=>item.id===geometry.motorId);
  if(motor&&scenario.freeFlight&&scenario.freeFlight.duration<motor.curve.at(-1)!.t-scenario.freeFlight.motorAge)issues.push('Serbest uçuş süresi kalan motor yanışından kısa olamaz.');
  return [...new Set(issues)];
