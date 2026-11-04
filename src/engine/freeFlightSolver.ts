@@ -79,7 +79,7 @@ export async function solveFreeFlight(project:Project,flight:FlightWorkspace,sce
  if(Math.abs(mass0.cg-mass1.cg)>1e-6)throw Error('Bu model faz boyunca sabit CG istiyor. Motor yanışı CG’yi değiştiriyor; bu proje için serbest uçuş hesabı durduruldu.');
  if(mass0.mass<mass1.mass||mass1.mass<=0||[mass0.ix,mass0.iy,mass1.ix,mass1.iy].some(value=>value<=0))throw Error('Kütle veya atalet serbest uçuş için geçersiz.');
  const response=await fetch('/api/free-flight/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:scenario.solverMode==='free3'?'3':'6',input:inputText(projected,scenario,motor,mass0,mass1)}),signal});
- const payload=await response.json() as {history?:string;components?:string;error?:string};
- if(!response.ok||typeof payload.history!=='string'||typeof payload.components!=='string')throw Error(payload.error||'Serbest uçuş motoru yanıt vermedi.');
- return parseFreeFlightHistory(payload.history,payload.components);
+ const payload=await response.json() as {history?:string;components?:string;buildId?:string;error?:string};
+ if(!response.ok||typeof payload.history!=='string'||typeof payload.components!=='string'||typeof payload.buildId!=='string')throw Error(payload.error||'Serbest uçuş motoru yanıt vermedi.');
+ return {...parseFreeFlightHistory(payload.history,payload.components),buildId:payload.buildId};
 }
