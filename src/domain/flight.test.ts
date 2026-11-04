@@ -14,11 +14,11 @@ describe('flight workspace',()=>{
  it('parses external results and rejects invalid time series',()=>{expect(parseResultCsv('t,altitude,velocity,acceleration\n0,0,0,0\n1,10,20,5')).toHaveLength(2);expect(()=>parseResultCsv('t,altitude,velocity,acceleration\n1,0,0,0\n1,0,0,0')).toThrow()});
  it('round trips solver telemetry csv',()=>{const samples=parseResultCsv('t,altitude,velocity,acceleration,downrange,horizontalVelocity,verticalVelocity,railCleared\n0,0,0,0,0,0,0,0\n1,10,20,5,4,3,19,1');expect(samples[1].railCleared).toBe(true);expect(parseResultCsv(resultCsv(samples))).toEqual(samples)});
  it('imports B3 flight telemetry by column name without changing physical units',()=>{
-  const csv='t,altitude_agl_m,downrange_m,ground_speed_ms,acceleration_magnitude_ms2,velocity_downrange_ms,velocity_vertical_ms,on_launch_rail,unused\n0,0,0,0,9.81,0,0,1,5\n1,10,3,20,5,3,19,0,6';
+  const csv='t,altitude_agl_m,downrange_m,ground_speed_ms,acceleration_magnitude_ms2,velocity_downrange_ms,velocity_vertical_ms,on_launch_rail,attached_stage_count,recovery_deployed\n0,0,0,0,9.81,0,0,1,2,0\n1,10,3,20,5,3,19,0,1,1';
   const samples=parseResultCsv(csv);
-  expect(samples[1]).toEqual({t:1,altitude:10,velocity:20,acceleration:5,downrange:3,horizontalVelocity:3,verticalVelocity:19,railCleared:true});
+  expect(samples[1]).toEqual({t:1,altitude:10,velocity:20,acceleration:5,downrange:3,horizontalVelocity:3,verticalVelocity:19,railCleared:true,attachedStageCount:1,recoveryDeployed:true});
   expect(parseResultCsv(resultCsv(samples))).toEqual(samples);
-  expect(()=>parseResultCsv(csv.replace('3,19,0,6','3,,0,6'))).toThrow(/eksik/);
+  expect(()=>parseResultCsv(csv.replace('3,19,0,1,1','3,,0,1,1'))).toThrow(/eksik/);
  });
 });
 describe('motor data',()=>{
