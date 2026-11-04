@@ -13,9 +13,9 @@ export function portableProject(project:Project):Project {
  const next={...project,flight:{...flight,motors:[...flight.motors,...bundled.map(m=>({...m,id:ids.get(m.id)!}))],configurations:flight.configurations.map(c=>({...c,mounts:Object.fromEntries(Object.entries(c.mounts).map(([id,a])=>[id,{...a,motorId:ids.get(a.motorId)??a.motorId}]))}))}};
  next.flight.cases=flight.cases.map(c=>{
   const config=flight.configurations.find(cfg=>cfg.id===c.configurationId)!;
-  if(!c.result||c.result.signature!==simulationSignature(project,config,c.environment,flight))return c;
+  if(!c.result||c.result.signature!==simulationSignature(project,config,c.environment,flight,c))return c;
   const updated=next.flight.configurations.find(cfg=>cfg.id===c.configurationId)!;
-  return {...c,result:{...c.result,signature:simulationSignature(next,updated,c.environment,next.flight)}};
+  return {...c,result:{...c.result,signature:simulationSignature(next,updated,c.environment,next.flight,c)}};
  });
  return next;
 }
