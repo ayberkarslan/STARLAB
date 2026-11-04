@@ -33,11 +33,11 @@ int main(int argc,char** argv){
   require(argc==2,"Usage: flight-runner 3|6");
   const std::string mode=argv[1];require(mode=="3"||mode=="6","Invalid DoF");
   Config cfg{};ProjectHost host;Phase phase{};phase.name="free-flight";
-  double pitch=0,heading=0;
+  double pitch=0,heading=0,motorAge=0;
   read(cfg.dt,"dt");read(cfg.site,"site");read(cfg.startUp,"start altitude");
   read(cfg.speed,"speed");read(pitch,"pitch");read(heading,"heading");
   read(host.windNorth,"north wind");read(host.windEast,"east wind");read(host.windDown,"down wind");
-  read(phase.duration,"duration");read(phase.burn,"burn duration");
+  read(phase.duration,"duration");read(motorAge,"motor age at start");read(phase.burn,"burn duration");
   read(phase.m0,"initial mass");read(phase.m1,"final mass");read(phase.cg,"CG");
   read(phase.I0.x,"Ix0");read(phase.I0.y,"Iy0");read(phase.I0.z,"Iz0");
   read(phase.I1.x,"Ix1");read(phase.I1.y,"Iy1");read(phase.I1.z,"Iz1");
@@ -57,6 +57,11 @@ int main(int argc,char** argv){
   require(cfg.dt>0&&cfg.dt<=1&&cfg.site>=0&&cfg.startUp>0&&cfg.speed>=0&&phase.duration>0&&phase.duration<=300
    &&phase.burn>0&&phase.burn<=phase.duration&&phase.m0>=phase.m1&&phase.m1>0,"Invalid flight bounds");
   require(phase.motor.front().time==0&&phase.motor.back().time==phase.burn,"Motor curve must cover burn");
+  require(motorAge>=0&&motorAge<phase.burn,"Ray çıkışında motor hâlâ yanıyor olmalı.");
+  const double originalBurn=phase.burn;
+  std::vector<MotorPoint> remaining{{0,sampleCurve(phase.motor,motorAge,&MotorPoint::force)}};
+  for(const auto& p:phase.motor)if(p.time>motorAge)remaining.push_back({p.time-motorAge,p.force});
+  phase.motor=remaining;phase.burn=originalBurn-motorAge;
   require(host.exitArea>=0&&std::isfinite(host.exitArea),"Invalid motor exit area");
   cfg.theta=(90-pitch)*pi/180;cfg.yaw=heading*pi/180;cfg.wind={host.windNorth,host.windEast,host.windDown};
   cfg.legacy=false;cfg.host=&host;cfg.phases={phase};host.phase=&cfg.phases[0];host.site=cfg.site;

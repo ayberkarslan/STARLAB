@@ -4,9 +4,24 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {EngineService} from './engine';
 import type {EngineRequest} from '../src/engine/protocol';
+import {runFreeFlight} from './freeFlight';
 const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),execute=promisify(execFile);
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
  const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false;
+ server.middlewares.use('/api/free-flight',async(req,res,next)=>{
+  if(req.url!=='/run'){next();return}
+  if(req.method!=='POST'){res.statusCode=405;res.end();return}
+  const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
+  if(!req.headers['content-type']?.startsWith('application/json')){res.statusCode=415;res.end();return}
+  const controller=new AbortController();res.on('close',()=>{if(!res.writableEnded)controller.abort()});let data='';
+  try{
+   for await(const chunk of req){data+=chunk.toString();if(data.length>120000)throw Error('Uçuş isteği çok büyük.')}
+   const payload=JSON.parse(data) as {mode:'3'|'6';input:string};
+   if(!payload||!['3','6'].includes(payload.mode)||typeof payload.input!=='string')throw Error('Uçuş isteği geçersiz.');
+   const result=await runFreeFlight(payload.mode,payload.input,controller.signal);
+   if(!res.destroyed){res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(result))}
+  }catch(error){if(!res.destroyed){res.statusCode=400;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify({error:error instanceof Error?error.message:'Uçuş tamamlanamadı.'}))}}
+ });
  server.middlewares.use('/api/calculations',async(req,res,next)=>{
   if(req.url!=='/structure'&&req.url!=='/tube'){next();return}
   if(req.method!=='POST'){res.statusCode=405;res.end();return}
