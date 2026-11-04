@@ -6,7 +6,7 @@ import {parseStar,serializeStar,starFilename} from './starFile';
 describe('star project files',()=>{
  it('round trips the complete workspace and user inputs',()=>{
   const p=initialProject();p.parts[0].inputs={centerOfMass:450,centerOfPressure:620,notes:'test'};p.flight=initialFlight();
-  p.flight.cases[0].result={source:'imported',signature:'external',samples:[{t:0,altitude:0,velocity:0,acceleration:0},{t:1,altitude:20,velocity:30,acceleration:5}]};
+  p.flight.cases[0].result={source:'imported',signature:'external',sourceFile:'b3-flight.csv',samples:[{t:0,altitude:0,velocity:0,acceleration:0},{t:1,altitude:20,velocity:30,acceleration:5}]};
   expect(parseStar(serializeStar(p))).toEqual(p);
  });
  it('embeds referenced sample motors and rewires assignments',()=>{
