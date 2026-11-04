@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {IconButton} from '@stardrop/ui';
 import {Pause,Play,RefreshCw} from '@stardrop/ui/icons';
-import type {FlightSample} from '../../domain/flight';
+import type {FlightEvent,FlightSample} from '../../domain/flight';
 
 const WIDTH=1000,HEIGHT=430,PAD_X=52,PAD_Y=42;
 export function trajectoryGeometry(samples:FlightSample[]){
@@ -14,20 +14,22 @@ export function trajectoryGeometry(samples:FlightSample[]){
  return {points,path:points.map((point,index)=>`${index?'L':'M'}${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' '),minX,maxX,maxY,groundY:HEIGHT-PAD_Y};
 }
 
-export default function FlightPath2D({samples}:{samples:FlightSample[]}){
+export default function FlightPath2D({samples,events:flightEvents}:{samples:FlightSample[];events?:FlightEvent[]}){
  const geometry=useMemo(()=>trajectoryGeometry(samples),[samples]),[frame,setFrame]=useState(0),[playing,setPlaying]=useState(true),request=useRef(0),started=useRef(0);
  const last=geometry?.points.length?geometry.points.length-1:0;
  useEffect(()=>{setFrame(0);setPlaying(!!geometry)},[geometry]);
  useEffect(()=>{if(!playing||!geometry)return;const duration=Math.min(12000,Math.max(4000,(samples.at(-1)?.t||0)*350));started.current=performance.now()-frame/last*duration;const tick=(now:number)=>{const next=Math.min(last,Math.floor((now-started.current)/duration*last));setFrame(next);if(next<last)request.current=requestAnimationFrame(tick);else setPlaying(false)};request.current=requestAnimationFrame(tick);return()=>cancelAnimationFrame(request.current)},[playing,geometry,last,samples]);
  if(!geometry)return <div className="engineering-empty">Bu sonuçta 2D konum verisi yok</div>;
  const point=geometry.points[Math.min(frame,last)],previous=geometry.points[Math.max(0,frame-1)],vx=point.sample.horizontalVelocity,vy=point.sample.verticalVelocity,railExit=geometry.points.find(item=>item.sample.railCleared);
- const events=geometry.points.flatMap((item,index)=>{
+ const inferredEvents=geometry.points.flatMap((item,index)=>{
   if(index===0)return [];
   const previous=geometry.points[index-1].sample,labels:string[]=[];
   if(item.sample.attachedStageCount!==undefined&&previous.attachedStageCount!==undefined&&item.sample.attachedStageCount<previous.attachedStageCount)labels.push('Kademe ayrılması');
   if(item.sample.recoveryDeployed&&!previous.recoveryDeployed)labels.push('Kurtarma açılması');
   return labels.map(label=>({item,label}));
  });
+ const eventNames:Record<string,string>={MOTOR_IGNITION:'Motor ateşleme',MOTOR_BURNOUT:'Motor yanışı bitti',STAGE_SEPARATION:'Kademe ayrılması',RECOVERY_TRIGGER:'Kurtarma tetiklendi',RECOVERY_DEPLOYMENT_START:'Paraşüt açılıyor',RECOVERY_FULLY_INFLATED:'Paraşüt açık',ground_impact:'Yere temas',apogee:'Tepe noktası',rail_exit:'Ray çıkışı'};
+ const events=flightEvents?.filter(event=>eventNames[event.type]).map(event=>({item:geometry.points.find(point=>point.sample.t>=event.t)??geometry.points[last],label:eventNames[event.type],time:event.t}))??inferredEvents.map(event=>({...event,time:event.item.sample.t}));
  const angle=Number.isFinite(vx)&&Number.isFinite(vy)?-Math.atan2(vy!,vx!)*180/Math.PI:Math.atan2(point.y-previous.y,point.x-previous.x)*180/Math.PI;
  const progress=geometry.points.slice(0,frame+1).map((item,index)=>`${index?'L':'M'}${item.x.toFixed(2)} ${item.y.toFixed(2)}`).join(' ');
  function toggle(){if(frame>=last){setFrame(0);started.current=0;setPlaying(true)}else setPlaying(value=>!value)}
@@ -36,7 +38,7 @@ export default function FlightPath2D({samples}:{samples:FlightSample[]}){
    <line className="flight-path-ground" x1="24" x2={WIDTH-24} y1={geometry.groundY} y2={geometry.groundY}/>
    <path className="flight-path-ghost" d={geometry.path}/><path className="flight-path-progress" d={progress}/>
    {railExit&&<circle className="flight-path-rail-exit" cx={railExit.x} cy={railExit.y} r="4"/>}
-   {events.map(({item,label},index)=><circle key={`${index}-${label}`} className="flight-path-event" cx={item.x} cy={item.y} r="5"><title>{label} · {item.sample.t.toFixed(2)} s</title></circle>)}
+   {events.map(({item,label,time},index)=><circle key={`${index}-${label}`} className="flight-path-event" cx={item.x} cy={item.y} r="5"><title>{label} · {time.toFixed(2)} s</title></circle>)}
    <g className="flight-path-rocket" transform={`translate(${point.x} ${point.y}) rotate(${angle})`}><path d="M 13 0 L -8 -6 L -4 0 L -8 6 Z"/></g>
    <text x="24" y="26">{Math.round(geometry.maxY)} m</text><text x={WIDTH-24} y={HEIGHT-14} textAnchor="end">{Math.round(point.sample.downrange!)} m</text>
   </svg>
