@@ -19,7 +19,7 @@ export function parseMissionEvents(summary:{events?:unknown[]}):FlightEvent[]{
 export async function solveFullMission(project:Project,flight:FlightWorkspace,scenario:SimulationCase,signal:AbortSignal){
  const {payload,issues}=fullMissionInputs(project,flight,scenario);if(issues.length)throw Error(issues.join('\n'));
  const response=await fetch('/api/full-mission/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal});
- const value=await response.json() as {csv?:string;summary?:{events?:unknown[]};buildId?:string;error?:string};
+ const value=await response.json() as {csv?:string;summary?:{events?:unknown[];landing?:{ground_impact_detected?:boolean}};buildId?:string;error?:string};
  if(!response.ok||typeof value.csv!=='string'||!value.summary||typeof value.buildId!=='string')throw Error(value.error||'B3 uçuş motoru yanıt vermedi.');
- return {samples:parseResultCsv(value.csv),events:parseMissionEvents(value.summary),buildId:`b3-${value.buildId}`};
+ return {samples:parseResultCsv(value.csv),events:parseMissionEvents(value.summary),completed:value.summary.landing?.ground_impact_detected===true,buildId:`b3-${value.buildId}`};
 }

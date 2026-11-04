@@ -1,8 +1,9 @@
 import {describe,expect,it} from 'vitest';
 import {emptyProject,type Part} from '../src/domain/project';
-import {initialFlight,parseResultCsv} from '../src/domain/flight';
+import {initialFlight,parseResultCsv,resultCsv} from '../src/domain/flight';
 import {fullMissionInputs} from '../src/engine/fullMissionInputs';
 import {runFullMission} from './fullMission';
+import {existsSync} from 'node:fs';
 
 const part=(id:string,parentId:string,kind:Part['kind'],length:number,diameter:number,offset=0):Part=>({id,parentId,kind,name:id,length,diameter,offset,mass:0,material:'Test',inputs:{wallThickness:2,density:2700}});
 
@@ -23,7 +24,18 @@ describe('B3 full mission bridge',()=>{
   const samples=parseResultCsv(output.csv);
   expect(samples.length).toBeGreaterThan(10);
   expect(Math.max(...samples.map(item=>item.altitude))).toBeGreaterThan(1);
+  expect(output.summary.landing?.ground_impact_detected).toBe(true);
   expect(output.summary.events).toEqual(expect.arrayContaining([expect.objectContaining({type:'ground_impact'})]));
+  const original='/home/ayberk/Projects/B3/roketsimdeneme1/desktop_app/build-linux/bin/roketsim_cli';
+  if(existsSync(original)){
+   process.env.STARLAB_B3_CLI=original;
+   try{
+    const reference=await runFullMission(payload,new AbortController().signal),referenceSamples=parseResultCsv(reference.csv);
+    expect(samples.length).toBe(referenceSamples.length);
+    expect(Math.max(...samples.map(item=>item.altitude))).toBeCloseTo(Math.max(...referenceSamples.map(item=>item.altitude)),4);
+    expect((output.summary.events as {type:string;time_s:number}[]).map(event=>[event.type,event.time_s])).toEqual((reference.summary.events as {type:string;time_s:number}[]).map(event=>[event.type,event.time_s]));
+   }finally{delete process.env.STARLAB_B3_CLI}
+  }
  });
  it('runs a staged vehicle with a recovery device and source events',async()=>{
   const project=emptyProject(),flight=initialFlight();
@@ -51,5 +63,9 @@ describe('B3 full mission bridge',()=>{
   expect(types).toContain('STAGE_SEPARATION');
   expect(types).toContain('RECOVERY_TRIGGER');
   expect(types).toContain('ground_impact');
+  const exported=resultCsv(samples,{source:'solver',signature:'test',samples,solverId:`b3-${output.buildId}`,events:(output.summary.events as {type:string;time_s:number}[]).map(event=>({type:event.type,t:event.time_s}))});
+  expect(exported).toContain(`# solverId,b3-${output.buildId}`);
+  expect(exported).toContain('# event,{"type":"STAGE_SEPARATION"');
+  expect(JSON.stringify(parseResultCsv(exported))).toBe(JSON.stringify(samples));
  });
 });
