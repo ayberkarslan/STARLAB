@@ -15,7 +15,7 @@
     "check:engine": "tsc -p tsconfig.server.json --noEmit",
     "build:ui": "npm run build --prefix packages/ui-kit",
     "dev:ui": "npm run dev --prefix packages/ui-kit",
-    "prebuild": "npm run build:ui",
+    "prebuild": "npm run build:ui && npm run build:flight",
     "postinstall": "npm run build:ui",
     "calcs": "python3 scripts/update-calcs.py"
   },
