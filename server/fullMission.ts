@@ -5,11 +5,18 @@ import {mkdtemp,readFile,rm,stat,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const execute=promisify(execFile);
-const binary=process.env.STARLAB_B3_CLI||'/home/ayberk/Projects/B3/roketsimdeneme1/desktop_app/build-linux/bin/roketsim_cli';
+const root=fileURLToPath(new URL('../',import.meta.url));
+async function missionBinary(signal?:AbortSignal){
+ if(process.env.STARLAB_B3_CLI)return process.env.STARLAB_B3_CLI;
+ const result=await execute(process.execPath,['scripts/build-mission.mjs'],{cwd:root,signal,timeout:180000,maxBuffer:100000,windowsHide:true});
+ return result.stdout.trim();
+}
 
 export async function fullMissionVersion(){
+ const binary=await missionBinary();
  const data=await readFile(binary).catch(()=>{throw Error('B3 uçuş ikilisi bulunamadı. STARLAB_B3_CLI yolunu ayarla.');});
  return createHash('sha256').update(data).digest('hex').slice(0,16);
 }
@@ -17,7 +24,7 @@ export async function fullMissionVersion(){
 export async function runFullMission(input:unknown,signal:AbortSignal){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Tam görev girdisi geçersiz.');
  const serialized=JSON.stringify(input);if(serialized.length>1_000_000)throw Error('Tam görev girdisi çok büyük.');
- const buildId=await fullMissionVersion(),directory=await mkdtemp(join(tmpdir(),'starlab-flight-'));
+ const binary=await missionBinary(signal),data=await readFile(binary),buildId=createHash('sha256').update(data).digest('hex').slice(0,16),directory=await mkdtemp(join(tmpdir(),'starlab-flight-'));
  const source=join(directory,'input.json'),analysis=join(directory,'analysis.json'),telemetry=join(directory,'flight.csv'),summary=join(directory,'summary.json');
  try{
   await writeFile(source,serialized,'utf8');
