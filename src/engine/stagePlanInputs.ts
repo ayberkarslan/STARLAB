@@ -17,7 +17,7 @@ export function stagePlanInputs(project:Project,configuration:FlightConfiguratio
   const event=configuration.separations[stage.id]??{event:'never',delay:0};
   return {
    id:stage.id,
-   component_ids:project.parts.filter(part=>!isStructural(part.kind)&&part.kind!=='motor'&&stageOf(part.id)===stage.id).map(part=>part.id),
+   component_ids:project.parts.filter(part=>!isStructural(part.kind)&&stageOf(part.id)===stage.id).map(part=>part.id),
    motor_instance_ids:project.parts.filter(part=>part.kind==='motor'&&stageOf(part.id)===stage.id&&configuration.mounts[part.id]).map(part=>part.id),
    separation_type:event.event==='nextStageIgnition'?'next_stage_ignition':'own_motor_burnout',
    separation_delay_s:event.delay,

@@ -12,6 +12,7 @@ it('orders booster before sustainer and maps B3 stage triggers without calculati
  expect(stages.map(stage=>stage.id)).toEqual(['booster','sustainer']);
  expect(stages[0]).toMatchObject({motor_instance_ids:['lmotor'],separation_type:'next_stage_ignition',separation_delay_s:.2,separation_enabled:true});
  expect(stages[0].component_ids).toContain('lfins');
+ expect(stages[0].component_ids).toContain('lmotor');
  expect(stages[0].component_ids).not.toContain('ufins');
  expect(stages[1]).toMatchObject({motor_instance_ids:['umotor'],separation_enabled:false});
  expect(ignitionPlanInputs(project,config)).toEqual([
