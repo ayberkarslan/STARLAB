@@ -16,6 +16,7 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
  if(e.atmosphereModel!=='surface')issues.push('Tam görev B3 atmosferi yüzey sıcaklığı ve basıncı kullanır; yüzey ölçümünü seç.');
  if(e.windModel&& !['constant','powerLaw','logarithmic'].includes(e.windModel))issues.push('Bu B3 uçuşunda seçilen rüzgâr modeli desteklenmiyor.');
  if(project.aerodynamics?.coefficientTable?.length)issues.push('Mach/Reynolds/AoA tablosu için B3 dosya yolu gerekir; bu girdiyi henüz doğrudan aktaramıyoruz.');
+ if([project.aerodynamics?.dragCoefficient,project.aerodynamics?.normalForceSlope,project.aerodynamics?.centerOfPressure,project.aerodynamics?.referenceArea].some(value=>value!==undefined))issues.push('Roket geneli Cd/CNa/CP/alan override bu B3 geometri yoluna bağlı değil; tasarım geometrisini kullan veya bu girdileri temizle.');
  if(project.parts.some(p=>p.kind==='pod'||p.kind==='parallelStage'))issues.push('Paralel kademe veya pod tam görev aktarımında henüz desteklenmiyor.');
  const resolved=resolveParts(project),positions=new Map(resolved.map(item=>[item.part.id,mm(item.position[0])])),byId=new Map(project.parts.map(part=>[part.id,part]));
  const stageFor=(part:Part)=>{let current:Part|undefined=part;while(current&&current.kind!=='stage')current=current.parentId?byId.get(current.parentId):undefined;return current?.id};
@@ -69,6 +70,7 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
   if(part.kind==='motor'){
    const assignment=configuration.mounts[part.id],motor=allMotors(flight).find(item=>item.id===assignment?.motorId);
    if(!assignment||!motor||assignment.offset===undefined){issues.push(`${part.name}: motor ve yuva içi konum gerekli.`);continue}
+   if(motor.massProfile?.length)issues.push(`${motor.name}: ölçülmüş kütle/CG profili bu B3 uçuş yolunda desteklenmiyor.`);
    const installedPosition=position+mm(assignment.offset);const motorId=`${part.id}:installed`;
    append(part,{...base,id:motorId,type:'Motor',pos_value:installedPosition,params:{length:mm(motor.length),radius:mm(motor.diameter)/2,dry_mass_kg:motor.totalMass-motor.propellantMass,propellant_mass_kg:motor.propellantMass,motor_local_cg_m:mm(motor.length)/2}});
   }
@@ -81,7 +83,7 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
  const recovery=recoveryPlanInputs(project,configuration);
  issues.push(...stagePlanIssues(project,configuration),...recovery.issues);
  if(!ignitions.length)issues.push('Uçuş için motor ataması gerekli.');
- if(e.maxTime/e.timeStep>2_000_000)issues.push('Zaman adımı ve azami süre iki milyondan fazla adım üretiyor.');
+ if(e.maxTime/e.timeStep>50000)issues.push('Tam görev telemetrisi en fazla 50000 adım destekliyor; adımı büyüt veya süreyi kısalt.');
  const diameter=project.aerodynamics?.referenceDiameter??Math.max(0,...project.parts.filter(p=>['body','nose','transition'].includes(p.kind)).map(p=>p.diameter));
  if(diameter<=0)issues.push('Referans çapı için burun veya gövde gerekli.');
  const payload={reference_diameter_m:mm(diameter),components,motor_instances:ignitions,stages,simulation:{step_size_ms:e.timeStep*1000,t_end_s:e.maxTime,launch_angle_deg:e.railAngle,launch_azimuth_deg:e.railHeading,launch_altitude_m:e.altitude,launch_latitude_deg:e.latitude,launch_longitude_deg:e.longitude,rail_length_m:e.railLength,wind_speed_ms:e.windSpeed,wind_direction_from_deg:e.windDirection,wind_shear_model:e.windModel==='logarithmic'?'logarithmic':'power_law',wind_reference_height_m:e.windReferenceHeight??10,wind_min_effective_height_m:e.windMinimumHeight??1,wind_shear_exponent:e.windModel==='constant'?0:e.windShearExponent??.14,wind_roughness_length_m:e.windRoughnessLength??.03,wind_direction_gradient_deg_per_km:e.windDirectionGradient??0,turbulence_enabled:e.turbulence?.enabled??false,turbulence_rms_ms:e.turbulence?.rms??0,turbulence_alpha:e.turbulence?.alpha??1,turbulence_poles:e.turbulence?.poles??5,turbulence_sample_hz:e.turbulence?.sampleRate??20,turbulence_seed:e.turbulence?.seed??1,temperature_c:e.temperature,pressure_hpa:e.pressure/100,dof:'3-DoF',earth_model:'WGS84 local tangent plane'},recovery:{recovery_enabled:recovery.devices.length>0,devices:recovery.devices}};
