@@ -25,3 +25,19 @@ export function stagePlanInputs(project:Project,configuration:FlightConfiguratio
   };
  });
 }
+
+/** B3 motor_instances event fields; physical motor state comes from native models. */
+export function ignitionPlanInputs(project:Project,configuration:FlightConfiguration){
+ const parts=new Map(project.parts.map(part=>[part.id,part]));
+ const stageOf=(id:string):string|undefined=>{
+  let part=parts.get(id);
+  while(part&&part.kind!=='stage')part=part.parentId?parts.get(part.parentId):undefined;
+  return part?.id;
+ };
+ return project.parts.filter(part=>part.kind==='motor'&&configuration.mounts[part.id]).map(part=>{
+  const assignment=configuration.mounts[part.id];
+  return {id:part.id,stage_id:stageOf(part.id),motor_id:assignment.motorId,
+   ignition_event:assignment.event==='previousBurnout'?'previous_motor_burnout':assignment.event==='separation'?'previous_stage_separation':'launch',
+   ignition_delay_s:assignment.delay};
+ });
+}
