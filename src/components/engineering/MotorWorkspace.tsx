@@ -3,7 +3,7 @@ import RecoveryFields from './RecoveryFields';
 import NumericSeriesEditor from './NumericSeriesEditor';
 import {NumberInput} from '../NumberInput';
 import {motorMassColumns} from '../../domain/motorMass';
-import {useRef,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Button,IconButton,SelectMenu} from '@stardrop/ui';
 import {Check,Copy,Download,Flame,Layers,Plus,Search,SlidersHorizontal,Trash2,Upload,X} from '@stardrop/ui/icons';
 import type {Project} from '../../domain/project';
@@ -15,9 +15,10 @@ import MotorPreview from './MotorPreview';
 import MotorEditor from './MotorEditor';
 import Plot from './Plot';
 
-export default function MotorWorkspace({project,flight,onChange}:{project:Project;flight:FlightWorkspace;onChange:(flight:FlightWorkspace)=>void}){
+export default function MotorWorkspace({project,flight,onChange,focusRequest}:{project:Project;flight:FlightWorkspace;onChange:(flight:FlightWorkspace)=>void;focusRequest?:{section:'motor'|'separation'|'recovery';version:number}}){
  const [motorId,setMotorId]=useState('sample-54'),[configId,setConfigId]=useState(flight.activeConfigurationId??flight.configurations[0].id),[mountId,setMountId]=useState(''),[query,setQuery]=useState(''),[fitOnly,setFitOnly]=useState(false),[section,setSection]=useState('motor'),[curveTab,setCurveTab]=useState('thrust');
  const [editor,setEditor]=useState<{motor?:Motor}|null>(null),[error,setError]=useState('');const input=useRef<HTMLInputElement>(null);
+ useEffect(()=>{if(focusRequest?.version)setSection(focusRequest.section)},[focusRequest]);
  const motors=allMotors(flight),motor=motors.find(m=>m.id===motorId)||motors[0],config=flight.configurations.find(c=>c.id===configId)||flight.configurations[0];const mounts=project.parts.filter(p=>p.kind==='motor'),mount=mounts.find(m=>m.id===mountId)||mounts[0];
  const stats=motorStats(motor),assignment=mount?config.mounts[mount.id]:undefined;const fits=mount&&motorFits(motor,mount);const assigned=motors.find(m=>m.id===assignment?.motorId);
  const stages=project.parts.filter(p=>p.kind==='stage'),recovery=project.parts.filter(p=>p.kind==='parachute');

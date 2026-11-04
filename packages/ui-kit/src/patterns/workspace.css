@@ -59,6 +59,8 @@
 .engineering-table tbody tr:hover{box-shadow:inset 2px 0 white}
 .engineering-readiness{padding:20px;display:grid;gap:16px;font-size:12px;line-height:1.8}
 .engineering-readiness>span{display:flex;align-items:center;gap:10px}
+.engineering-readiness>.engineering-issue{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-left:2px solid transparent;background:#000;color:#fff;text-align:left;font:13px var(--sd-font);line-height:1.6;cursor:pointer}
+.engineering-readiness>.engineering-issue:hover,.engineering-readiness>.engineering-issue:focus-visible{border-left-color:#fff;background:#101010;outline:none}
 .engineering-small-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .engineering-assignment{display:flex;align-items:center;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)}
 .engineering-event-list{display:grid;gap:24px}
