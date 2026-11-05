@@ -1,6 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {runFreeFlight} from './freeFlight';
 import {parseFreeFlightHistory} from '../src/engine/freeFlightSolver';
+import {parseResultCsv,resultCsv} from '../src/domain/flight';
 
 const parts=[
  'cone 0 0 .36 0 .07 0 0 0 0 0 0',
@@ -20,6 +21,12 @@ describe('supplied free flight model process',()=>{
    expect(result.samples[0].altitude).toBeCloseTo(15);
    expect(result.samples.at(-1)?.t).toBeCloseTo(.35);
    expect(result.samples[0].mach).toBeGreaterThan(0);
+   expect(result.samples[0].mass).toBeGreaterThan(0);
+   expect(Number.isFinite(result.samples[0].angleOfAttack)).toBe(true);
+   const restored=parseResultCsv(resultCsv(result.samples));
+   expect(restored[0].mass).toBeCloseTo(result.samples[0].mass!);
+   expect(restored[0].angleOfAttack).toBeCloseTo(result.samples[0].angleOfAttack!);
+   expect(restored[0].pitchRate).toBeCloseTo(result.samples[0].pitchRate!);
    expect(result.components.map(item=>item.id)).toEqual(['cone','tube','transition','boattail','fins']);
   }
  });

@@ -9,7 +9,7 @@ const number=(text:string,label:string)=>{if(text.trim()==='')throw Error(`${lab
 
 export function parseFreeFlightHistory(history:string,components:string){
  const lines=history.trim().split(/\r?\n/),header=lines.shift()?.split(',')??[];
- const required=['t_s','n_m','e_m','down_m','u','v','w','Mach','Q_Pa','mass','FnetX_N','FnetY_N','FnetZ_N','CP_m','CD','CL','CmCG'];
+ const required=['t_s','n_m','e_m','down_m','u','v','w','p','q','r','alpha','beta','Mach','Q_Pa','mass','Tx_N','FnetX_N','FnetY_N','FnetZ_N','CP_m','CD','CL','CmCG'];
  const column=Object.fromEntries(required.map(key=>[key,header.indexOf(key)]));
  if(required.some(key=>column[key]<0))throw Error('Yeni uçuş telemetrisi eksik sütun içeriyor.');
  const samples:FlightSample[]=lines.map(line=>{
@@ -18,7 +18,8 @@ export function parseFreeFlightHistory(history:string,components:string){
   const cp=cells[column.CP_m]?.trim();
   return {t:at('t_s'),altitude:-down,velocity:Math.hypot(at('u'),at('v'),at('w')),
    acceleration:Math.hypot(at('FnetX_N'),at('FnetY_N'),at('FnetZ_N'))/mass,
-   north,east,downrange:Math.hypot(north,east),railCleared:true,mach:at('Mach'),dynamicPressure:at('Q_Pa'),
+   north,east,downrange:Math.hypot(north,east),railCleared:true,mach:at('Mach'),dynamicPressure:at('Q_Pa'),mass,
+   angleOfAttack:at('alpha')*180/Math.PI,sideslip:at('beta')*180/Math.PI,rollRate:at('p'),pitchRate:at('q'),yawRate:at('r'),thrust:at('Tx_N'),
    ...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:at('CD'),liftCoefficient:at('CL'),momentCoefficient:at('CmCG')};
  });
  const firstTime=samples[0]?.t,componentLines=components.trim().split(/\r?\n/),componentHeader=componentLines.shift()?.split(',')??[];
