@@ -10,6 +10,7 @@ import {geometryResource,retainGeometry,releaseGeometry,sceneMaterials,type Scen
 import type {ViewProps} from './ViewProps';
 import {geometrySelection} from '../domain/selectionGeometry';
 import {isFin,isInternal} from '../domain/componentCatalog';
+import DeepSpace from './DeepSpace';
 
 function PartMesh({node,bodyDiameter,selected,onSelect,materials,presentation=false}:{node:ResolvedPart;bodyDiameter:number;selected:boolean;onSelect:(id:string,additive?:boolean)=>void;materials:SceneMaterials;presentation?:boolean}){
  const {kind,length,diameter}=node.part;
@@ -58,7 +59,7 @@ function Scene(props:ViewProps&{presentation?:boolean}){
  const active=new Set(geometrySelection(props.project,props.selectedIds??[props.selected]).nodes.map(n=>n.part.id));
  const children=new Map<string|null,ResolvedPart[]>();for(const node of resolved){const list=children.get(node.parentId)||[];list.push(node);children.set(node.parentId,list);}
  const branch=(node:ResolvedPart):React.ReactNode=><group key={node.part.id} position={node.localPosition.map(v=>v*.001) as [number,number,number]}>{node.physical&&visible.has(node.part.id)&&(!props.presentation||!isInternal(node.part.kind))&&<PartMesh presentation={props.presentation} node={node} materials={materials} bodyDiameter={nodes.get(node.parentId||'')?.part.diameter||140} selected={active.has(node.part.id)} onSelect={props.onSelect}/>} {(children.get(node.part.id)||[]).map(branch)}</group>;
- return <>{props.presentation?<CinematicRig bounds={bounds}/>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom} focusMotion={props.focusMotion}/>}<StudioLights bounds={bounds} presentation={props.presentation}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
+ return <>{props.presentation?<><CinematicRig bounds={bounds}/><DeepSpace/></>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom} focusMotion={props.focusMotion}/>}<StudioLights bounds={bounds} presentation={props.presentation}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
 }
 class Boundary extends React.Component<{children:React.ReactNode;onBack:()=>void},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?<div className="view-fallback" role="alert"><p>3D görünüm başlatılamadı.</p><button onClick={this.props.onBack}>2D görünüme dön</button></div>:this.props.children}}
 export default function RocketView3D(props:ViewProps&{onBack:()=>void;presentation?:boolean}){
