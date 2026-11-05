@@ -167,13 +167,17 @@ kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 
 .empty-canvas-add{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:64px;height:64px;border:0;background:#000;color:#fff;cursor:pointer}
 .empty-canvas-add:focus-visible{outline:1px solid #fff;outline-offset:4px}
 .empty-canvas-add:hover svg{stroke-width:1.8}
-.canvas-summary{position:absolute;right:16px;bottom:14px;z-index:3;max-width:260px;background:#000e;padding:10px 12px;font-size:12px;line-height:1.8}
-.canvas-summary dl{display:grid;grid-template-columns:auto auto;gap:4px 24px;margin:0 0 4px}.canvas-summary dd{margin:0;text-align:right}
-.canvas-summary>span{display:block;font-size:12px}
-.selection-summary{min-width:0;padding:0;max-width:min(280px,45%)}
+.viewport-topbar{display:flex;align-items:center;gap:16px;min-height:42px;flex-shrink:0;border-bottom:1px solid var(--line);min-width:0}
+.viewport-topbar .breadcrumbs{border-bottom:0;min-width:0;max-width:32%;padding:6px 0 6px 20px}
+.canvas-summary{display:flex;align-items:center;justify-content:flex-end;gap:18px;min-width:0;flex:1;padding:5px 16px 5px 0;font-size:12px;white-space:nowrap}
+.canvas-summary dl{display:grid;grid-auto-flow:column;grid-template-rows:auto auto;column-gap:18px;min-width:0;margin:0;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#444 #000}
+.canvas-summary dt{color:#aaa}.canvas-summary dd{margin:0}
+.canvas-summary-issue{min-width:0;max-width:280px;overflow:hidden;text-overflow:ellipsis;color:#f4b14a}
+.canvas-summary-count{flex:none;color:#aaa}
+.selection-summary{flex:0 1 auto;max-width:min(280px,45%);padding:0}
 .summary-selection-title{display:flex;align-items:center;gap:10px;width:100%;min-width:0;border:0;border-left:2px solid #fff;background:#000;color:#fff;padding:10px 12px;font-size:12px;text-align:left}
 .summary-selection-title>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-.summary-selection-list{max-height:150px;overflow:auto;border:1px solid var(--line)}
+.summary-selection-list{position:absolute;right:16px;top:100%;z-index:5;max-height:150px;min-width:220px;overflow:auto;border:1px solid var(--line);background:#000;scrollbar-width:thin;scrollbar-color:#444 #000}
 .summary-selection-list button{display:block;width:100%;padding:9px 12px;border:0;background:#000;color:#fff;font-size:12px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .summary-selection-list button:hover{box-shadow:inset 2px 0 #fff}
 .new-project-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
