@@ -73,7 +73,7 @@ function inputText(projected:FreeFlightProjection,scenario:SimulationCase,motor:
  const state=q.initialState;
  const initial=[state?1:0,state?.roll??0,q.startSpeed,state?.v??0,state?.w??0,state?.p??0,state?.q??0,state?.r??0];
  const wind=q.windTimeline??[];
- const lines=[main.join(' '),initial.join(' '),String(wind.length),...wind.map(point=>[point.t,point.north,point.east,point.down].join(' ')),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
+ const lines=[main.join(' '),initial.join(' '),String(wind.length),...wind.map(point=>[point.t,point.north,point.east,point.down].join(' ')),q.sourceAtmosphere??'standard',String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
  return 'STARLAB_FREE_FLIGHT_V2\n'+lines.join('\n')+'\n';
 }
 

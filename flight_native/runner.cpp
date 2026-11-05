@@ -7,11 +7,11 @@ using namespace flight;
 struct ProjectHost final : geometry::Host {
  geometry::Design design;
  const Phase* phase=nullptr;
- double site=0,windNorth=0,windEast=0,windDown=0,exitArea=0;
+ double site=0,windNorth=0,windEast=0,windDown=0,exitArea=0;bool legacy=false;
  const geometry::Design& activeDesign(const geometry::Request&) const override { return design; }
  geometry::Conditions conditions(const geometry::Request& r) const override {
   require(phase!=nullptr,"Missing flight phase");
-  auto air=atmosphere(site-r.position.z,false);
+  auto air=atmosphere(site-r.position.z,legacy);
   const double fraction=phase->burn>0?std::max(0.,std::min(1.,r.phaseTime/phase->burn)):1.;
   geometry::Conditions c{};
   c.rho=air.rho;c.soundSpeed=air.a;c.mu=air.mu;c.temperature=air.T;c.pressure=air.P;
@@ -58,6 +58,7 @@ int main(int argc,char** argv){
     require(point.time>=0&&point.time<=phase.duration&&(phase.weather.empty()||point.time>phase.weather.back().time)&&length(point.wind)<=200,"Invalid wind curve");phase.weather.push_back(point);
    }
    require(phase.weather.empty()||(phase.weather.front().time==0&&phase.weather.back().time==phase.duration),"Wind curve must cover phase");
+   std::string atmosphereModel;read(atmosphereModel,"atmosphere model");require(atmosphereModel=="standard"||atmosphereModel=="archive","Unknown atmosphere model");cfg.legacy=atmosphereModel=="archive";
   }
   int count=0;read(count,"motor point count");require(count>=2&&count<=10000,"Invalid motor curve size");
   for(int i=0;i<count;++i){MotorPoint p{};read(p.time,"motor time");read(p.force,"motor thrust");finite(p.time,"motor time");finite(p.force,"motor thrust");phase.motor.push_back(p);}
@@ -80,7 +81,7 @@ int main(int argc,char** argv){
   phase.motor=remaining;phase.burn=originalBurn-motorAge;
   require(host.exitArea>=0&&std::isfinite(host.exitArea),"Invalid motor exit area");
   cfg.theta=(90-pitch)*pi/180;cfg.yaw=heading*pi/180;cfg.wind={host.windNorth,host.windEast,host.windDown};
-  cfg.legacy=false;cfg.host=&host;cfg.phases={phase};host.phase=&cfg.phases[0];host.site=cfg.site;
+  cfg.host=&host;cfg.phases={phase};host.phase=&cfg.phases[0];host.site=cfg.site;host.legacy=cfg.legacy;
   std::ostringstream history,components;
   simulate(cfg,mode=="3",&history,&components);
   std::cout<<"STHISTORY\n"<<history.str()<<"STCOMPONENTS\n"<<components.str();
