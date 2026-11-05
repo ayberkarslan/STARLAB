@@ -26,7 +26,10 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
  for(const {part} of resolved){
   if(['rocket','stage','assembly'].includes(part.kind))continue;
   if(part.geometry?.radialOffset||part.geometry?.instanceCount&&part.geometry.instanceCount!==1&&part.kind!=='railButton'){issues.push(`${part.name}: radyal veya tekrarlı yerleşim B3 aktarımında desteklenmiyor.`);continue}
-  const g=part.geometry??{},i=part.inputs??{},position=positions.get(part.id)??0,base={id:part.id,parent_id:nearestSourceParent(part),pos_mode:'Absolute' as const,pos_value:position};
+  const g=part.geometry??{},i=part.inputs??{},position=positions.get(part.id)??0;
+  const sourceParent=nearestSourceParent(part),parentPosition=sourceParent?positions.get(sourceParent)??0:0;
+  // B3's Absolute position is measured from the source parent's origin.
+  const base={id:part.id,parent_id:sourceParent,pos_mode:'Absolute' as const,pos_value:position-parentPosition};
   const density=i.density;const requiresDensity=!['mass','parachute','cord','motor'].includes(part.kind);
   if(requiresDensity&&!(density&&density>0)){issues.push(`${part.name}: malzeme yoğunluğu gerekli.`);continue}
   const common={source_bulk_density_kg_m3:density??0};let type='',params:Record<string,string|number|boolean>={...common},sub_type:string|undefined;
@@ -72,7 +75,7 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
    if(!assignment||!motor||assignment.offset===undefined){issues.push(`${part.name}: motor ve yuva içi konum gerekli.`);continue}
    if(motor.massProfile?.length)issues.push(`${motor.name}: ölçülmüş kütle/CG profili bu B3 uçuş yolunda desteklenmiyor.`);
    const installedPosition=position+mm(assignment.offset);const motorId=`${part.id}:installed`;
-   append(part,{...base,id:motorId,type:'Motor',pos_value:installedPosition,params:{length:mm(motor.length),radius:mm(motor.diameter)/2,dry_mass_kg:motor.totalMass-motor.propellantMass,propellant_mass_kg:motor.propellantMass,motor_local_cg_m:mm(motor.length)/2}});
+   append(part,{...base,id:motorId,type:'Motor',pos_value:installedPosition-parentPosition,params:{length:mm(motor.length),radius:mm(motor.diameter)/2,dry_mass_kg:motor.totalMass-motor.propellantMass,propellant_mass_kg:motor.propellantMass,motor_local_cg_m:mm(motor.length)/2}});
   }
  }
  const plan=stagePlanInputs(project,configuration),ignitions=project.parts.filter(part=>part.kind==='motor'&&configuration.mounts[part.id]).map(part=>{
