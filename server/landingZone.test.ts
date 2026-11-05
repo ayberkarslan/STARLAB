@@ -2,6 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {emptyProject,type Part} from '../src/domain/project';
 import {initialFlight} from '../src/domain/flight';
 import {defaultDispersionSettings} from '../src/domain/landingZone';
+import {twoStagePayloadBenchmarkProject} from '../src/domain/verificationBenchmarks';
 import {fullMissionInputs} from '../src/engine/fullMissionInputs';
 import {runLandingZoneDispersion} from './landingZone';
 
@@ -41,5 +42,19 @@ describe('landing zone dispersion engine',()=>{
   expect(first.ellipse).toEqual(second.ellipse);
   expect(first.bodies?.map(b=>b.id)).toEqual(['sustainer','payload']);
   expect(first.bodies?.[1].ellipse.cep50Radius).toBeGreaterThan(1);
+ });
+
+ it('flies the 2-stage KTR benchmark rocket with booster separation, 2nd-stage ignition, and 3 landing zones',async()=>{
+  const project=twoStagePayloadBenchmarkProject();
+  const flight=project.flight!;
+  const {payload,issues}=fullMissionInputs(project,flight,flight.cases[0]);
+  expect(issues).toEqual([]);
+  const res=await runLandingZoneDispersion({
+   payload,
+   settings:{...flight.cases[0].dispersion!,sampleCount:5,seed:42},
+   signature:'2stage-ktr-sig',
+  },new AbortController().signal);
+  expect(res.bodies?.map(b=>b.id)).toEqual(['sustainer','payload','booster']);
+  expect(res.bodies?.every(b=>b.points.length===6&&b.ellipse.cep50Radius>0)).toBe(true);
  });
 });
