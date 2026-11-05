@@ -14,11 +14,12 @@ it('keeps N/E and aerodynamic telemetry through CSV export and import',()=>{
 
 it('keeps the free flight mode, source version and component result in a .star project',()=>{
  const project=emptyProject(),flight=initialFlight();project.flight=flight;
- const scenario=flight.cases[0];scenario.solverMode='free6';scenario.freeFlight={startAltitude:5,startSpeed:20,motorAge:.2,duration:3,motorExitArea:.0001};
- scenario.result={source:'solver',signature:'snapshot',solverId:'flight-linux-x64-test',samples:[{t:0,altitude:5,velocity:20,acceleration:1},{t:1,altitude:15,velocity:18,acceleration:2}],components:[{id:'nose',centerOfPressure:.2,dragCoefficient:.3,liftCoefficient:0,momentCoefficient:0}]};
+ const scenario=flight.cases[0];scenario.solverMode='free6';scenario.freeFlight={startAltitude:5,startSpeed:20,motorAge:.2,duration:3,motorExitArea:.0001,sourceAtmosphere:'archive',initialState:{roll:1,v:2,w:3,p:.1,q:.2,r:.3},windTimeline:[{t:0,north:1,east:0,down:0},{t:3,north:2,east:1,down:0}],tailInlets:{tail:{mach:1.8,pressurePa:100000}}};
+ scenario.result={source:'solver',signature:'snapshot',solverId:'flight-linux-x64-test',samples:[{t:0,altitude:5,velocity:20,acceleration:1},{t:1,altitude:15,velocity:18,acceleration:2}],components:[{id:'nose',centerOfPressure:.2,dragCoefficient:.3,liftCoefficient:0,momentCoefficient:0,tailInletMethod:'local_supersonic'}]};
  const restored=parseStar(serializeStar(project)).flight!.cases[0];
  expect(restored.solverMode).toBe('free6');
  expect(restored.freeFlight).toEqual(scenario.freeFlight);
  expect(restored.result?.solverId).toBe('flight-linux-x64-test');
+ expect(restored.result?.components?.[0].tailInletMethod).toBe('local_supersonic');
  expect(restored.result?.components?.[0].centerOfPressure).toBe(.2);
 });
