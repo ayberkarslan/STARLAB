@@ -1,17 +1,40 @@
-import {useState} from 'react';
-import {TextField} from '@stardrop/ui';
+import {useRef,useState} from 'react';
+import {Button,TextField} from '@stardrop/ui';
 import {validateEnvironment,type Environment} from '../../domain/flight';
 import {atmosphereColumns,windColumns,type EnvironmentInputs,type TurbulenceInputs} from '../../domain/environmentInputs';
+import {parseEnvironmentProfileJson,serializeEnvironmentProfileJson} from '../../domain/environmentProfile';
 import NumericSeriesEditor from './NumericSeriesEditor';
 import {NumberInput} from '../NumberInput';
 import {Choice,NumberField} from './shared';
 
 export default function EnvironmentFields({value:e,onChange}:{value:Environment;onChange:(value:Environment)=>void}){
  const [error,setError]=useState('');
+ const fileInputRef=useRef<HTMLInputElement>(null);
  function set(patch:Partial<Environment>){try{const next=validateEnvironment({...e,...patch});onChange(next);setError('')}catch(error){setError(error instanceof Error?error.message:'Çevre girdisi geçersiz.')}}
+ function saveProfileJson(){
+  const blob=new Blob([serializeEnvironmentProfileJson(e)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='cevre-profili.json';a.click();
+  URL.revokeObjectURL(url);
+ }
  const optional=(key:'windReferenceHeight'|'windMinimumHeight'|'windShearExponent'|'windRoughnessLength'|'windDirectionGradient',label:string,unit:string,signed=false)=><NumberInput label={label} key={key} unit={unit} optional signed={signed} max={key==='windShearExponent'?1:Infinity} min={['windDirectionGradient','windShearExponent','windMinimumHeight'].includes(key)?0:Number.MIN_VALUE} value={e[key]} onChange={n=>set({[key]:n})}/>;
  const turbulence=(key:Exclude<keyof TurbulenceInputs,'enabled'>,label:string,unit:string,min=0,max=Infinity)=><NumberInput label={label} key={key} unit={unit} optional min={min} max={max} integer={key==='poles'||key==='seed'} value={e.turbulence?.[key]} onChange={n=>set({turbulence:{...e.turbulence,enabled:e.turbulence?.enabled??false,[key]:n}})}/>;
  return <div className="input-settings">
+  <div className="toolbar-actions" style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+   <Button variant="ghost" onClick={saveProfileJson}>Çevre profilini kaydet (JSON)</Button>
+   <Button variant="ghost" onClick={()=>fileInputRef.current?.click()}>Çevre profili yükle (JSON)</Button>
+   <input ref={fileInputRef} type="file" accept=".json,application/json" hidden onChange={async ev=>{
+    const file=ev.target.files?.[0];ev.target.value='';
+    if(!file)return;
+    try{
+     const next=parseEnvironmentProfileJson(await file.text(),e);
+     onChange(next);setError('');
+    }catch(err){
+     setError(err instanceof Error?err.message:'Çevre profili yüklenemedi.');
+    }
+   }}/>
+  </div>
   <div className="engineering-field-grid"><Choice label="Atmosfer" value={e.atmosphereModel??'unknown'} options={[{value:'unknown',label:'Belirtilmedi'},{value:'standard1976',label:'Standart · US 1976'},{value:'surface',label:'Yüzey ölçümü'},{value:'profile',label:'İrtifa profili'}]} onChange={v=>set({atmosphereModel:v==='unknown'?undefined:v as EnvironmentInputs['atmosphereModel']})}/>
    <TextField label="Tarih · UTC" aria-label="Fırlatma tarihi UTC" type="datetime-local" value={e.dateTimeUtc?.slice(0,16)??''} onChange={event=>set({dateTimeUtc:event.target.value?event.target.value+'Z':undefined})}/>
   </div>
