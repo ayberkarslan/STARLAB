@@ -8,8 +8,8 @@ import {geometryPatch,minimumDiameter,type GeometryEdit,type GeometryPatch} from
 import {useGeometryDrag} from './useGeometryDrag';
 import {useCanvasNavigation} from './useCanvasNavigation';
 import type {DesignAnalysisResult} from './useDesignAnalysis';
-interface Props extends ViewProps {onEdit?:(id:string,patch:GeometryPatch)=>void;onPreview?:(part:Part|null)=>void;onBatchEdit?:(project:Project)=>void;onBatchPreview?:(parts:Part[]|null)=>void;onZoom?:(zoom:number)=>void;resetKey?:number;snapEnabled?:boolean;stability?:DesignAnalysisResult}
-export default function RocketView({project,selected,selectedIds,focus,onSelect,zoom,onEdit,onPreview,onBatchEdit,onBatchPreview,onZoom,resetKey=0,snapEnabled=true,stability}:Props){
+interface Props extends ViewProps {onEdit?:(id:string,patch:GeometryPatch)=>void;onPreview?:(part:Part|null)=>void;onBatchEdit?:(project:Project)=>void;onBatchPreview?:(parts:Part[]|null)=>void;onZoom?:(zoom:number)=>void;resetKey?:number;focusMotion?:boolean;snapEnabled?:boolean;stability?:DesignAnalysisResult}
+export default function RocketView({project,selected,selectedIds,focus,onSelect,zoom,onEdit,onPreview,onBatchEdit,onBatchPreview,onZoom,resetKey=0,focusMotion=true,snapEnabled=true,stability}:Props){
  const svg=useRef<SVGSVGElement>(null);const [size,setSize]=useState({width:1000,height:400});
  const ids=selectedIds??(selected?[selected]:[]);const selectedSet=new Set(ids);const pointerSelection=useRef(false);
  const drag=useGeometryDrag(svg,project,focus,onEdit,onPreview,snapEnabled,onBatchEdit?{ids,onEdit:onBatchEdit,onPreview:onBatchPreview??(()=>{})}:undefined);
@@ -17,6 +17,11 @@ export default function RocketView({project,selected,selectedIds,focus,onSelect,
  const resolved=useMemo(()=>resolveParts(working),[working]);const shown=scopeParts(resolved,focus).filter(n=>n.physical);
  const original=useMemo(()=>scopeParts(resolveParts(project),focus),[project,focus]);const bounds=boundsOf(original);const min=bounds.min[0],max=bounds.max[0];const radius=Math.max(bounds.max[1],100);const height=Math.max(500,radius*4);const width=Math.max(300,max-min)+300;
  const nav=useCanvasNavigation(svg,{x:min-150,y:-height/2,width,height},zoom,onZoom,`${focus}:${resetKey}`,!!drag.draft);
+ const lastFrame=useRef(nav.frame),previousFocus=useRef(focus);
+ useEffect(()=>{const old=previousFocus.current;previousFocus.current=focus;const target={x:min-150,y:-height/2,width,height};if(old===focus||!focusMotion||matchMedia('(prefers-reduced-motion: reduce)').matches){lastFrame.current=target;return}
+  const from={...lastFrame.current},start=performance.now();let frame=0;const tick=(now:number)=>{const t=Math.min((now-start)/650,1),ease=t*t*(3-2*t);const value={x:from.x+(target.x-from.x)*ease,y:from.y+(target.y-from.y)*ease,width:from.width+(target.width-from.width)*ease,height:from.height+(target.height-from.height)*ease};svg.current?.setAttribute('viewBox',`${value.x} ${value.y} ${value.width} ${value.height}`);lastFrame.current=value;if(t<1)frame=requestAnimationFrame(tick)};frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
+ },[focus,resetKey,focusMotion]);
+ useEffect(()=>{if(previousFocus.current===focus)lastFrame.current=nav.frame},[nav.frame.x,nav.frame.y,nav.frame.width,nav.frame.height]);
  const unit=Math.max(nav.frame.width/Math.max(size.width,1),nav.frame.height/Math.max(size.height,1));
  useEffect(()=>{const node=svg.current;if(!node)return;const observer=new ResizeObserver(([entry])=>setSize({width:entry.contentRect.width,height:entry.contentRect.height}));observer.observe(node);return()=>observer.disconnect()},[]);
  const primary=working.parts.find(p=>p.id===selected);const grouped=ids.length>1||primary&&isStructural(primary.kind)&&primary.kind!=='rocket';

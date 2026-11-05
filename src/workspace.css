@@ -58,11 +58,6 @@ nav.task-tabs button.active::after,nav.task-tabs button:not(:disabled):is(:hover
 .breadcrumbs button{font-size:11px;background:none;border:0;padding:3px 0 6px;white-space:nowrap;flex-shrink:0}
 .breadcrumbs button[aria-current=location]::after{opacity:1}
 .drawing{position:relative;overflow:hidden;flex:1;min-height:0;display:flex;align-items:center}
-.focus-transition{position:absolute;inset:0;z-index:9;pointer-events:none;display:grid;place-items:center;background:#0008;animation:focus-veil 620ms ease both}
-.focus-transition span{padding:15px 24px;border-bottom:2px solid #fff;background:#000;color:#fff;font-size:16px;animation:focus-name 620ms ease both}
-@keyframes focus-veil{0%{opacity:0}26%{opacity:1}100%{opacity:0}}
-@keyframes focus-name{0%{opacity:0;transform:translateY(14px)}30%{opacity:1;transform:translateY(0)}76%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
-@media(prefers-reduced-motion:reduce){.focus-transition{animation:none;display:none}}
 .settings-list{display:grid;gap:0;min-width:min(480px,76vw)}
 .settings-row{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:64px;border-bottom:1px solid #ffffff40;font-size:13px}
 .settings-row:last-child{border-bottom:0}

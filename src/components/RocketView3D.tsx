@@ -24,14 +24,17 @@ function PartMesh({node,bodyDiameter,selected,onSelect,materials,presentation=fa
  {selected&&<mesh geometry={geometry} material={materials.selected} dispose={null} raycast={()=>{}}/>}
  </group>)}</>;
 }
-function CameraRig({bounds,focus,zoom}:{bounds:Bounds;focus:string;zoom:number}){
+function CameraRig({bounds,focus,zoom,focusMotion=true}:{bounds:Bounds;focus:string;zoom:number;focusMotion?:boolean}){
  const {camera,gl,invalidate,size}=useThree();const controlRef=useRef<OrbitControls|null>(null);
+ const motion=useRef<{start:number;fromPosition:Vector3;fromTarget:Vector3;toPosition:Vector3;toTarget:Vector3}|null>(null),previousFocus=useRef(focus);
  const [a,b,c]=bounds.min,[d,e,f]=bounds.max;
  useEffect(()=>{const controls=new OrbitControls(camera,gl.domElement);controlRef.current=controls;const changed=()=>invalidate();controls.enableDamping=true;controls.dampingFactor=.12;controls.addEventListener('change',changed);return()=>{controls.removeEventListener('change',changed);controls.dispose();controlRef.current=null}},[camera,gl,invalidate]);
  useEffect(()=>{const controls=controlRef.current;if(!controls)return;const center=new Vector3((a+d)/2000,(b+e)/2000,(c+f)/2000);const radius=Math.max(new Vector3(d-a,e-b,f-c).length()/2000,.05);const perspective=camera as PerspectiveCamera;const vertical=perspective.fov*Math.PI/360;const angle=Math.min(vertical,Math.atan(Math.tan(vertical)*size.width/Math.max(size.height,1)));const distance=radius/Math.sin(angle)*1.18/zoom;
- controls.target.copy(center);camera.position.copy(center).add(new Vector3(.4,.55,1).normalize().multiplyScalar(distance));perspective.near=Math.max(radius/1000,.0001);perspective.far=Math.max(distance+radius*20,100);perspective.updateProjectionMatrix();controls.update();invalidate();
- },[a,b,c,d,e,f,focus,zoom,size.width,size.height,camera,gl,invalidate]);
- useFrame(()=>controlRef.current?.update());return null;
+ const position=center.clone().add(new Vector3(.4,.55,1).normalize().multiplyScalar(distance));const animate=previousFocus.current!==focus&&focusMotion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;previousFocus.current=focus;
+ if(animate){motion.current={start:performance.now(),fromPosition:camera.position.clone(),fromTarget:controls.target.clone(),toPosition:position,toTarget:center};controls.enableDamping=false}else{motion.current=null;controls.target.copy(center);camera.position.copy(position);controls.update()}
+ perspective.near=Math.max(radius/1000,.0001);perspective.far=Math.max(distance+radius*20,100);perspective.updateProjectionMatrix();invalidate();
+ },[a,b,c,d,e,f,focus,zoom,focusMotion,size.width,size.height,camera,gl,invalidate]);
+ useFrame(()=>{const controls=controlRef.current;if(!controls)return;const m=motion.current;if(m){const t=Math.min((performance.now()-m.start)/650,1),ease=t*t*(3-2*t);camera.position.lerpVectors(m.fromPosition,m.toPosition,ease);controls.target.lerpVectors(m.fromTarget,m.toTarget,ease);if(t===1){motion.current=null;controls.enableDamping=true}invalidate()}controls.update()});return null;
 }
 function WorldGrid({floor}:{floor:number}){const geometry=useMemo(gridGeometry,[]);useEffect(()=>()=>geometry.dispose(),[geometry]);return <lineSegments geometry={geometry} position={[0,floor,0]} raycast={()=>{}}><lineBasicMaterial color="white" transparent opacity={.07}/></lineSegments>}
 function StudioLights({bounds,presentation=false}:{bounds:Bounds;presentation?:boolean}){
@@ -55,7 +58,7 @@ function Scene(props:ViewProps&{presentation?:boolean}){
  const active=new Set(geometrySelection(props.project,props.selectedIds??[props.selected]).nodes.map(n=>n.part.id));
  const children=new Map<string|null,ResolvedPart[]>();for(const node of resolved){const list=children.get(node.parentId)||[];list.push(node);children.set(node.parentId,list);}
  const branch=(node:ResolvedPart):React.ReactNode=><group key={node.part.id} position={node.localPosition.map(v=>v*.001) as [number,number,number]}>{node.physical&&visible.has(node.part.id)&&(!props.presentation||!isInternal(node.part.kind))&&<PartMesh presentation={props.presentation} node={node} materials={materials} bodyDiameter={nodes.get(node.parentId||'')?.part.diameter||140} selected={active.has(node.part.id)} onSelect={props.onSelect}/>} {(children.get(node.part.id)||[]).map(branch)}</group>;
- return <>{props.presentation?<CinematicRig bounds={bounds}/>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom}/>}<StudioLights bounds={bounds} presentation={props.presentation}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
+ return <>{props.presentation?<CinematicRig bounds={bounds}/>:<CameraRig bounds={bounds} focus={props.focus} zoom={props.zoom} focusMotion={props.focusMotion}/>}<StudioLights bounds={bounds} presentation={props.presentation}/>{!props.presentation&&<WorldGrid floor={bounds.min[1]*.001-.04}/>}{(children.get(null)||[]).map(branch)}</>;
 }
 class Boundary extends React.Component<{children:React.ReactNode;onBack:()=>void},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?<div className="view-fallback" role="alert"><p>3D görünüm başlatılamadı.</p><button onClick={this.props.onBack}>2D görünüme dön</button></div>:this.props.children}}
 export default function RocketView3D(props:ViewProps&{onBack:()=>void;presentation?:boolean}){
