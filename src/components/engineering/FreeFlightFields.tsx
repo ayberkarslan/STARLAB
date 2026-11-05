@@ -1,14 +1,19 @@
 import {validateFreeWind,type FreeFlightSettings,type SimulationCase} from '../../domain/flight';
 import NumericSeriesEditor from './NumericSeriesEditor';
+import {NumberInput} from '../NumberInput';
+import type {Project} from '../../domain/project';
 import {Choice,NumberField} from './shared';
 
 const blank:FreeFlightSettings={startAltitude:0,startSpeed:0,motorAge:0,duration:5,motorExitArea:0};
 const windColumns=[{key:'t',label:'Zaman',unit:'s',min:0},{key:'north',label:'Kuzey',unit:'m/s',min:-200,max:200},{key:'east',label:'Doğu',unit:'m/s',min:-200,max:200},{key:'down',label:'Aşağı',unit:'m/s',min:-200,max:200}];
-export default function FreeFlightFields({scenario,onChange}:{scenario:SimulationCase;onChange:(patch:Partial<SimulationCase>)=>void}){
+export default function FreeFlightFields({scenario,project,onChange}:{scenario:SimulationCase;project:Project;onChange:(patch:Partial<SimulationCase>)=>void}){
  const value=scenario.freeFlight??blank;
  const set=(key:keyof FreeFlightSettings,n:number)=>onChange({freeFlight:{...value,[key]:n}});
  const initial=value.initialState??{roll:0,v:0,w:0,p:0,q:0,r:0};
  const setInitial=(key:keyof typeof initial,n:number)=>onChange({freeFlight:{...value,initialState:{...initial,[key]:n}}});
+ const boattails=project.parts.filter(part=>part.kind==='transition'&&part.geometry?.aftDiameter!==undefined&&part.geometry.aftDiameter<part.diameter);
+ const inletIds=[...new Set([...boattails.map(part=>part.id),...Object.keys(value.tailInlets??{})])];
+ const setInlet=(id:string,key:'mach'|'pressurePa',n:number|undefined)=>{const next={...value.tailInlets,[id]:{...value.tailInlets?.[id],[key]:n}};if(next[id].mach===undefined&&next[id].pressurePa===undefined)delete next[id];onChange({freeFlight:{...value,tailInlets:Object.keys(next).length?next:undefined}})};
  return <>
   <Choice label="Uçuş modeli" value={scenario.solverMode??'axial'} options={[{value:'mission3',label:'Tam görev · 3DOF'},{value:'free3',label:'Ray sonrası · 3DOF'},{value:'free6',label:'Ray sonrası · 6DOF'},{value:'axial',label:'Kalkış · eksenel'}]} onChange={mode=>onChange({solverMode:mode as SimulationCase['solverMode'],...(['free3','free6'].includes(mode)&&!scenario.freeFlight?{freeFlight:blank}:{})})}/>
   {(scenario.solverMode==='free3'||scenario.solverMode==='free6')&&<div className="engineering-field-grid">
@@ -31,5 +36,8 @@ export default function FreeFlightFields({scenario,onChange}:{scenario:Simulatio
    const windTimeline=rows.length?rows.map(row=>({t:row.t!,north:row.north!,east:row.east!,down:row.down!})):undefined;
    validateFreeWind(windTimeline,value.duration);onChange({freeFlight:{...value,windTimeline}});
   }}/></details>}
+  {(scenario.solverMode==='free3'||scenario.solverMode==='free6')&&inletIds.length>0&&<details className="engineering-details"><summary>Boattail yerel akışı</summary><div className="engineering-field-grid">
+   {inletIds.map(id=>{const name=project.parts.find(part=>part.id===id)?.name??id,input=value.tailInlets?.[id];return <div key={id} className="engineering-field-grid"><NumberInput label={`${name} · Mach`} unit="M" optional min={1.000001} value={input?.mach} onChange={n=>setInlet(id,'mach',n)}/><NumberInput label={`${name} · Statik basınç`} unit="Pa" optional min={Number.MIN_VALUE} value={input?.pressurePa} onChange={n=>setInlet(id,'pressurePa',n)}/></div>})}
+  </div></details>}
  </>;
 }

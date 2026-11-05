@@ -1,6 +1,6 @@
 import type {Project} from '../domain/project';
 import type {FlightWorkspace,SimulationCase,FlightSample,FlightComponentSnapshot} from '../domain/flight';
-import {allMotors,validateFreeWind,validateSamples} from '../domain/flight';
+import {allMotors,validateFreeWind,validateSamples,validateTailInlets} from '../domain/flight';
 import {rocketInputs} from './rocketInputs';
 import {evaluateStructure} from './client';
 import {projectFreeFlight,type FreeFlightProjection} from './freeFlightInputs';
@@ -26,7 +26,7 @@ export function parseFreeFlightHistory(history:string,components:string){
  if(['t_s','surface','CP_m','CD','CL','CmCG'].some(key=>find(key)<0))throw Error('Bileşen telemetrisi eksik sütun içeriyor.');
  const snapshot:FlightComponentSnapshot[]=componentLines.filter(line=>Number(line.split(',')[find('t_s')])===firstTime).map(line=>{
   const cells=line.split(','),cp=cells[find('CP_m')]?.trim();
-  return {id:cells[find('surface')],...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:number(cells[find('CD')],'CD'),liftCoefficient:number(cells[find('CL')],'CL'),momentCoefficient:number(cells[find('CmCG')],'CmCG')};
+  return {id:cells[find('surface')],...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:number(cells[find('CD')],'CD'),liftCoefficient:number(cells[find('CL')],'CL'),momentCoefficient:number(cells[find('CmCG')],'CmCG'),...(find('tail_inlet_method')>=0?{tailInletMethod:cells[find('tail_inlet_method')]}:{})};
  });
  if(snapshot.length>64)throw Error('Bileşen telemetrisi çok büyük.');
  return {samples:validateSamples(samples),components:snapshot};
@@ -50,6 +50,11 @@ export function freeFlightIssues(project:Project,flight:FlightWorkspace,scenario
  if(!configuration)return ['Uçuş konfigürasyonu bulunamadı.'];
  const geometry=projectFreeFlight(project,flight,configuration,scenario),issues=[...geometry.issues];
  try{validateFreeWind(scenario.freeFlight?.windTimeline,scenario.freeFlight?.duration??0)}catch(error){issues.push((error as Error).message)}
+ try{validateTailInlets(scenario.freeFlight?.tailInlets)}catch(error){issues.push((error as Error).message)}
+ for(const [id,inlet] of Object.entries(scenario.freeFlight?.tailInlets??{})){
+  if(!geometry.parts.some(part=>part.id===id&&part.kind===3))issues.push(`${id}: yerel giriş yalnız boattail parçasına bağlanır.`);
+  if(inlet.mach===undefined||inlet.pressurePa===undefined)issues.push(`${id}: yerel Mach ve statik basınç birlikte gerekli.`);
+ }
  if(scenario.solverMode==='free3'){
   const e=scenario.environment,windEast=-e.windSpeed*Math.sin(e.windDirection*Math.PI/180);
   if(Math.abs(windEast)>1e-9||Math.abs(e.railHeading)>1e-9)issues.push('3DOF kuzey–irtifa düzleminde çalışır; doğu rüzgârı ve farklı yön için 6DOF seç.');
@@ -73,7 +78,8 @@ function inputText(projected:FreeFlightProjection,scenario:SimulationCase,motor:
  const state=q.initialState;
  const initial=[state?1:0,state?.roll??0,q.startSpeed,state?.v??0,state?.w??0,state?.p??0,state?.q??0,state?.r??0];
  const wind=q.windTimeline??[];
- const lines=[main.join(' '),initial.join(' '),String(wind.length),...wind.map(point=>[point.t,point.north,point.east,point.down].join(' ')),q.sourceAtmosphere??'standard',String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
+ const inlets=Object.entries(q.tailInlets??{});
+ const lines=[main.join(' '),initial.join(' '),String(wind.length),...wind.map(point=>[point.t,point.north,point.east,point.down].join(' ')),q.sourceAtmosphere??'standard',String(inlets.length),...inlets.map(([id,input])=>[id,input.mach,input.pressurePa].join(' ')),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
  return 'STARLAB_FREE_FLIGHT_V2\n'+lines.join('\n')+'\n';
 }
 

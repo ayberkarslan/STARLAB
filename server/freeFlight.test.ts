@@ -29,7 +29,7 @@ describe('supplied free flight model process',()=>{
   expect(parseFreeFlightHistory(raw.history,raw.components).samples.at(-1)?.east).not.toBe(0);
  });
  it('accepts the supplied solver initial body state in 6DOF',async()=>{
-  const base=input(),v2=base.replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n1 4 50 2 -1 .01 .02 .03\n0\nstandard\n2\n');
+  const base=input(),v2=base.replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n1 4 50 2 -1 .01 .02 .03\n0\nstandard\n0\n2\n');
   const raw=await runFreeFlight('6',v2,new AbortController().signal);
   const columns=raw.history.trim().split(/\r?\n/),names=columns[0].split(','),first=columns[1].split(',');
   for(const [key,value] of Object.entries({u:50,v:2,w:-1,p:.01,q:.02,r:.03}))expect(Number(first[names.indexOf(key)])).toBeCloseTo(value);
@@ -37,19 +37,28 @@ describe('supplied free flight model process',()=>{
   await expect(runFreeFlight('3',v2,new AbortController().signal)).rejects.toThrow('outside 3DOF plane');
  });
  it('feeds timed source wind through the geometry host',async()=>{
-  const baseline=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n0 0 50 0 0 0 0 0\n0\nstandard\n2\n');
-  const varying=baseline.replace('0 0 50 0 0 0 0 0\n0\nstandard\n2\n','0 0 50 0 0 0 0 0\n2\n0 0 0 0\n0.35 2 0 0\nstandard\n2\n');
+  const baseline=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n0 0 50 0 0 0 0 0\n0\nstandard\n0\n2\n');
+  const varying=baseline.replace('0 0 50 0 0 0 0 0\n0\nstandard\n0\n2\n','0 0 50 0 0 0 0 0\n2\n0 0 0 0\n0.35 2 0 0\nstandard\n0\n2\n');
   const [still,wind]=await Promise.all([runFreeFlight('6',baseline,new AbortController().signal),runFreeFlight('6',varying,new AbortController().signal)]);
   const end=(history:string)=>{const lines=history.trim().split(/\r?\n/),index=lines[0].split(',').indexOf('n_m');return Number(lines.at(-1)!.split(',')[index])};
   expect(end(wind.history)).not.toBeCloseTo(end(still.history),5);
   await expect(runFreeFlight('6',varying.replace('0.35 2 0 0','0.30 2 0 0'),new AbortController().signal)).rejects.toThrow('cover phase');
  });
  it('selects the supplied archive atmosphere without changing geometry',async()=>{
-  const standard=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n0 0 50 0 0 0 0 0\n0\nstandard\n2\n');
+  const standard=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n0 0 50 0 0 0 0 0\n0\nstandard\n0\n2\n');
   const archive=standard.replace('\nstandard\n','\narchive\n');
   const [a,b]=await Promise.all([runFreeFlight('6',standard,new AbortController().signal),runFreeFlight('6',archive,new AbortController().signal)]);
   const density=(history:string)=>{const lines=history.trim().split(/\r?\n/);return Number(lines[1].split(',')[lines[0].split(',').indexOf('rho')])};
   expect(density(a.history)).not.toBeCloseTo(density(b.history),6);
+ });
+ it('uses the supplied local boattail inlet at supersonic speed',async()=>{
+  const fast=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('15 50 20','15 680 20').replace('boattail\n2\n','boattail\n0 0 680 0 0 0 0 0\n0\nstandard\n0\n2\n');
+  const local=fast.replace('\nstandard\n0\n2\n','\nstandard\n1\nboattail 1.8 100000\n2\n');
+  const [a,b]=await Promise.all([runFreeFlight('6',fast,new AbortController().signal),runFreeFlight('6',local,new AbortController().signal)]);
+  const proxy=parseFreeFlightHistory(a.history,a.components),inlet=parseFreeFlightHistory(b.history,b.components);
+  expect(proxy.components.find(item=>item.id==='boattail')?.tailInletMethod).toBe('freestream_proxy');
+  expect(inlet.components.find(item=>item.id==='boattail')?.tailInletMethod).toBe('local_supersonic');
+  expect(inlet.components.find(item=>item.id==='boattail')?.dragCoefficient).not.toBe(proxy.components.find(item=>item.id==='boattail')?.dragCoefficient);
  });
  it('matches the supplied C++ geometry fixture at the final step',async()=>{
   const source=input().replace('0.15 0\n5\n','0.15 120\n5\n');

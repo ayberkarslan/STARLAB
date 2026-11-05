@@ -8,6 +8,7 @@ struct ProjectHost final : geometry::Host {
  geometry::Design design;
  const Phase* phase=nullptr;
  double site=0,windNorth=0,windEast=0,windDown=0,exitArea=0;bool legacy=false;
+ std::vector<geometry::TailInlet> tailInlets;
  const geometry::Design& activeDesign(const geometry::Request&) const override { return design; }
  geometry::Conditions conditions(const geometry::Request& r) const override {
   require(phase!=nullptr,"Missing flight phase");
@@ -21,6 +22,7 @@ struct ProjectHost final : geometry::Host {
   c.windB=inverseRotate(r.orientation,wind);
   c.gravityB=inverseRotate(r.orientation,{0,0,gravity});
   c.firing=r.firing;c.motorExitArea=exitArea;
+  c.tailInlets=tailInlets;
   c.thrustB={r.firing?sampleCurve(phase->motor,r.phaseTime,&MotorPoint::force):0.,0,0};
   return c;
  }
@@ -59,6 +61,11 @@ int main(int argc,char** argv){
    }
    require(phase.weather.empty()||(phase.weather.front().time==0&&phase.weather.back().time==phase.duration),"Wind curve must cover phase");
    std::string atmosphereModel;read(atmosphereModel,"atmosphere model");require(atmosphereModel=="standard"||atmosphereModel=="archive","Unknown atmosphere model");cfg.legacy=atmosphereModel=="archive";
+   int inletCount=0;read(inletCount,"boattail inlet count");require(inletCount>=0&&inletCount<=64,"Invalid boattail inlet count");
+   for(int i=0;i<inletCount;++i){geometry::TailInlet inlet{};read(inlet.partId,"boattail ID");read(inlet.mach,"local Mach");read(inlet.pressurePa,"local pressure");
+    require(std::isfinite(inlet.mach)&&inlet.mach>1&&std::isfinite(inlet.pressurePa)&&inlet.pressurePa>0,"Invalid local inlet");
+    require(std::none_of(host.tailInlets.begin(),host.tailInlets.end(),[&](const auto& x){return x.partId==inlet.partId;}),"Duplicate boattail inlet");host.tailInlets.push_back(inlet);
+   }
   }
   int count=0;read(count,"motor point count");require(count>=2&&count<=10000,"Invalid motor curve size");
   for(int i=0;i<count;++i){MotorPoint p{};read(p.time,"motor time");read(p.force,"motor thrust");finite(p.time,"motor time");finite(p.force,"motor thrust");phase.motor.push_back(p);}
@@ -71,6 +78,7 @@ int main(int argc,char** argv){
    read(part.number,"fin count");read(part.span,"span");read(part.root,"root chord");read(part.tip,"tip chord");read(part.sweep,"sweep");read(part.thickness,"fin thickness");
    host.design.parts.push_back(part);
   }
+  for(const auto& inlet:host.tailInlets)require(std::any_of(host.design.parts.begin(),host.design.parts.end(),[&](const auto& part){return part.id==inlet.partId&&part.kind==geometry::Kind::Boattail;}),"Local inlet must target a boattail");
   require(cfg.dt>0&&cfg.dt<=1&&cfg.site>=0&&cfg.startUp>0&&cfg.speed>=0&&phase.duration>0&&phase.duration<=300
    &&phase.burn>0&&phase.burn<=phase.duration&&phase.m0>=phase.m1&&phase.m1>0,"Invalid flight bounds");
   require(phase.motor.front().time==0&&phase.motor.back().time==phase.burn,"Motor curve must cover burn");
