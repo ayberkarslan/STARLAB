@@ -1,6 +1,6 @@
 import type {Project} from '../domain/project';
 import type {FlightWorkspace,SimulationCase,FlightSample,FlightComponentSnapshot} from '../domain/flight';
-import {allMotors,validateSamples} from '../domain/flight';
+import {allMotors,validateFreeWind,validateSamples} from '../domain/flight';
 import {rocketInputs} from './rocketInputs';
 import {evaluateStructure} from './client';
 import {projectFreeFlight,type FreeFlightProjection} from './freeFlightInputs';
@@ -49,9 +49,11 @@ export function freeFlightIssues(project:Project,flight:FlightWorkspace,scenario
  const configuration=flight.configurations.find(item=>item.id===scenario.configurationId);
  if(!configuration)return ['Uçuş konfigürasyonu bulunamadı.'];
  const geometry=projectFreeFlight(project,flight,configuration,scenario),issues=[...geometry.issues];
+ try{validateFreeWind(scenario.freeFlight?.windTimeline,scenario.freeFlight?.duration??0)}catch(error){issues.push((error as Error).message)}
  if(scenario.solverMode==='free3'){
   const e=scenario.environment,windEast=-e.windSpeed*Math.sin(e.windDirection*Math.PI/180);
   if(Math.abs(windEast)>1e-9||Math.abs(e.railHeading)>1e-9)issues.push('3DOF kuzey–irtifa düzleminde çalışır; doğu rüzgârı ve farklı yön için 6DOF seç.');
+  if(scenario.freeFlight?.windTimeline?.some(point=>Math.abs(point.east)>1e-9))issues.push('3DOF düzleminde doğu rüzgârı sıfır olmalı.');
   const state=scenario.freeFlight?.initialState;
   if(state&&(Math.abs(state.roll)+Math.abs(state.v)+Math.abs(state.p)+Math.abs(state.r)>1e-9))issues.push('3DOF düzleminde roll, yan hız, roll/yaw hızları sıfır olmalı.');
  }
@@ -70,7 +72,8 @@ function inputText(projected:FreeFlightProjection,scenario:SimulationCase,motor:
   mass0.mass,mass1.mass,-mass0.cg,mass0.ix,mass0.iy,mass0.iy,mass1.ix,mass1.iy,mass1.iy,projected.diameter,q.motorExitArea,projected.baseOwner];
  const state=q.initialState;
  const initial=[state?1:0,state?.roll??0,q.startSpeed,state?.v??0,state?.w??0,state?.p??0,state?.q??0,state?.r??0];
- const lines=[main.join(' '),initial.join(' '),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
+ const wind=q.windTimeline??[];
+ const lines=[main.join(' '),initial.join(' '),String(wind.length),...wind.map(point=>[point.t,point.north,point.east,point.down].join(' ')),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
  return 'STARLAB_FREE_FLIGHT_V2\n'+lines.join('\n')+'\n';
 }
 

@@ -29,12 +29,20 @@ describe('supplied free flight model process',()=>{
   expect(parseFreeFlightHistory(raw.history,raw.components).samples.at(-1)?.east).not.toBe(0);
  });
  it('accepts the supplied solver initial body state in 6DOF',async()=>{
-  const base=input(),v2=base.replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n1 4 50 2 -1 .01 .02 .03\n2\n');
+  const base=input(),v2=base.replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n1 4 50 2 -1 .01 .02 .03\n0\n2\n');
   const raw=await runFreeFlight('6',v2,new AbortController().signal);
   const columns=raw.history.trim().split(/\r?\n/),names=columns[0].split(','),first=columns[1].split(',');
   for(const [key,value] of Object.entries({u:50,v:2,w:-1,p:.01,q:.02,r:.03}))expect(Number(first[names.indexOf(key)])).toBeCloseTo(value);
   expect(Number(first[names.indexOf('k1')])).not.toBe(0);
   await expect(runFreeFlight('3',v2,new AbortController().signal)).rejects.toThrow('outside 3DOF plane');
+ });
+ it('feeds timed source wind through the geometry host',async()=>{
+  const baseline=input().replace('STARLAB_FREE_FLIGHT_V1','STARLAB_FREE_FLIGHT_V2').replace('boattail\n2\n','boattail\n0 0 50 0 0 0 0 0\n0\n2\n');
+  const varying=baseline.replace('0 0 50 0 0 0 0 0\n0\n2\n','0 0 50 0 0 0 0 0\n2\n0 0 0 0\n0.35 2 0 0\n2\n');
+  const [still,wind]=await Promise.all([runFreeFlight('6',baseline,new AbortController().signal),runFreeFlight('6',varying,new AbortController().signal)]);
+  const end=(history:string)=>{const lines=history.trim().split(/\r?\n/),index=lines[0].split(',').indexOf('n_m');return Number(lines.at(-1)!.split(',')[index])};
+  expect(end(wind.history)).not.toBeCloseTo(end(still.history),5);
+  await expect(runFreeFlight('6',varying.replace('0.35 2 0 0','0.30 2 0 0'),new AbortController().signal)).rejects.toThrow('cover phase');
  });
  it('matches the supplied C++ geometry fixture at the final step',async()=>{
   const source=input().replace('0.15 0\n5\n','0.15 120\n5\n');

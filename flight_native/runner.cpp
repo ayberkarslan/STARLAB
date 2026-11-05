@@ -17,7 +17,8 @@ struct ProjectHost final : geometry::Host {
   c.rho=air.rho;c.soundSpeed=air.a;c.mu=air.mu;c.temperature=air.T;c.pressure=air.P;
   c.mass=phase->m0+fraction*(phase->m1-phase->m0);
   c.cgStation=-phase->cg;c.groundVelocityB=r.velocityB;
-  c.windB=inverseRotate(r.orientation,{windNorth,windEast,windDown});
+  Vec wind=phase->weather.empty()?Vec{windNorth,windEast,windDown}:sampleCurve(phase->weather,r.phaseTime,&WindPoint::wind);
+  c.windB=inverseRotate(r.orientation,wind);
   c.gravityB=inverseRotate(r.orientation,{0,0,gravity});
   c.firing=r.firing;c.motorExitArea=exitArea;
   c.thrustB={r.firing?sampleCurve(phase->motor,r.phaseTime,&MotorPoint::force):0.,0,0};
@@ -51,6 +52,12 @@ int main(int argc,char** argv){
    for(double v:{cfg.roll,cfg.velocity.x,cfg.velocity.y,cfg.velocity.z,cfg.rates.x,cfg.rates.y,cfg.rates.z})finite(v,"initial state");
    cfg.customInitial=custom==1;cfg.roll*=pi/180;
    if(cfg.customInitial)require(length(cfg.velocity)>0,"Initial velocity must be positive");
+   int weatherCount=0;read(weatherCount,"wind point count");require(weatherCount==0||(weatherCount>=2&&weatherCount<=1000),"Invalid wind curve size");
+   for(int i=0;i<weatherCount;++i){WindPoint point{};read(point.time,"wind time");read(point.wind.x,"north wind");read(point.wind.y,"east wind");read(point.wind.z,"down wind");
+    for(double value:{point.time,point.wind.x,point.wind.y,point.wind.z})finite(value,"wind curve");
+    require(point.time>=0&&point.time<=phase.duration&&(phase.weather.empty()||point.time>phase.weather.back().time)&&length(point.wind)<=200,"Invalid wind curve");phase.weather.push_back(point);
+   }
+   require(phase.weather.empty()||(phase.weather.front().time==0&&phase.weather.back().time==phase.duration),"Wind curve must cover phase");
   }
   int count=0;read(count,"motor point count");require(count>=2&&count<=10000,"Invalid motor curve size");
   for(int i=0;i<count;++i){MotorPoint p{};read(p.time,"motor time");read(p.force,"motor thrust");finite(p.time,"motor time");finite(p.force,"motor thrust");phase.motor.push_back(p);}

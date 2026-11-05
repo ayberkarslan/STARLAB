@@ -1,7 +1,9 @@
-import type {FreeFlightSettings,SimulationCase} from '../../domain/flight';
+import {validateFreeWind,type FreeFlightSettings,type SimulationCase} from '../../domain/flight';
+import NumericSeriesEditor from './NumericSeriesEditor';
 import {Choice,NumberField} from './shared';
 
 const blank:FreeFlightSettings={startAltitude:0,startSpeed:0,motorAge:0,duration:5,motorExitArea:0};
+const windColumns=[{key:'t',label:'Zaman',unit:'s',min:0},{key:'north',label:'Kuzey',unit:'m/s',min:-200,max:200},{key:'east',label:'Doğu',unit:'m/s',min:-200,max:200},{key:'down',label:'Aşağı',unit:'m/s',min:-200,max:200}];
 export default function FreeFlightFields({scenario,onChange}:{scenario:SimulationCase;onChange:(patch:Partial<SimulationCase>)=>void}){
  const value=scenario.freeFlight??blank;
  const set=(key:keyof FreeFlightSettings,n:number)=>onChange({freeFlight:{...value,[key]:n}});
@@ -24,5 +26,9 @@ export default function FreeFlightFields({scenario,onChange}:{scenario:Simulatio
    <NumberField label="Pitch hızı" unit="rad/s" value={initial.q} onChange={n=>setInitial('q',n)}/>
    <NumberField label="Yaw hızı" unit="rad/s" value={initial.r} onChange={n=>setInitial('r',n)}/>
   </div></details>}
+  {(scenario.solverMode==='free3'||scenario.solverMode==='free6')&&<details className="engineering-details"><summary>Zamanlı rüzgâr</summary><NumericSeriesEditor label="Zamanlı rüzgâr" columns={windColumns} maxRows={1000} value={value.windTimeline?.map(point=>({...point}))} onApply={rows=>{
+   const windTimeline=rows.length?rows.map(row=>({t:row.t!,north:row.north!,east:row.east!,down:row.down!})):undefined;
+   validateFreeWind(windTimeline,value.duration);onChange({freeFlight:{...value,windTimeline}});
+  }}/></details>}
  </>;
 }
