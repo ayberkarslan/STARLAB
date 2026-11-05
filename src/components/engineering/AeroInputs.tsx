@@ -22,6 +22,7 @@ export default function AeroInputs({value={},onChange}:{value?:AerodynamicInputs
    {field('normalForceSlope','CNa · tüm roket','1/rad',0,Infinity,true)}
    {field('dragCoefficient','Eksenel Cd · tüm roket','—')}
    {field('centerOfPressure','CP · roket başlangıcından','mm',0,Infinity,true)}
+   {field('surfaceRoughness','Yüzey pürüzlülüğü','µm')}
   </div></details>
   <details className="engineering-details"><summary>Gövde kaldırması ve yunuslama</summary><div className="engineering-field-grid">
    {field('bodyPlanformArea','Gövde planform alanı','m²')}

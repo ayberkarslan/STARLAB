@@ -1,4 +1,5 @@
 import type {Project,Part} from '../domain/project';
+import {validateCoefficientTable} from '../domain/aerodynamics';
 import {resolveParts} from '../domain/geometry';
 import {allMotors,type FlightWorkspace,type SimulationCase} from '../domain/flight';
 import {stagePlanInputs,stagePlanIssues} from './stagePlanInputs';
@@ -15,7 +16,6 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
  const issues:string[]=[];const e=scenario.environment;
  if(e.atmosphereModel!=='surface')issues.push('Tam görev B3 atmosferi yüzey sıcaklığı ve basıncı kullanır; yüzey ölçümünü seç.');
  if(e.windModel&& !['constant','powerLaw','logarithmic'].includes(e.windModel))issues.push('Bu B3 uçuşunda seçilen rüzgâr modeli desteklenmiyor.');
- if(project.aerodynamics?.coefficientTable?.length)issues.push('Mach/Reynolds/AoA tablosu için B3 dosya yolu gerekir; bu girdiyi henüz doğrudan aktaramıyoruz.');
  if([project.aerodynamics?.dragCoefficient,project.aerodynamics?.normalForceSlope,project.aerodynamics?.centerOfPressure,project.aerodynamics?.referenceArea].some(value=>value!==undefined))issues.push('Roket geneli Cd/CNa/CP/alan override bu B3 geometri yoluna bağlı değil; tasarım geometrisini kullan veya bu girdileri temizle.');
  if(project.parts.some(p=>p.kind==='pod'||p.kind==='parallelStage'))issues.push('Paralel kademe veya pod tam görev aktarımında henüz desteklenmiyor.');
  const resolved=resolveParts(project),positions=new Map(resolved.map(item=>[item.part.id,mm(item.position[0])])),byId=new Map(project.parts.map(part=>[part.id,part]));
@@ -83,12 +83,17 @@ export function fullMissionInputs(project:Project,flight:FlightWorkspace,scenari
   return {id:part.id,stage_id:stageFor(part),time_s:motor.curve.map(point=>point.t),thrust_n:motor.curve.map(point=>point.thrust),wet_mass_kg:motor.totalMass,dry_mass_kg:motor.totalMass-motor.propellantMass,ignition_delay_s:assignment.delay,ignition_event:assignment.event==='previousBurnout'?'previous_motor_burnout':assignment.event==='separation'?'previous_stage_separation':'launch'};
  });
  const stages=plan.map(stage=>({...stage,component_ids:stageComponents.get(stage.id)??[],motor_instance_ids:stage.motor_instance_ids}));
+ const table=project.aerodynamics?.coefficientTable;
+ if(table?.length){try{validateCoefficientTable(table);if(plan.length>1)issues.push('Mach/Reynolds/AoA tablosu tüm araca aittir; çok kademeli uçuşta kullanılamaz.');}catch(error){issues.push(error instanceof Error?error.message:'Aero katsayı tablosu geçersiz.');}}
+ const partRoughness=[...new Set(resolved.filter(({part})=>['nose','body','transition','fins','lug','railButton'].includes(part.kind)).map(({part})=>part.inputs?.roughness).filter((v):v is number=>v!==undefined))];
+ if(project.aerodynamics?.surfaceRoughness===undefined&&partRoughness.length>1)issues.push('B3 sürükleme modeli tek bir yüzey pürüzlülüğü kullanır; dış bileşenlerde aynı pürüzlülüğü gir veya genel aero yüzey pürüzlülüğünü belirle.');
+ const roughnessUm=project.aerodynamics?.surfaceRoughness??(partRoughness.length===1?partRoughness[0]:undefined);
  const recovery=recoveryPlanInputs(project,configuration);
  issues.push(...stagePlanIssues(project,configuration),...recovery.issues);
  if(!ignitions.length)issues.push('Uçuş için motor ataması gerekli.');
  if(e.maxTime/e.timeStep>50000)issues.push('Tam görev telemetrisi en fazla 50000 adım destekliyor; adımı büyüt veya süreyi kısalt.');
  const diameter=project.aerodynamics?.referenceDiameter??Math.max(0,...project.parts.filter(p=>['body','nose','transition'].includes(p.kind)).map(p=>p.diameter));
  if(diameter<=0)issues.push('Referans çapı için burun veya gövde gerekli.');
- const payload={reference_diameter_m:mm(diameter),components,motor_instances:ignitions,stages,simulation:{step_size_ms:e.timeStep*1000,t_end_s:e.maxTime,launch_angle_deg:e.railAngle,launch_azimuth_deg:e.railHeading,launch_altitude_m:e.altitude,launch_latitude_deg:e.latitude,launch_longitude_deg:e.longitude,rail_length_m:e.railLength,wind_speed_ms:e.windSpeed,wind_direction_from_deg:e.windDirection,wind_shear_model:e.windModel==='logarithmic'?'logarithmic':'power_law',wind_reference_height_m:e.windReferenceHeight??10,wind_min_effective_height_m:e.windMinimumHeight??1,wind_shear_exponent:e.windModel==='constant'?0:e.windShearExponent??.14,wind_roughness_length_m:e.windRoughnessLength??.03,wind_direction_gradient_deg_per_km:e.windDirectionGradient??0,turbulence_enabled:e.turbulence?.enabled??false,turbulence_rms_ms:e.turbulence?.rms??0,turbulence_alpha:e.turbulence?.alpha??1,turbulence_poles:e.turbulence?.poles??5,turbulence_sample_hz:e.turbulence?.sampleRate??20,turbulence_seed:e.turbulence?.seed??1,temperature_c:e.temperature,pressure_hpa:e.pressure/100,dof:'3-DoF',earth_model:'WGS84 local tangent plane'},recovery:{recovery_enabled:recovery.devices.length>0,devices:recovery.devices}};
+ const payload={reference_diameter_m:mm(diameter),components,motor_instances:ignitions,stages,...(roughnessUm!==undefined?{drag_settings:{roughness_m:roughnessUm/1e6,perfect_finish:roughnessUm===0}}:{}),...(table?.length&&plan.length<=1?{rasaero_table:table}:{}),simulation:{step_size_ms:e.timeStep*1000,t_end_s:e.maxTime,launch_angle_deg:e.railAngle,launch_azimuth_deg:e.railHeading,launch_altitude_m:e.altitude,launch_latitude_deg:e.latitude,launch_longitude_deg:e.longitude,rail_length_m:e.railLength,wind_speed_ms:e.windSpeed,wind_direction_from_deg:e.windDirection,wind_shear_model:e.windModel==='logarithmic'?'logarithmic':'power_law',wind_reference_height_m:e.windReferenceHeight??10,wind_min_effective_height_m:e.windMinimumHeight??1,wind_shear_exponent:e.windModel==='constant'?0:e.windShearExponent??.14,wind_roughness_length_m:e.windRoughnessLength??.03,wind_direction_gradient_deg_per_km:e.windDirectionGradient??0,turbulence_enabled:e.turbulence?.enabled??false,turbulence_rms_ms:e.turbulence?.rms??0,turbulence_alpha:e.turbulence?.alpha??1,turbulence_poles:e.turbulence?.poles??5,turbulence_sample_hz:e.turbulence?.sampleRate??20,turbulence_seed:e.turbulence?.seed??1,temperature_c:e.temperature,pressure_hpa:e.pressure/100,dof:'3-DoF',earth_model:'WGS84 local tangent plane'},recovery:{recovery_enabled:recovery.devices.length>0,devices:recovery.devices}};
  return {payload,issues:[...new Set(issues)]};
 }

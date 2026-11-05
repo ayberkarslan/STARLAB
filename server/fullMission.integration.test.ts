@@ -68,4 +68,33 @@ describe('B3 full mission bridge',()=>{
   expect(exported).toContain('# event,{"type":"STAGE_SEPARATION"');
   expect(JSON.stringify(parseResultCsv(exported))).toBe(JSON.stringify(samples));
  });
+ it('applies surface roughness and Mach x Reynolds x AoA table in B3 full mission',async()=>{
+  const makeProject=()=>{
+   const project=emptyProject(),flight=initialFlight();
+   project.parts.push(part('stage','rocket','stage',0,0),
+    {...part('nose','stage','nose',300,60),geometry:{noseProfile:'conical',filled:true}},
+    part('body','stage','body',1000,60),
+    {...part('fins','body','fins',180,180,600),geometry:{finCount:3,tipChord:80,sweep:100,finCrossSection:'square'},inputs:{wallThickness:3,density:2700}},
+    {...part('mount','body','motor',200,56,750),geometry:{innerDiameter:52}});
+   flight.motors.push({id:'test-motor',name:'Test',manufacturer:'Test',source:'custom',diameter:50,length:200,totalMass:.5,propellantMass:.1,curve:[{t:0,thrust:0},{t:.1,thrust:500},{t:1,thrust:0}]});
+   flight.configurations[0].mounts.mount={motorId:'test-motor',event:'launch',delay:0,offset:0};
+   flight.cases[0].environment.atmosphereModel='surface';flight.cases[0].environment.maxTime=120;
+   return {project,flight};
+  };
+  const smooth=makeProject(),rough=makeProject(),tabled=makeProject();
+  smooth.project.aerodynamics={surfaceRoughness:2};
+  rough.project.aerodynamics={surfaceRoughness:200};
+  tabled.project.aerodynamics={coefficientTable:[
+   {Mach:0,Reynolds:1e5,AoA_deg:0,CA_off:.95,CA_on:.95,CN:0,CP_m:.85,CN_alpha_per_rad:12},
+   {Mach:1,Reynolds:1e5,AoA_deg:0,CA_off:.95,CA_on:.95,CN:0,CP_m:.85,CN_alpha_per_rad:12},
+  ]};
+  const [outSmooth,outRough,outTabled]=await Promise.all([
+   runFullMission(fullMissionInputs(smooth.project,smooth.flight,smooth.flight.cases[0]).payload,new AbortController().signal),
+   runFullMission(fullMissionInputs(rough.project,rough.flight,rough.flight.cases[0]).payload,new AbortController().signal),
+   runFullMission(fullMissionInputs(tabled.project,tabled.flight,tabled.flight.cases[0]).payload,new AbortController().signal),
+  ]);
+  const apogee=(csv:string)=>Math.max(...parseResultCsv(csv).map(s=>s.altitude));
+  expect(apogee(outRough.csv)).toBeLessThan(apogee(outSmooth.csv));
+  expect(apogee(outTabled.csv)).toBeLessThan(apogee(outSmooth.csv));
+ });
 });

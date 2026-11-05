@@ -7,6 +7,7 @@ export interface AerodynamicInputs {
  normalForceSlope?:number;
  dragCoefficient?:number;
  centerOfPressure?:number;
+ surfaceRoughness?:number;
  bodyPlanformArea?:number;
  bodyPlanformMoment?:number;
  pitchRate?:number;
@@ -35,7 +36,7 @@ export function validateCoefficientTable(rows:AeroCoefficientRow[]){
  }
  if(rows.length&&rows.length!==axes[0].size*axes[1].size*axes[2].size)throw Error('Aero tablosunda Mach × Reynolds × hücum açısı ızgarası eksik.');
 }
-export const aeroUnits={normalForceSlope:'1/rad',dragCoefficient:'1',centerOfPressure:'mm',bodyPlanformArea:'m²',bodyPlanformMoment:'m³',pitchRate:'deg/s',referenceDiameter:'mm',referenceArea:'m²',referenceLength:'mm',mach:'1',angleOfAttack:'deg',reynolds:'1',velocity:'m/s',density:'kg/m³',dynamicViscosity:'Pa·s',dynamicPressure:'Pa',rollRate:'deg/s'} as const;
+export const aeroUnits={normalForceSlope:'1/rad',dragCoefficient:'1',centerOfPressure:'mm',surfaceRoughness:'µm',bodyPlanformArea:'m²',bodyPlanformMoment:'m³',pitchRate:'deg/s',referenceDiameter:'mm',referenceArea:'m²',referenceLength:'mm',mach:'1',angleOfAttack:'deg',reynolds:'1',velocity:'m/s',density:'kg/m³',dynamicViscosity:'Pa·s',dynamicPressure:'Pa',rollRate:'deg/s'} as const;
 export function validateAerodynamics(value:unknown):asserts value is AerodynamicInputs {
  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Aero koşulları geçersiz.');
  const v=value as AerodynamicInputs;

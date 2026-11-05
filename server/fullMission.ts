@@ -7,6 +7,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+import {validateCoefficientTable,type AeroCoefficientRow} from '../src/domain/aerodynamics';
+
 const execute=promisify(execFile);
 const root=fileURLToPath(new URL('../',import.meta.url));
 async function missionBinary(signal?:AbortSignal){
@@ -30,13 +32,21 @@ export async function runFullMission(input:unknown,signal:AbortSignal){
   await writeFile(source,serialized,'utf8');
   await execute(binary,['--analyze',source,analysis],{signal,timeout:60000,maxBuffer:100000,windowsHide:true});
   const design=JSON.parse(await readFile(analysis,'utf8')) as {components?:{id:string;type:string;mass_kg:number;absolute_cg_m:number;inertia_transverse_kgm2:number}[]};
-  const payload=JSON.parse(serialized) as {motor_instances?:{id:string;wet_mass_kg:number;cg_z_m?:number;transverse_inertia_per_mass_kgm2_per_kg?:number}[]};
+  const payload=JSON.parse(serialized) as {motor_instances?:{id:string;wet_mass_kg:number;cg_z_m?:number;transverse_inertia_per_mass_kgm2_per_kg?:number}[];rasaero_table?:AeroCoefficientRow[];simulation?:Record<string,unknown>};
   if(!Array.isArray(design.components)||!Array.isArray(payload.motor_instances))throw Error('B3 tasarım veya motor analizi eksik.');
   for(const motor of payload.motor_instances){
    const component=design.components.find(item=>item.id===`${motor.id}:installed`&&item.type==='Motor');
    if(!component||!Number.isFinite(component.mass_kg)||component.mass_kg<=0||Math.abs(component.mass_kg-motor.wet_mass_kg)>1e-6||!Number.isFinite(component.absolute_cg_m)||!Number.isFinite(component.inertia_transverse_kgm2))throw Error(`${motor.id}: B3 motor kütle/atalet analizi uyuşmuyor.`);
    motor.cg_z_m=component.absolute_cg_m;
    motor.transverse_inertia_per_mass_kgm2_per_kg=component.inertia_transverse_kgm2/component.mass_kg;
+  }
+  if(payload.rasaero_table?.length){
+   validateCoefficientTable(payload.rasaero_table);
+   const rasaero=join(directory,'rasaero.csv');
+   const rows=['Mach,Reynolds,AoA_deg,CA_off,CA_on,CN,CP_m,CN_alpha_per_rad',...payload.rasaero_table.map(r=>`${r.Mach},${r.Reynolds},${r.AoA_deg},${r.CA_off},${r.CA_on},${r.CN},${r.CP_m},${r.CN_alpha_per_rad}`)];
+   await writeFile(rasaero,rows.join('\n'),'utf8');
+   payload.simulation={...payload.simulation,rasaero_aero_table_path:rasaero};
+   delete payload.rasaero_table;
   }
   await writeFile(source,JSON.stringify(payload),'utf8');
   await execute(binary,[source,telemetry,summary],{signal,timeout:120000,maxBuffer:200000,windowsHide:true});
