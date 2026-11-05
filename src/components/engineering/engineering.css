@@ -25,3 +25,9 @@
 .flight-path-rocket path{fill:#000;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke}
 .flight-path-control{position:absolute;left:18px;bottom:14px;display:flex;align-items:center;gap:10px;background:#000;border:1px solid var(--line);padding:2px 8px 2px 2px}
 .flight-path-control output{min-width:58px;text-align:right;font-size:12px}
+.landing-zone-view{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#000}
+.landing-zone-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);background:#000;z-index:2}
+.landing-zone-actions{display:flex;align-items:center;gap:8px}
+.landing-zone-canvas{position:relative;flex:1;min-height:200px}
+.landing-three-view{position:absolute;inset:0;width:100%;height:100%}
+.engineering-metrics.landing-zone-metrics{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
