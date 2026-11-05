@@ -1,11 +1,24 @@
 import {resolveParts} from '../domain/geometry';
 import type {Project} from '../domain/project';
-import type {FlightConfiguration,FlightWorkspace,SimulationCase} from '../domain/flight';
+import type {FlightConfiguration,FlightWorkspace,FreeFlightSettings,SimulationCase} from '../domain/flight';
 import {allMotors} from '../domain/flight';
 
 export interface FreePart {id:string;kind:0|1|2|3|4;station:number;length:number;foreRadius:number;aftRadius:number;number:number;span:number;root:number;tip:number;sweep:number;thickness:number}
 export interface FreeFlightProjection {parts:FreePart[];diameter:number;baseOwner:string;issues:string[];motorId?:string;mountId?:string}
 const m=(millimeters:number)=>millimeters/1000;
+
+export function handoffStateFromCase(source:SimulationCase,burnDuration?:number,mode:'railExit'|'burnout'='railExit'):Pick<FreeFlightSettings,'startAltitude'|'startSpeed'|'motorAge'>|null {
+ const samples=source.result?.samples;if(!samples?.length)return null;
+ if(mode==='railExit'){
+  const sample=samples.find(item=>item.railCleared&&item.altitude>0&&item.velocity>0)??samples.find(item=>item.altitude>0&&item.velocity>0);
+  if(!sample)return null;
+  return {startAltitude:Number(sample.altitude.toFixed(4)),startSpeed:Number(sample.velocity.toFixed(4)),motorAge:Number(sample.t.toFixed(4))};
+ }
+ if(burnDuration===undefined||burnDuration<=0)return null;
+ const sample=samples.reduce((best,item)=>Math.abs(item.t-burnDuration)<Math.abs(best.t-burnDuration)?item:best);
+ if(sample.altitude<=0||sample.velocity<=0)return null;
+ return {startAltitude:Number(sample.altitude.toFixed(4)),startSpeed:Number(sample.velocity.toFixed(4)),motorAge:burnDuration};
+}
 
 /** Only geometry and unit projection. All aerodynamic loads stay in the supplied C++ package. */
 export function projectFreeFlight(project:Project,flight:FlightWorkspace,config:FlightConfiguration,scenario:SimulationCase):FreeFlightProjection {
@@ -18,9 +31,9 @@ export function projectFreeFlight(project:Project,flight:FlightWorkspace,config:
  if(!motor)issues.push('Motor seçilmedi.');
  else if(motor.massProfile?.length)issues.push('Bağımsız motor kütle profili bu bağlantıda desteklenmiyor.');
  if(mounts[0]?.[1].event!=='launch'||(mounts[0]?.[1].delay??0)!==0)issues.push('Motor raydan önce kalkışta ateşlenmiş olmalı.');
- const q=scenario.freeFlight;
- if(!q||![q.startAltitude,q.startSpeed,q.motorAge,q.duration,q.motorExitArea].every(Number.isFinite)||q.startAltitude<=0||q.startSpeed<=0||q.motorAge<0||q.duration<=0||q.duration>300||q.motorExitArea<=0)issues.push('Ray çıkışı hızı, irtifası, motor yaşı, süre ve motor çıkış alanı gerekli.');
- else if(motor&&q.motorAge>=motor.curve.at(-1)!.t)issues.push('Ray çıkışında motor hâlâ yanıyor olmalı.');
+ const q=scenario.freeFlight,burn=motor?.curve.at(-1)?.t??0,coasting=!!motor&&q?.motorAge===burn;
+ if(!q||![q.startAltitude,q.startSpeed,q.motorAge,q.duration,q.motorExitArea].every(Number.isFinite)||q.startAltitude<=0||q.startSpeed<=0||q.motorAge<0||q.duration<=0||q.duration>300||(coasting?q.motorExitArea<0:q.motorExitArea<=0))issues.push('Ray çıkışı hızı, irtifası, motor yaşı, süre ve motor çıkış alanı gerekli.');
+ else if(motor&&q.motorAge>burn)issues.push('Başlangıçta motor yaşı yanış süresini aşamaz.');
  if(scenario.environment.atmosphereModel&&!['standard1976'].includes(scenario.environment.atmosphereModel))issues.push('Yeni motor yalnız standart atmosfer kullanıyor.');
  if(scenario.environment.windModel&&!['constant'].includes(scenario.environment.windModel))issues.push('Yeni motor yalnız sabit rüzgâr kullanıyor.');
  if(scenario.environment.altitude<0||scenario.environment.altitude+Math.max(q?.startAltitude??0,0)>20000)issues.push('Yeni motor 0–20 km atmosfer aralığında çalışıyor.');

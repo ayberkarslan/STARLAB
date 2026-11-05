@@ -84,4 +84,11 @@ describe('supplied free flight model process',()=>{
   expect(value('CP_m')).toBeCloseTo(.66519179971344,10);
   expect(value('CD')).toBeCloseTo(.23460182781791,10);
  });
+ it('supports post-burnout coast when motorAge equals burn duration',async()=>{
+  const coast=input().replace('0.35 0 0.15','0.35 0.15 0.15');
+  const raw=await runFreeFlight('6',coast,new AbortController().signal);
+  const result=parseFreeFlightHistory(raw.history,raw.components);
+  expect(result.samples.every(sample=>sample.thrust===0)).toBe(true);
+  expect(result.samples.every(sample=>Math.abs((sample.mass??0)-10)<1e-9)).toBe(true);
+ });
 });

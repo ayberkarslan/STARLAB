@@ -33,8 +33,14 @@ void finite(double value,const char* field){require(std::isfinite(value),std::st
 
 int main(int argc,char** argv){
  try{
-  require(argc==2,"Usage: flight-runner 3|6");
+  require(argc==2||argc==3,"Usage: flight-runner 3|6 [config_file]");
   const std::string mode=argv[1];require(mode=="3"||mode=="6","Invalid DoF");
+  if(argc==3){
+   Config cfg=readConfig(argv[2]);std::ostringstream history,components;
+   simulate(cfg,mode=="3",&history,&components);
+   std::cout<<"STHISTORY\n"<<history.str()<<"STCOMPONENTS\n"<<components.str();
+   return 0;
+  }
   std::string protocol;read(protocol,"protocol");require(protocol=="STARLAB_FREE_FLIGHT_V1"||protocol=="STARLAB_FREE_FLIGHT_V2","Unsupported flight input protocol");
   Config cfg{};ProjectHost host;Phase phase{};phase.name="free-flight";
   double pitch=0,heading=0,motorAge=0;
@@ -80,13 +86,17 @@ int main(int argc,char** argv){
   }
   for(const auto& inlet:host.tailInlets)require(std::any_of(host.design.parts.begin(),host.design.parts.end(),[&](const auto& part){return part.id==inlet.partId&&part.kind==geometry::Kind::Boattail;}),"Local inlet must target a boattail");
   require(cfg.dt>0&&cfg.dt<=1&&cfg.site>=0&&cfg.startUp>0&&cfg.speed>=0&&phase.duration>0&&phase.duration<=300
-   &&phase.burn>0&&phase.burn<=phase.duration&&phase.m0>=phase.m1&&phase.m1>0,"Invalid flight bounds");
+   &&phase.burn>0&&phase.m0>=phase.m1&&phase.m1>0,"Invalid flight bounds");
   require(phase.motor.front().time==0&&phase.motor.back().time==phase.burn,"Motor curve must cover burn");
-  require(motorAge>=0&&motorAge<phase.burn,"Ray çıkışında motor hâlâ yanıyor olmalı.");
+  require(motorAge>=0&&motorAge<=phase.burn,"Başlangıçta motor yaşı yanış süresini aşamaz.");
   const double originalBurn=phase.burn;
-  std::vector<MotorPoint> remaining{{0,sampleCurve(phase.motor,motorAge,&MotorPoint::force)}};
-  for(const auto& p:phase.motor)if(p.time>motorAge)remaining.push_back({p.time-motorAge,p.force});
-  phase.motor=remaining;phase.burn=originalBurn-motorAge;
+  if(motorAge==originalBurn){phase.motor.clear();phase.burn=0;}
+  else{
+   std::vector<MotorPoint> remaining{{0,sampleCurve(phase.motor,motorAge,&MotorPoint::force)}};
+   for(const auto& p:phase.motor)if(p.time>motorAge)remaining.push_back({p.time-motorAge,p.force});
+   phase.motor=remaining;phase.burn=originalBurn-motorAge;
+   require(phase.burn<=phase.duration,"Invalid flight bounds");
+  }
   require(host.exitArea>=0&&std::isfinite(host.exitArea),"Invalid motor exit area");
   cfg.theta=(90-pitch)*pi/180;cfg.yaw=heading*pi/180;cfg.wind={host.windNorth,host.windEast,host.windDown};
   cfg.host=&host;cfg.phases={phase};host.phase=&cfg.phases[0];host.site=cfg.site;host.legacy=cfg.legacy;

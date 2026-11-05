@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {addPart,emptyProject} from '../domain/project';
 import {initialFlight} from '../domain/flight';
-import {projectFreeFlight} from './freeFlightInputs';
+import {handoffStateFromCase,projectFreeFlight} from './freeFlightInputs';
 
 function fixture(){
  let project=emptyProject();project=addPart(project,'rocket','stage');
@@ -26,5 +26,17 @@ describe('free flight projection',()=>{
  it('rejects shapes not supplied by the new geometry model',()=>{
   const {project,flight}=fixture();project.parts.find(part=>part.kind==='nose')!.geometry={noseProfile:'tangentOgive'};
   expect(projectFreeFlight(project,flight,flight.configurations[0],flight.cases[0]).issues.join(' ')).toContain('konik burun');
+ });
+ it('allows burnout motor age for post-burnout coast and extracts handoff states',()=>{
+  const {project,flight}=fixture();
+  flight.cases[0].freeFlight={startAltitude:120,startSpeed:180,motorAge:1.65,duration:5,motorExitArea:0};
+  expect(projectFreeFlight(project,flight,flight.configurations[0],flight.cases[0]).issues).toEqual([]);
+  const donor={...flight.cases[0],result:{source:'solver' as const,signature:'s',samples:[
+   {t:0,altitude:0,velocity:0,acceleration:20,railCleared:false},
+   {t:.42,altitude:5.1,velocity:35.4,acceleration:120,railCleared:true},
+   {t:1.65,altitude:195.2,velocity:225.8,acceleration:-15,railCleared:true},
+  ]}};
+  expect(handoffStateFromCase(donor,1.65,'railExit')).toEqual({startAltitude:5.1,startSpeed:35.4,motorAge:.42});
+  expect(handoffStateFromCase(donor,1.65,'burnout')).toEqual({startAltitude:195.2,startSpeed:225.8,motorAge:1.65});
  });
 });

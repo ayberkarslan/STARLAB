@@ -1,4 +1,6 @@
-import {validateFreeWind,type FreeFlightSettings,type SimulationCase} from '../../domain/flight';
+import {Button} from '@stardrop/ui';
+import {allMotors,validateFreeWind,type FlightWorkspace,type FreeFlightSettings,type SimulationCase} from '../../domain/flight';
+import {handoffStateFromCase} from '../../engine/freeFlightInputs';
 import NumericSeriesEditor from './NumericSeriesEditor';
 import {NumberInput} from '../NumberInput';
 import type {Project} from '../../domain/project';
@@ -6,7 +8,7 @@ import {Choice,NumberField} from './shared';
 
 const blank:FreeFlightSettings={startAltitude:0,startSpeed:0,motorAge:0,duration:5,motorExitArea:0};
 const windColumns=[{key:'t',label:'Zaman',unit:'s',min:0},{key:'north',label:'Kuzey',unit:'m/s',min:-200,max:200},{key:'east',label:'Doğu',unit:'m/s',min:-200,max:200},{key:'down',label:'Aşağı',unit:'m/s',min:-200,max:200}];
-export default function FreeFlightFields({scenario,project,onChange}:{scenario:SimulationCase;project:Project;onChange:(patch:Partial<SimulationCase>)=>void}){
+export default function FreeFlightFields({scenario,project,flight,onChange}:{scenario:SimulationCase;project:Project;flight?:FlightWorkspace;onChange:(patch:Partial<SimulationCase>)=>void}){
  const value=scenario.freeFlight??blank;
  const set=(key:keyof FreeFlightSettings,n:number)=>onChange({freeFlight:{...value,[key]:n}});
  const initial=value.initialState??{roll:0,v:0,w:0,p:0,q:0,r:0};
@@ -14,16 +16,25 @@ export default function FreeFlightFields({scenario,project,onChange}:{scenario:S
  const boattails=project.parts.filter(part=>part.kind==='transition'&&part.geometry?.aftDiameter!==undefined&&part.geometry.aftDiameter<part.diameter);
  const inletIds=[...new Set([...boattails.map(part=>part.id),...Object.keys(value.tailInlets??{})])];
  const setInlet=(id:string,key:'mach'|'pressurePa',n:number|undefined)=>{const next={...value.tailInlets,[id]:{...value.tailInlets?.[id],[key]:n}};if(next[id].mach===undefined&&next[id].pressurePa===undefined)delete next[id];onChange({freeFlight:{...value,tailInlets:Object.keys(next).length?next:undefined}})};
+ const config=flight?.configurations.find(c=>c.id===scenario.configurationId);
+ const motorId=config&&Object.values(config.mounts)[0]?.motorId,burn=flight&&motorId?allMotors(flight).find(m=>m.id===motorId)?.curve.at(-1)?.t:undefined;
+ const donor=flight?.cases.find(c=>c.id!==scenario.id&&c.configurationId===scenario.configurationId&&(c.solverMode==='mission3'||c.solverMode==='axial')&&c.result?.samples.length)??flight?.cases.find(c=>c.id!==scenario.id&&c.result?.samples.length);
+ const railHandoff=donor?handoffStateFromCase(donor,burn,'railExit'):null,burnoutHandoff=donor?handoffStateFromCase(donor,burn,'burnout'):null;
  return <>
   <Choice label="Uçuş modeli" value={scenario.solverMode??'axial'} options={[{value:'mission3',label:'Tam görev · 3DOF'},{value:'free3',label:'Ray sonrası · 3DOF'},{value:'free6',label:'Ray sonrası · 6DOF'},{value:'axial',label:'Kalkış · eksenel'}]} onChange={mode=>onChange({solverMode:mode as SimulationCase['solverMode'],...(['free3','free6'].includes(mode)&&!scenario.freeFlight?{freeFlight:blank}:{})})}/>
-  {(scenario.solverMode==='free3'||scenario.solverMode==='free6')&&<div className="engineering-field-grid">
+  {(scenario.solverMode==='free3'||scenario.solverMode==='free6')&&<>
+   {(railHandoff||burnoutHandoff)&&<div className="engineering-actions">
+    {railHandoff&&<Button size="sm" variant="secondary" onClick={()=>onChange({freeFlight:{...value,...railHandoff}})}>Ray çıkışını aktar</Button>}
+    {burnoutHandoff&&<Button size="sm" variant="secondary" onClick={()=>onChange({freeFlight:{...value,...burnoutHandoff}})}>Motor sönümünü aktar</Button>}
+   </div>}
+   <div className="engineering-field-grid">
    <Choice label="Kaynak atmosfer" value={value.sourceAtmosphere??'standard'} options={[{value:'standard',label:'Standart'},{value:'archive',label:'Arşiv'}]} onChange={sourceAtmosphere=>onChange({freeFlight:{...value,sourceAtmosphere:sourceAtmosphere as FreeFlightSettings['sourceAtmosphere']}})}/>
    <NumberField label="Ray çıkışı irtifası" unit="m · AGL" min={0} value={value.startAltitude} onChange={n=>set('startAltitude',n)}/>
    <NumberField label="Ray çıkışı hızı" unit="m/s" min={0} value={value.startSpeed} onChange={n=>set('startSpeed',n)}/>
    <NumberField label="Ray çıkışında motor yaşı" unit="s" min={0} value={value.motorAge} onChange={n=>set('motorAge',n)}/>
    <NumberField label="Serbest uçuş süresi" unit="s" min={.01} max={300} value={value.duration} onChange={n=>set('duration',n)}/>
    <NumberField label="Motor çıkış alanı" unit="m²" min={0} value={value.motorExitArea} onChange={n=>set('motorExitArea',n)}/>
-  </div>}
+  </div></>}
   {scenario.solverMode==='free6'&&<details className="engineering-details"><summary>Başlangıç durumu</summary><div className="engineering-field-grid">
    <NumberField label="Roll" unit="°" value={initial.roll} onChange={n=>setInitial('roll',n)}/>
    <NumberField label="Yan hız" unit="m/s" value={initial.v} onChange={n=>setInitial('v',n)}/>
