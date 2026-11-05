@@ -32,7 +32,7 @@ int main(int argc,char** argv){
  try{
   require(argc==2,"Usage: flight-runner 3|6");
   const std::string mode=argv[1];require(mode=="3"||mode=="6","Invalid DoF");
-  std::string protocol;read(protocol,"protocol");require(protocol=="STARLAB_FREE_FLIGHT_V1","Unsupported flight input protocol");
+  std::string protocol;read(protocol,"protocol");require(protocol=="STARLAB_FREE_FLIGHT_V1"||protocol=="STARLAB_FREE_FLIGHT_V2","Unsupported flight input protocol");
   Config cfg{};ProjectHost host;Phase phase{};phase.name="free-flight";
   double pitch=0,heading=0,motorAge=0;
   read(cfg.dt,"dt");read(cfg.site,"site");read(cfg.startUp,"start altitude");
@@ -44,6 +44,14 @@ int main(int argc,char** argv){
   read(phase.I1.x,"Ix1");read(phase.I1.y,"Iy1");read(phase.I1.z,"Iz1");
   read(host.design.diameter,"reference diameter");read(host.exitArea,"motor exit area");
   read(host.design.baseOwner,"base owner");if(host.design.baseOwner=="-")host.design.baseOwner.clear();
+  if(protocol=="STARLAB_FREE_FLIGHT_V2"){
+   int custom=0;read(custom,"custom initial state");require(custom==0||custom==1,"Invalid initial state mode");
+   read(cfg.roll,"initial roll");read(cfg.velocity.x,"initial axial velocity");read(cfg.velocity.y,"initial lateral velocity");read(cfg.velocity.z,"initial vertical velocity");
+   read(cfg.rates.x,"initial roll rate");read(cfg.rates.y,"initial pitch rate");read(cfg.rates.z,"initial yaw rate");
+   for(double v:{cfg.roll,cfg.velocity.x,cfg.velocity.y,cfg.velocity.z,cfg.rates.x,cfg.rates.y,cfg.rates.z})finite(v,"initial state");
+   cfg.customInitial=custom==1;cfg.roll*=pi/180;
+   if(cfg.customInitial)require(length(cfg.velocity)>0,"Initial velocity must be positive");
+  }
   int count=0;read(count,"motor point count");require(count>=2&&count<=10000,"Invalid motor curve size");
   for(int i=0;i<count;++i){MotorPoint p{};read(p.time,"motor time");read(p.force,"motor thrust");finite(p.time,"motor time");finite(p.force,"motor thrust");phase.motor.push_back(p);}
   read(count,"part count");require(count>=1&&count<=64,"Invalid part count");

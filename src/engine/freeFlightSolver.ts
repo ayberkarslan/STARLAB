@@ -52,6 +52,8 @@ export function freeFlightIssues(project:Project,flight:FlightWorkspace,scenario
  if(scenario.solverMode==='free3'){
   const e=scenario.environment,windEast=-e.windSpeed*Math.sin(e.windDirection*Math.PI/180);
   if(Math.abs(windEast)>1e-9||Math.abs(e.railHeading)>1e-9)issues.push('3DOF kuzey–irtifa düzleminde çalışır; doğu rüzgârı ve farklı yön için 6DOF seç.');
+  const state=scenario.freeFlight?.initialState;
+  if(state&&(Math.abs(state.roll)+Math.abs(state.v)+Math.abs(state.p)+Math.abs(state.r)>1e-9))issues.push('3DOF düzleminde roll, yan hız, roll/yaw hızları sıfır olmalı.');
  }
  const steps=(scenario.freeFlight?.duration??0)/scenario.environment.timeStep;
  if(steps>19500||steps*(geometry.parts.length+1)>25000)issues.push('Bu koşul çok fazla uçuş veya bileşen örneği üretiyor; zaman adımını büyüt ya da süreyi kısalt.');
@@ -66,8 +68,10 @@ function inputText(projected:FreeFlightProjection,scenario:SimulationCase,motor:
  const burn=motor.curve.at(-1)!.t;
  const main=[e.timeStep,e.altitude,q.startAltitude,q.startSpeed,e.railAngle,e.railHeading,windNorth,windEast,0,q.duration,q.motorAge,burn,
   mass0.mass,mass1.mass,-mass0.cg,mass0.ix,mass0.iy,mass0.iy,mass1.ix,mass1.iy,mass1.iy,projected.diameter,q.motorExitArea,projected.baseOwner];
- const lines=[main.join(' '),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
- return 'STARLAB_FREE_FLIGHT_V1\n'+lines.join('\n')+'\n';
+ const state=q.initialState;
+ const initial=[state?1:0,state?.roll??0,q.startSpeed,state?.v??0,state?.w??0,state?.p??0,state?.q??0,state?.r??0];
+ const lines=[main.join(' '),initial.join(' '),String(motor.curve.length),...motor.curve.map(point=>`${point.t} ${point.thrust}`),String(projected.parts.length),...projected.parts.map(p=>[p.id,p.kind,p.station,p.length,p.foreRadius,p.aftRadius,p.number,p.span,p.root,p.tip,p.sweep,p.thickness].join(' '))];
+ return 'STARLAB_FREE_FLIGHT_V2\n'+lines.join('\n')+'\n';
 }
 
 export async function solveFreeFlight(project:Project,flight:FlightWorkspace,scenario:SimulationCase,signal:AbortSignal){
