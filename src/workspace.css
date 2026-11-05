@@ -70,6 +70,7 @@ nav.task-tabs button.active::after,nav.task-tabs button:not(:disabled):is(:hover
 .settings-options button[aria-pressed=true]::after,.settings-options button:hover::after{opacity:1}
 .drawing::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,#ffffff40 .7px,transparent 1px),linear-gradient(to right,#ffffff0d 1px,transparent 1px),linear-gradient(to bottom,#ffffff0d 1px,transparent 1px);background-size:20px 20px,100px 100px,100px 100px;background-position:center;mask-image:radial-gradient(ellipse at center,#000 35%,#0005 100%)}
 .drawing:focus-visible{outline:1px solid #fff;outline-offset:-1px}
+.drawing.root-selected:focus-visible{outline:none}
 .drawing .rocket-svg{position:relative}
 .canvas-controls{position:absolute;left:16px;right:16px;top:12px;display:flex;align-items:flex-start;justify-content:space-between;z-index:4;pointer-events:none}
 .canvas-controls>*{pointer-events:auto;background:#000;border-radius:4px}
