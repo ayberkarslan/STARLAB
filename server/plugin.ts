@@ -6,6 +6,7 @@ import {EngineService} from './engine';
 import type {EngineRequest} from '../src/engine/protocol';
 import {freeFlightBuild,runFreeFlight} from './freeFlight';
 import {fullMissionVersion,runFullMission} from './fullMission';
+import {runLandingZoneDispersion} from './landingZone';
 const root=fileURLToPath(new URL('../',import.meta.url)).replaceAll('\\','/'),execute=promisify(execFile);
 export default function enginePlugin():Plugin{return {name:'starlab-native-engine',configureServer(server){
  const service=new EngineService();let timer:ReturnType<typeof setTimeout>|undefined;let builds=Promise.resolve(),nativeDirty=false,workerDirty=false,flightDirty=false;
@@ -18,6 +19,15 @@ export default function enginePlugin():Plugin{return {name:'starlab-native-engin
   const controller=new AbortController();res.on('close',()=>{if(!res.writableEnded)controller.abort()});let data='';
   try{for await(const chunk of req){data+=chunk.toString();if(data.length>1_000_000)throw Error('Uçuş isteği çok büyük.')}const result=await runFullMission(JSON.parse(data),controller.signal);if(!res.destroyed){res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(result))}}
   catch(error){if(!res.destroyed){res.statusCode=400;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify({error:error instanceof Error?error.message:'Uçuş tamamlanamadı.'}))}}
+ });
+ server.middlewares.use('/api/landing-zone',async(req,res,next)=>{
+  const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
+  if(req.url!=='/run'){next();return}
+  if(req.method!=='POST'){res.statusCode=405;res.end();return}
+  if(!req.headers['content-type']?.startsWith('application/json')){res.statusCode=415;res.end();return}
+  const controller=new AbortController();res.on('close',()=>{if(!res.writableEnded)controller.abort()});let data='';
+  try{for await(const chunk of req){data+=chunk.toString();if(data.length>1_000_000)throw Error('İniş bölgesi isteği çok büyük.')}const result=await runLandingZoneDispersion(JSON.parse(data),controller.signal);if(!res.destroyed){res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(result))}}
+  catch(error){if(!res.destroyed){res.statusCode=400;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify({error:error instanceof Error?error.message:'İniş bölgesi hesaplanamadı.'}))}}
  });
  server.middlewares.use('/api/free-flight',async(req,res,next)=>{
   const origin=req.headers.origin;if(origin&&origin!==`http://${req.headers.host}`&&origin!==`https://${req.headers.host}`){res.statusCode=403;res.end();return}
