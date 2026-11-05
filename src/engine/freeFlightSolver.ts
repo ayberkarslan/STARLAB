@@ -12,25 +12,37 @@ export function parseFreeFlightHistory(history:string,components:string){
  const required=['t_s','n_m','e_m','down_m','u','v','w','p','q','r','alpha','beta','Mach','Q_Pa','mass','Tx_N','FnetX_N','FnetY_N','FnetZ_N','CP_m','CD','CL','CmCG'];
  const column=Object.fromEntries(required.map(key=>[key,header.indexOf(key)]));
  if(required.some(key=>column[key]<0))throw Error('Yeni uçuş telemetrisi eksik sütun içeriyor.');
+ const optionalColumn=(key:string)=>header.indexOf(key);
  const samples:FlightSample[]=lines.map(line=>{
   const cells=line.split(','),at=(key:string)=>number(cells[column[key]]??'',key),mass=at('mass');
+  const optional=(key:string)=>{const idx=optionalColumn(key);return idx>=0&&cells[idx]?.trim()?number(cells[idx],key):undefined};
   const north=at('n_m'),east=at('e_m'),down=at('down_m');
   const cp=cells[column.CP_m]?.trim();
+  const q0=optional('k0'),q1=optional('k1'),q2=optional('k2'),q3=optional('k3');
+  const aeroForceX=optional('Fx'),aeroForceY=optional('Fy'),aeroForceZ=optional('Fz');
+  const aeroMomentX=optional('Mx'),aeroMomentY=optional('My'),aeroMomentZ=optional('Mz');
   return {t:at('t_s'),altitude:-down,velocity:Math.hypot(at('u'),at('v'),at('w')),
    acceleration:Math.hypot(at('FnetX_N'),at('FnetY_N'),at('FnetZ_N'))/mass,
    north,east,downrange:Math.hypot(north,east),railCleared:true,mach:at('Mach'),dynamicPressure:at('Q_Pa'),mass,
    angleOfAttack:at('alpha')*180/Math.PI,sideslip:at('beta')*180/Math.PI,rollRate:at('p'),pitchRate:at('q'),yawRate:at('r'),thrust:at('Tx_N'),
+   ...(q0!==undefined&&q1!==undefined&&q2!==undefined&&q3!==undefined?{q0,q1,q2,q3}:{}),
+   ...(aeroForceX!==undefined&&aeroForceY!==undefined&&aeroForceZ!==undefined?{aeroForceX,aeroForceY,aeroForceZ}:{}),
+   ...(aeroMomentX!==undefined&&aeroMomentY!==undefined&&aeroMomentZ!==undefined?{aeroMomentX,aeroMomentY,aeroMomentZ}:{}),
    ...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:at('CD'),liftCoefficient:at('CL'),momentCoefficient:at('CmCG')};
  });
  const firstTime=samples[0]?.t,componentLines=components.trim().split(/\r?\n/),componentHeader=componentLines.shift()?.split(',')??[];
  const find=(key:string)=>componentHeader.indexOf(key);
  if(['t_s','surface','CP_m','CD','CL','CmCG'].some(key=>find(key)<0))throw Error('Bileşen telemetrisi eksik sütun içeriyor.');
- const snapshot:FlightComponentSnapshot[]=componentLines.filter(line=>Number(line.split(',')[find('t_s')])===firstTime).map(line=>{
-  const cells=line.split(','),cp=cells[find('CP_m')]?.trim();
-  return {id:cells[find('surface')],...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:number(cells[find('CD')],'CD'),liftCoefficient:number(cells[find('CL')],'CL'),momentCoefficient:number(cells[find('CmCG')],'CmCG'),...(find('tail_inlet_method')>=0?{tailInletMethod:cells[find('tail_inlet_method')]}:{})};
- });
+ const parseRow=(line:string):FlightComponentSnapshot=>{
+  const cells=line.split(','),cp=cells[find('CP_m')]?.trim(),opt=(key:string)=>{const idx=find(key);return idx>=0&&cells[idx]?.trim()?number(cells[idx],key):undefined};
+  const reynolds=opt('Re'),forceX=opt('Fx'),forceY=opt('Fy'),forceZ=opt('Fz'),momentX=opt('MxCG'),momentY=opt('MyCG'),momentZ=opt('MzCG'),tailTurnDeg=opt('tail_turn_deg');
+  return {id:cells[find('surface')],t:number(cells[find('t_s')],'t_s'),...(reynolds!==undefined?{reynolds}:{}),...(cp?{centerOfPressure:number(cp,'CP_m')}:{ }),dragCoefficient:number(cells[find('CD')],'CD'),liftCoefficient:number(cells[find('CL')],'CL'),momentCoefficient:number(cells[find('CmCG')],'CmCG'),...(forceX!==undefined&&forceY!==undefined&&forceZ!==undefined?{forceX,forceY,forceZ}:{}),...(momentX!==undefined&&momentY!==undefined&&momentZ!==undefined?{momentX,momentY,momentZ}:{}),...(tailTurnDeg!==undefined?{tailTurnDeg}:{}),...(find('tail_inlet_method')>=0&&cells[find('tail_inlet_method')]?{tailInletMethod:cells[find('tail_inlet_method')]}:{})};
+ };
+ const componentSeries=componentLines.filter(line=>line.trim()).map(parseRow);
+ if(componentSeries.length>25000)throw Error('Bileşen telemetrisi çok büyük.');
+ const snapshot=componentSeries.filter(item=>item.t===firstTime);
  if(snapshot.length>64)throw Error('Bileşen telemetrisi çok büyük.');
- return {samples:validateSamples(samples),components:snapshot};
+ return {samples:validateSamples(samples),components:snapshot,componentSeries};
 }
 
 function nativeValue(result:Awaited<ReturnType<typeof evaluateStructure>>,id:string){

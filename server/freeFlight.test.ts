@@ -27,7 +27,12 @@ describe('supplied free flight model process',()=>{
    expect(restored[0].mass).toBeCloseTo(result.samples[0].mass!);
    expect(restored[0].angleOfAttack).toBeCloseTo(result.samples[0].angleOfAttack!);
    expect(restored[0].pitchRate).toBeCloseTo(result.samples[0].pitchRate!);
+   expect(restored[0].q0).toBeCloseTo(result.samples[0].q0!);
+   expect(restored[0].aeroForceX).toBeCloseTo(result.samples[0].aeroForceX!);
    expect(result.components.map(item=>item.id)).toEqual(['cone','tube','transition','boattail','fins']);
+   expect(result.componentSeries.length).toBe(result.samples.length*5);
+   expect(result.componentSeries[0].reynolds).toBeGreaterThan(0);
+   expect(Number.isFinite(result.componentSeries[0].forceX)).toBe(true);
   }
  });
  it('rejects lateral wind in the planar model',async()=>{

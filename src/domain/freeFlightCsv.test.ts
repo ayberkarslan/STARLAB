@@ -4,10 +4,10 @@ import {emptyProject} from './project';
 import {initialFlight} from './flight';
 import {parseStar,serializeStar} from './starFile';
 
-it('keeps N/E and aerodynamic telemetry through CSV export and import',()=>{
+it('keeps N/E, quaternion and aerodynamic telemetry through CSV export and import',()=>{
  const samples:FlightSample[]=[
-  {t:0,altitude:15,velocity:50,acceleration:9.8,downrange:0,north:0,east:0,railCleared:true,mach:.15,dynamicPressure:100,dragCoefficient:.4,liftCoefficient:0,momentCoefficient:0},
-  {t:1,altitude:61,velocity:45,acceleration:7,downrange:10,north:8,east:6,railCleared:true,mach:.13,dynamicPressure:80,centerOfPressure:.3,dragCoefficient:.41,liftCoefficient:.02,momentCoefficient:-.01},
+  {t:0,altitude:15,velocity:50,acceleration:9.8,downrange:0,north:0,east:0,railCleared:true,mach:.15,dynamicPressure:100,dragCoefficient:.4,liftCoefficient:0,momentCoefficient:0,mass:12,angleOfAttack:0,sideslip:0,rollRate:0,pitchRate:0,yawRate:0,thrust:100,q0:1,q1:0,q2:0,q3:0,aeroForceX:-12,aeroForceY:0,aeroForceZ:-1.5,aeroMomentX:0,aeroMomentY:.4,aeroMomentZ:0},
+  {t:1,altitude:61,velocity:45,acceleration:7,downrange:10,north:8,east:6,railCleared:true,mach:.13,dynamicPressure:80,centerOfPressure:.3,dragCoefficient:.41,liftCoefficient:.02,momentCoefficient:-.01,mass:11.5,angleOfAttack:.5,sideslip:.1,rollRate:.01,pitchRate:.02,yawRate:.03,thrust:80,q0:.99,q1:.01,q2:-.1,q3:0,aeroForceX:-10,aeroForceY:.2,aeroForceZ:-1.1,aeroMomentX:0,aeroMomentY:.3,aeroMomentZ:.01},
  ];
  expect(parseResultCsv(resultCsv(samples))).toEqual(samples);
 });
